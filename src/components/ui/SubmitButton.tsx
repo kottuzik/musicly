@@ -8,15 +8,17 @@ export function SubmitButton({
   pendingText,
   variant = "primary",
   fullWidth = true,
+  disabled,
 }: {
   children: React.ReactNode;
   pendingText?: string;
   variant?: ButtonVariant;
   fullWidth?: boolean;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant={variant} fullWidth={fullWidth} loading={pending}>
+    <Button type="submit" variant={variant} fullWidth={fullWidth} loading={pending} disabled={disabled}>
       {pending && pendingText ? pendingText : children}
     </Button>
   );

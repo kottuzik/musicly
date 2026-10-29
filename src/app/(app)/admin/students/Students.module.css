@@ -1,0 +1,55 @@
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.subtitle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.grid {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 3fr 2fr;
+    align-items: start;
+  }
+}
+
+.parent {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.parent legend {
+  padding-inline: 6px;
+  font-weight: 600;
+}
+
+/* Radio option with a title and an explanation line. */
+.longOption {
+  flex: 1 1 100%;
+  align-items: flex-start;
+  padding-block: 10px;
+}
+
+.longOption input {
+  margin-block-start: 2px;
+}
+
+.phoneLabel {
+  margin-inline-start: 6px;
+}

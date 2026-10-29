@@ -10,7 +10,7 @@ import { NavLinks } from "./NavLinks";
 import styles from "./AppShell.module.css";
 
 export function AppShell({ profile, children }: { profile: Profile; children: ReactNode }) {
-  const items = navItemsForRole(profile.role);
+  const items = navItemsForRole(profile.role, profile.status);
   return (
     <>
       <PageBackground />

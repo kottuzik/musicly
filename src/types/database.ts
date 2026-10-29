@@ -157,6 +157,136 @@ export type Database = {
         }
         Relationships: []
       }
+      student_contacts: {
+        Row: {
+          email: string | null
+          parent_email: string | null
+          parent_name: string | null
+          parent_phone: string | null
+          phone: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          email?: string | null
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          phone?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          email?: string | null
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          phone?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_contacts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_subjects: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_type_id: string
+          level: Database["public"]["Enums"]["student_level"]
+          professional_background: string | null
+          regular_teacher_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_type_id: string
+          level: Database["public"]["Enums"]["student_level"]
+          professional_background?: string | null
+          regular_teacher_id: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_type_id?: string
+          level?: Database["public"]["Enums"]["student_level"]
+          professional_background?: string | null
+          regular_teacher_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_subjects_lesson_type_id_fkey"
+            columns: ["lesson_type_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subjects_regular_teacher_id_fkey"
+            columns: ["regular_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          birth_date: string
+          created_at: string
+          expected_return_date: string | null
+          full_name: string
+          id: string
+          return_mode: Database["public"]["Enums"]["student_return_mode"] | null
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+        }
+        Insert: {
+          birth_date: string
+          created_at?: string
+          expected_return_date?: string | null
+          full_name: string
+          id?: string
+          return_mode?:
+            | Database["public"]["Enums"]["student_return_mode"]
+            | null
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string
+          created_at?: string
+          expected_return_date?: string | null
+          full_name?: string
+          id?: string
+          return_mode?:
+            | Database["public"]["Enums"]["student_return_mode"]
+            | null
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       teacher_skills: {
         Row: {
           lesson_type_id: string
@@ -247,6 +377,7 @@ export type Database = {
         }
         Returns: string
       }
+      current_teacher_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -256,6 +387,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_my_student: { Args: { p_student_id: string }; Returns: boolean }
       list_open_invitations: {
         Args: never
         Returns: {
@@ -267,7 +399,15 @@ export type Database = {
           teacher_id: string
         }[]
       }
+      list_teacher_names: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       pick_lesson_type_color: { Args: { p_palette: string[] }; Returns: string }
+      remove_student_subject: { Args: { p_id: string }; Returns: undefined }
       require_admin: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -276,6 +416,30 @@ export type Database = {
       revoke_invitation: {
         Args: { p_invitation_id: string }
         Returns: undefined
+      }
+      save_student: {
+        Args: {
+          p_birth_date: string
+          p_email: string
+          p_full_name: string
+          p_id: string
+          p_parent_email: string
+          p_parent_name: string
+          p_parent_phone: string
+          p_phone: string
+        }
+        Returns: string
+      }
+      save_student_subject: {
+        Args: {
+          p_background: string
+          p_id: string
+          p_lesson_type_id: string
+          p_level: Database["public"]["Enums"]["student_level"]
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: string
       }
       save_teacher: {
         Args: {
@@ -287,6 +451,7 @@ export type Database = {
         }
         Returns: string
       }
+      school_today: { Args: never; Returns: string }
       set_admin_permissions: {
         Args: { p_delete_student_history: boolean; p_profile_id: string }
         Returns: undefined
@@ -294,6 +459,15 @@ export type Database = {
       set_admin_status: {
         Args: {
           p_profile_id: string
+          p_status: Database["public"]["Enums"]["user_status"]
+        }
+        Returns: undefined
+      }
+      set_student_status: {
+        Args: {
+          p_id: string
+          p_return_date: string
+          p_return_mode: Database["public"]["Enums"]["student_return_mode"]
           p_status: Database["public"]["Enums"]["user_status"]
         }
         Returns: undefined
@@ -313,9 +487,19 @@ export type Database = {
         Args: { p_full_name: string; p_phone: string }
         Returns: undefined
       }
+      update_professional_info: {
+        Args: {
+          p_background: string
+          p_id: string
+          p_level: Database["public"]["Enums"]["student_level"]
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       invitation_role: "admin" | "teacher"
+      student_level: "beginner" | "intermediate" | "advanced"
+      student_return_mode: "notify" | "auto"
       user_role: "super_admin" | "admin" | "teacher"
       user_status: "active" | "inactive"
     }
@@ -446,6 +630,8 @@ export const Constants = {
   public: {
     Enums: {
       invitation_role: ["admin", "teacher"],
+      student_level: ["beginner", "intermediate", "advanced"],
+      student_return_mode: ["notify", "auto"],
       user_role: ["super_admin", "admin", "teacher"],
       user_status: ["active", "inactive"],
     },

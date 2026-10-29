@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, House, Settings, UserRound, Users } from "lucide-react";
+import { GraduationCap, House, Music, Settings, UserRound, Users } from "lucide-react";
 import type { NavIcon, NavItem } from "@/lib/nav/items";
 import styles from "./AppShell.module.css";
 
 const ICONS: Record<NavIcon, typeof House> = {
   home: House,
-  teachers: GraduationCap,
+  students: GraduationCap,
+  teachers: Music,
   users: Users,
   settings: Settings,
   profile: UserRound,

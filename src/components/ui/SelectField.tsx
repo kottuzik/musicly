@@ -16,6 +16,7 @@ type SelectFieldProps = {
   placeholder?: string;
   error?: string;
   hideLabel?: boolean;
+  onValueChange?: (value: string) => void;
 };
 
 // Radix Select reserves "" for "no value", so options with an empty value use this stand-in.
@@ -23,7 +24,7 @@ const EMPTY = "__empty__";
 
 // Dropdown whose list opens as a card below the field. The chosen value is submitted
 // through a hidden input, so it works in both server-action and GET forms.
-export function SelectField({ label, name, options, defaultValue = "", placeholder, error, hideLabel }: SelectFieldProps) {
+export function SelectField({ label, name, options, defaultValue = "", placeholder, error, hideLabel, onValueChange }: SelectFieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
   const [value, setValue] = useState(defaultValue);
@@ -37,7 +38,11 @@ export function SelectField({ label, name, options, defaultValue = "", placehold
       <Select.Root
         dir="rtl"
         value={value === "" && !options.some((o) => o.value === "") ? "" : value || EMPTY}
-        onValueChange={(v) => setValue(v === EMPTY ? "" : v)}
+        onValueChange={(v) => {
+          const next = v === EMPTY ? "" : v;
+          setValue(next);
+          onValueChange?.(next);
+        }}
       >
         <Select.Trigger
           id={id}

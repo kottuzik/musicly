@@ -80,7 +80,7 @@ export async function deleteLessonType(_prev: ActionState, formData: FormData): 
   if (error) {
     return {
       error: dbErrorMessage(error, {
-        "23503": "לא ניתן למחוק תחום שמשויכים אליו מורים. הסירו קודם את התחום מהמורים.",
+        "23503": "לא ניתן למחוק תחום שמשויכים אליו מורים או תלמידים. הסירו קודם את התחום מהמורים ומהתלמידים.",
       }),
     };
   }

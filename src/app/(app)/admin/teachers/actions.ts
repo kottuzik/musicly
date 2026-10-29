@@ -40,7 +40,7 @@ export async function saveTeacher(_prev: ActionState, formData: FormData): Promi
   if (error || !teacherId) {
     const message = dbErrorMessage(error);
     if (error?.message === "email_taken" || error?.message === "email_locked") return { fieldErrors: { email: message } };
-    if (error?.message === "skills_required") return { fieldErrors: { lessonTypeIds: message } };
+    if (error?.message === "skills_required" || error?.message === "skill_in_use") return { fieldErrors: { lessonTypeIds: message } };
     return { error: message };
   }
 

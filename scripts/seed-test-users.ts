@@ -14,6 +14,7 @@ const TEST_USERS: { key: string; email: string; fullName: string; role: Role; st
   { key: "admin2", email: "test-admin2@example.test", fullName: "מנהל בדיקה שני", role: "admin", status: "active" },
   { key: "adminInactive", email: "test-admin-inactive@example.test", fullName: "מנהל לא פעיל", role: "admin", status: "inactive" },
   { key: "teacher", email: "test-teacher@example.test", fullName: "מורה בדיקה", role: "teacher", status: "active" },
+  { key: "teacher2", email: "test-teacher2@example.test", fullName: "מורה בדיקה שני", role: "teacher", status: "active" },
   { key: "teacherInactive", email: "test-teacher-inactive@example.test", fullName: "מורה לא פעיל", role: "teacher", status: "inactive" },
   { key: "noProfile", email: "test-no-profile@example.test", fullName: "", role: "teacher", status: "active" },
 ];
