@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 
 const nextConfig: NextConfig = {
   turbopack: { root: fileURLToPath(new URL(".", import.meta.url)) },
+  // E2E tests build into their own folder so they never overwrite a running dev server's files.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // The app is private: ask search engines not to index any route.
   async headers() {
     return [

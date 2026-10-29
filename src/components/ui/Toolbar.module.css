@@ -1,0 +1,40 @@
+/* Search + filters row above lists. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.toolbar > * {
+  flex: 1 1 160px;
+}
+
+.toolbar > button {
+  flex: 0 0 auto;
+}
+
+.search {
+  position: relative;
+}
+
+.toolbar > .search {
+  flex: 2 1 260px;
+}
+
+.search svg {
+  position: absolute;
+  inset-inline-end: 14px;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.search input {
+  padding-inline-end: 42px;
+}
+
+.count {
+  color: var(--color-text-secondary);
+}

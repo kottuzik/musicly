@@ -10,10 +10,20 @@ function listFiles(dir: string): string[] {
 }
 
 describe("secret key isolation", () => {
-  it("never references the Supabase secret key from application code", () => {
-    const offenders = listFiles("src")
-      .filter((f) => /\.(ts|tsx)$/.test(f))
-      .filter((f) => readFileSync(f, "utf8").includes("SUPABASE_SECRET_KEY"));
+  const ADMIN_CLIENT = join("src", "lib", "supabase", "admin.ts");
+  const sourceFiles = () => listFiles("src").filter((f) => /\.(ts|tsx)$/.test(f));
+
+  it("references the Supabase secret key only in the server-only admin client", () => {
+    const offenders = sourceFiles().filter((f) => readFileSync(f, "utf8").includes("SUPABASE_SECRET_KEY"));
+    expect(offenders).toEqual([ADMIN_CLIENT]);
+    expect(readFileSync(ADMIN_CLIENT, "utf8")).toContain('import "server-only"');
+  });
+
+  it("never imports the admin client from client components", () => {
+    const offenders = sourceFiles().filter((f) => {
+      const source = readFileSync(f, "utf8");
+      return source.includes('"use client"') && source.includes("@/lib/supabase/admin");
+    });
     expect(offenders).toEqual([]);
   });
 

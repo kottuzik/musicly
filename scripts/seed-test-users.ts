@@ -9,7 +9,9 @@ type Role = "super_admin" | "admin" | "teacher";
 type Status = "active" | "inactive";
 
 const TEST_USERS: { key: string; email: string; fullName: string; role: Role; status: Status }[] = [
+  { key: "superAdmin", email: "test-super-admin@example.test", fullName: "מנהל ראשי בדיקה", role: "super_admin", status: "active" },
   { key: "admin", email: "test-admin@example.test", fullName: "מנהל בדיקה", role: "admin", status: "active" },
+  { key: "admin2", email: "test-admin2@example.test", fullName: "מנהל בדיקה שני", role: "admin", status: "active" },
   { key: "adminInactive", email: "test-admin-inactive@example.test", fullName: "מנהל לא פעיל", role: "admin", status: "inactive" },
   { key: "teacher", email: "test-teacher@example.test", fullName: "מורה בדיקה", role: "teacher", status: "active" },
   { key: "teacherInactive", email: "test-teacher-inactive@example.test", fullName: "מורה לא פעיל", role: "teacher", status: "inactive" },
@@ -29,6 +31,44 @@ async function findUserId(email: string): Promise<string | null> {
     if (data.users.length < 200) return null;
   }
   return null;
+}
+
+const TEST_LESSON_TYPE = "תחום בדיקה";
+
+// Teacher records (with one lesson type) for the test teacher accounts, so RLS on teachers can be tested.
+async function seedTeacherRecords(output: Record<string, { id: string }>) {
+  const { data: existing, error: findError } = await admin
+    .from("lesson_types")
+    .select("id")
+    .eq("name", TEST_LESSON_TYPE)
+    .maybeSingle();
+  if (findError) throw findError;
+  let lessonTypeId = existing?.id;
+  if (!lessonTypeId) {
+    const { data, error } = await admin
+      .from("lesson_types")
+      .insert({ name: TEST_LESSON_TYPE, default_duration_minutes: 45, color: "#6B46C1" })
+      .select("id")
+      .single();
+    if (error) throw error;
+    lessonTypeId = data.id;
+  }
+
+  for (const user of TEST_USERS.filter((u) => u.role === "teacher" && u.key !== "noProfile")) {
+    const { data, error } = await admin
+      .from("teachers")
+      .upsert(
+        { profile_id: output[user.key].id, full_name: user.fullName, email: user.email, status: user.status },
+        { onConflict: "email" },
+      )
+      .select("id")
+      .single();
+    if (error) throw error;
+    const { error: skillError } = await admin
+      .from("teacher_skills")
+      .upsert({ teacher_id: data.id, lesson_type_id: lessonTypeId }, { ignoreDuplicates: true });
+    if (skillError) throw skillError;
+  }
 }
 
 async function main() {
@@ -60,6 +100,8 @@ async function main() {
 
     output[user.key] = { id, email: user.email, password };
   }
+
+  await seedTeacherRecords(output);
 
   mkdirSync("tests", { recursive: true });
   writeFileSync("tests/.test-users.json", JSON.stringify(output, null, 2));

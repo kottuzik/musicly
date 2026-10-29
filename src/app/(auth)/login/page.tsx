@@ -6,6 +6,7 @@ export const metadata: Metadata = { title: "התחברות" };
 
 const NOTICES: Record<string, string> = {
   "signed-out": "התנתקת מהמערכת.",
+  registered: "החשבון נוצר. התחברו עם האימייל והסיסמה שבחרתם.",
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {

@@ -1,0 +1,32 @@
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.toggle input {
+  inline-size: 20px;
+  block-size: 20px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.toggle > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.error {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-error-text);
+}
+
+.email {
+  direction: ltr;
+  unicode-bidi: isolate;
+  word-break: break-all;
+}

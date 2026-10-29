@@ -24,6 +24,10 @@ export function isAdminRole(role: Role): boolean {
   return ADMIN_ROLES.includes(role);
 }
 
+export function isSuperAdmin(role: Role): boolean {
+  return role === "super_admin";
+}
+
 export function homePathForRole(role: Role): string {
   return isAdminRole(role) ? "/admin" : "/teacher";
 }
@@ -50,9 +54,9 @@ export function canAccessPath(role: Role, path: string): boolean {
 
 // Paths reachable without a session. /reset-password checks the session itself
 // so it can show a clear "link expired" message.
-const PUBLIC_PREFIXES = ["/login", "/forgot-password", "/reset-password", "/auth"];
+const PUBLIC_PREFIXES = ["/login", "/forgot-password", "/reset-password", "/register", "/auth"];
 // Paths a signed-in user should not see (sent home instead).
-const GUEST_ONLY_PREFIXES = ["/login", "/forgot-password"];
+const GUEST_ONLY_PREFIXES = ["/login", "/forgot-password", "/register"];
 
 export function isPublicPath(path: string): boolean {
   return PUBLIC_PREFIXES.some((p) => matchesPrefix(path, p));

@@ -21,7 +21,7 @@ export default defineConfig({
     { name: "mobile-safari", use: { ...devices["iPhone 15"] } },
   ],
   webServer: {
-    command: `npm run build && npx next start -p ${PORT}`,
+    command: `NEXT_DIST_DIR=.next-e2e npm run build && NEXT_DIST_DIR=.next-e2e npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}/login`,
     timeout: 240_000,
     reuseExistingServer: false,

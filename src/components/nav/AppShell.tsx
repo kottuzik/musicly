@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { ROLE_LABELS, type Profile } from "@/lib/auth/roles";
@@ -26,13 +27,15 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
               <MobileNav items={items} />
             </div>
             <div className={styles.user}>
-              <div className={styles.userText}>
-                <span className={styles.userName}>{profile.full_name}</span>
-                <span className="text-small text-secondary">{ROLE_LABELS[profile.role]}</span>
-              </div>
-              <span className={styles.avatar} aria-hidden="true">
-                {profile.full_name.trim().charAt(0)}
-              </span>
+              <Link href="/profile" className={styles.profileLink} aria-label={`הפרופיל שלי: ${profile.full_name}`}>
+                <span className={styles.userText}>
+                  <span className={styles.userName}>{profile.full_name}</span>
+                  <span className="text-small text-secondary">{ROLE_LABELS[profile.role]}</span>
+                </span>
+                <span className={styles.avatar} aria-hidden="true">
+                  {profile.full_name.trim().charAt(0)}
+                </span>
+              </Link>
               <form action="/auth/signout" method="post">
                 <button type="submit" className={styles.logout}>
                   <LogOut size={18} strokeWidth={1.75} aria-hidden="true" />

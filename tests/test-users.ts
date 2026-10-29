@@ -4,7 +4,7 @@ import { config } from "dotenv";
 config({ path: ".env", quiet: true });
 
 export type TestUser = { id: string; email: string; password: string };
-export type TestUsers = Record<"admin" | "adminInactive" | "teacher" | "teacherInactive" | "noProfile", TestUser>;
+export type TestUsers = Record<"superAdmin" | "admin" | "admin2" | "adminInactive" | "teacher" | "teacherInactive" | "noProfile", TestUser>;
 
 const FILE = "tests/.test-users.json";
 

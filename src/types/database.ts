@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_permissions: {
+        Row: {
+          delete_student_history: boolean
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          delete_student_history?: boolean
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          delete_student_history?: boolean
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_permissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          created_at: string
+          created_by: string
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["invitation_role"]
+          teacher_id: string | null
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          email: string
+          expires_at: string
+          full_name: string
+          id?: string
+          revoked_at?: string | null
+          role: Database["public"]["Enums"]["invitation_role"]
+          teacher_id?: string | null
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["invitation_role"]
+          teacher_id?: string | null
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_types: {
+        Row: {
+          color: string
+          created_at: string
+          default_duration_minutes: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          default_duration_minutes: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          default_duration_minutes?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -47,18 +157,165 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_skills: {
+        Row: {
+          lesson_type_id: string
+          teacher_id: string
+        }
+        Insert: {
+          lesson_type_id: string
+          teacher_id: string
+        }
+        Update: {
+          lesson_type_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_skills_lesson_type_id_fkey"
+            columns: ["lesson_type_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_skills_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          profile_id: string | null
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          profile_id?: string | null
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          profile_id?: string | null
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: { p_token_hash: string; p_user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      create_invitation: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_role: Database["public"]["Enums"]["invitation_role"]
+          p_teacher_id: string
+          p_token_hash: string
+        }
+        Returns: string
+      }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      email_in_use: {
+        Args: { p_email: string; p_except_teacher?: string }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
+      list_open_invitations: {
+        Args: never
+        Returns: {
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["invitation_role"]
+          teacher_id: string
+        }[]
+      }
+      pick_lesson_type_color: { Args: { p_palette: string[] }; Returns: string }
+      require_admin: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      require_super_admin: { Args: never; Returns: undefined }
+      revoke_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
+      save_teacher: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_id: string
+          p_lesson_type_ids: string[]
+          p_phone: string
+        }
+        Returns: string
+      }
+      set_admin_permissions: {
+        Args: { p_delete_student_history: boolean; p_profile_id: string }
+        Returns: undefined
+      }
+      set_admin_status: {
+        Args: {
+          p_profile_id: string
+          p_status: Database["public"]["Enums"]["user_status"]
+        }
+        Returns: undefined
+      }
+      set_teacher_status: {
+        Args: {
+          p_status: Database["public"]["Enums"]["user_status"]
+          p_teacher_id: string
+        }
+        Returns: undefined
+      }
+      transfer_super_admin: {
+        Args: { p_target_profile_id: string }
+        Returns: undefined
+      }
+      update_own_profile: {
+        Args: { p_full_name: string; p_phone: string }
+        Returns: undefined
+      }
     }
     Enums: {
+      invitation_role: "admin" | "teacher"
       user_role: "super_admin" | "admin" | "teacher"
       user_status: "active" | "inactive"
     }
@@ -188,6 +445,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      invitation_role: ["admin", "teacher"],
       user_role: ["super_admin", "admin", "teacher"],
       user_status: ["active", "inactive"],
     },

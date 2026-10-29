@@ -1,0 +1,32 @@
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 40px;
+  padding-inline: 16px;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--color-primary);
+}
+
+.tab[aria-current="page"] {
+  background: var(--color-primary);
+  color: #fff;
+}

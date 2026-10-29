@@ -34,3 +34,14 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   }
   return result;
 }
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "יש להזין את הסיסמה הנוכחית"),
+    password: z.string().min(PASSWORD_MIN_LENGTH, `הסיסמה צריכה להכיל לפחות ${PASSWORD_MIN_LENGTH} תווים`),
+    confirmPassword: z.string().min(1, "יש להזין שוב את הסיסמה"),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "הסיסמאות אינן תואמות",
+  });

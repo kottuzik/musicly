@@ -17,6 +17,7 @@ dist/
 build/
 out/
 .next/
+.next-e2e/
 .nuxt/
 .svelte-kit/
 *.tsbuildinfo

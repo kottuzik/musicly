@@ -1,0 +1,153 @@
+/* Trigger matches the shared text-field look (globals.css). */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding-block: 10px;
+  padding-inline: 14px 16px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: 16px;
+  line-height: 24px;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.trigger:hover {
+  border-color: var(--color-input-border-hover);
+}
+
+.trigger:focus-visible,
+.trigger[data-state="open"] {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.trigger[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.trigger[data-placeholder] {
+  color: #9ca3af;
+}
+
+/* Round button with a filled triangle, as in the approved dropdown reference. */
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+  transition: rotate 150ms ease, background-color 150ms ease;
+}
+
+.trigger:hover .icon {
+  background: #e2dafc;
+}
+
+.trigger[data-state="open"] .icon {
+  rotate: 180deg;
+}
+
+/* The open list: a white card with a pointer toward the field's arrow button. */
+.content {
+  position: relative;
+  z-index: 60;
+  inline-size: var(--radix-select-trigger-width);
+  background: var(--color-surface);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgb(31 41 55 / 0.12);
+  transform-origin: var(--radix-select-content-transform-origin);
+  animation: open 140ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Pointer: a rotated square sharing the card's border, centered under the arrow button
+   (button center = 16px trigger padding + 12px half-width from the inline end). */
+.content::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -7px;
+  inset-inline-end: 21px;
+  inline-size: 12px;
+  block-size: 12px;
+  background: var(--color-surface);
+  /* Physical sides on purpose: the top-left corner, turned 45°, points up in any direction. */
+  border-top: 1px solid var(--color-input-border);
+  border-left: 1px solid var(--color-input-border);
+  border-top-left-radius: 2px;
+  rotate: 45deg;
+}
+
+/* Opened upward (no room below): the pointer moves to the bottom edge. */
+.content[data-side="top"]::before {
+  inset-block-start: auto;
+  inset-block-end: -7px;
+  rotate: 225deg;
+}
+
+.viewport {
+  max-block-size: min(320px, calc(var(--radix-select-content-available-height) - 16px));
+  padding-block: 8px;
+  padding-inline: 16px;
+}
+
+/* Options separated by thin inset lines. */
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-block-size: 46px;
+  padding-inline: 6px;
+  border-block-end: 1px solid #d1d5db;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: color 120ms ease;
+}
+
+.item:last-child {
+  border-block-end: 0;
+}
+
+.item[data-highlighted] {
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+}
+
+.item[data-state="checked"] {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.indicator {
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+}
+
+/* The highlight background already marks the active option. */
+.item:focus-visible {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+@keyframes open {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+}

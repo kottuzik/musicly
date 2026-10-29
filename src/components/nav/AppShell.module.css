@@ -114,6 +114,20 @@
   margin-inline-start: auto;
 }
 
+.profileLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.profileLink:hover .userName {
+  color: var(--color-primary);
+}
+
 .userText {
   display: flex;
   flex-direction: column;
@@ -156,7 +170,21 @@
 }
 
 @media (max-width: 479px) {
-  .userText {
+  .profileLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.profileLink:hover .userName {
+  color: var(--color-primary);
+}
+
+.userText {
     display: none;
   }
 

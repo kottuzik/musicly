@@ -2,11 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House } from "lucide-react";
+import { GraduationCap, House, Settings, UserRound, Users } from "lucide-react";
 import type { NavIcon, NavItem } from "@/lib/nav/items";
 import styles from "./AppShell.module.css";
 
-const ICONS: Record<NavIcon, typeof House> = { home: House };
+const ICONS: Record<NavIcon, typeof House> = {
+  home: House,
+  teachers: GraduationCap,
+  users: Users,
+  settings: Settings,
+  profile: UserRound,
+};
+
+// Home links ("/admin", "/teacher") are active only on exact match, since other items live under them.
+const EXACT = new Set(["/admin", "/teacher"]);
 
 export function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -14,7 +23,8 @@ export function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?:
     <ul className={styles.navList}>
       {items.map((item) => {
         const Icon = ICONS[item.icon];
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active =
+          pathname === item.href || (!EXACT.has(item.href) && pathname.startsWith(`${item.href}/`));
         return (
           <li key={item.href}>
             <Link
