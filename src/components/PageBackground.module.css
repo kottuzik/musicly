@@ -1,0 +1,16 @@
+/* Fixed to the viewport so it always fills the screen, even when the page scrolls. */
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+  pointer-events: none;
+}
+
+/* Take the wrapper out of the page layout so it never occupies a grid/flex slot. */
+.picture {
+  position: absolute;
+}

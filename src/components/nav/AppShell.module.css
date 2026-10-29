@@ -1,0 +1,244 @@
+.shell {
+  position: relative;
+  z-index: 1;
+  min-block-size: 100dvh;
+  display: flex;
+}
+
+/* Sidebar sits on the right in RTL (inline-start). */
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    inset-block-start: 0;
+    block-size: 100dvh;
+    inline-size: var(--sidebar-width);
+    flex-shrink: 0;
+    padding: 20px 16px;
+    background: var(--color-surface);
+    border-inline-end: 1px solid var(--color-border);
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-inline: 8px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.brandLogo {
+  inline-size: 36px;
+  block-size: 36px;
+}
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-block-size: 44px;
+  padding-inline: 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.navLink:hover {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.navLink[aria-current="page"] {
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+}
+
+.main {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-block-size: 64px;
+  padding-inline: 16px;
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(8px);
+  border-block-end: 1px solid var(--color-border);
+}
+
+@media (min-width: 1024px) {
+  .header {
+    padding-inline: 32px;
+  }
+
+  .headerStart {
+    display: none;
+  }
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: auto;
+}
+
+.userText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: end;
+}
+
+.userName {
+  font-weight: 600;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 50%;
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 40px;
+  padding-inline: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.logout:hover {
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+}
+
+@media (max-width: 479px) {
+  .userText {
+    display: none;
+  }
+
+  /* Keep the label for screen readers while showing only the icon. */
+  .logout span {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+.content {
+  flex: 1;
+  inline-size: 100%;
+  max-inline-size: 1200px;
+  padding: 24px 16px 40px;
+}
+
+@media (min-width: 768px) {
+  .content {
+    padding: 32px 32px 48px;
+  }
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+}
+
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(31 41 55 / 0.4);
+  animation: fadeIn 150ms ease-out;
+}
+
+/* Drawer slides in from the right (inline-start in RTL). */
+.drawer {
+  position: fixed;
+  z-index: 50;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: min(300px, 85vw);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+}

@@ -1,0 +1,97 @@
+.page {
+  position: relative;
+  min-block-size: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  inline-size: 100%;
+  max-inline-size: 440px;
+  display: grid;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.content {
+  padding: 32px 24px;
+}
+
+.imagePanel {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    max-inline-size: 960px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .content {
+    padding: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .imagePanel {
+    display: block;
+    position: relative;
+  }
+
+  .imagePanel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgb(107 70 193 / 0.28), rgb(244 114 182 / 0.12) 55%, transparent);
+  }
+}
+
+/* Short windows (e.g. laptops): tighten spacing so the card fits without scrolling. */
+@media (max-height: 760px) {
+  .page {
+    padding-block: 16px;
+  }
+
+  .content {
+    padding-block: 28px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 760px) {
+  .content {
+    padding: 32px 48px;
+  }
+}
+
+@media (max-height: 560px) {
+  .page {
+    padding-block: 8px;
+  }
+
+  .content {
+    padding-block: 20px;
+  }
+}
+
+/* Phones: place the card near the top instead of centering it vertically.
+   Kept last so it wins over the short-window padding rules above. */
+@media (max-width: 767px) {
+  .page {
+    align-items: start;
+    padding-block-start: 32px;
+  }
+}

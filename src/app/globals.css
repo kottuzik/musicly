@@ -1,0 +1,205 @@
+/* Design tokens — from spec/style-guide.png (DESIGN.md §2) */
+:root {
+  --color-primary: #6b46c1;
+  --color-primary-hover: #5a37ad;
+  --color-primary-light: #a78bfa;
+  --color-primary-lighter: #ede9fe;
+  --color-accent: #f472b6;
+  --color-secondary: #38bdf8;
+  --color-secondary-light: #bae6fd;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  /* Style Guide border #e5e7eb darkened by 20% (lightness) for better visibility */
+  --color-border: #abb2bf;
+  /* Form-control outline: darker than --color-border to meet WCAG 3:1 non-text contrast on white */
+  --color-input-border: #6b7280;
+  --color-input-border-hover: #4b5563;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+
+  /* Darker tints for readable text on light semantic backgrounds */
+  --color-success-text: #065f46;
+  --color-success-bg: #ecfdf5;
+  --color-warning-text: #92400e;
+  --color-warning-bg: #fffbeb;
+  --color-error-text: #b91c1c;
+  --color-error-bg: #fef2f2;
+  --color-info-text: #075985;
+  --color-info-bg: #f0f9ff;
+
+  --font-sans: var(--font-heebo), "Arial Hebrew", Arial, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-sm: 0 1px 2px rgb(31 41 55 / 0.05);
+  --shadow-md: 0 4px 16px rgb(107 70 193 / 0.08);
+  --shadow-lg: 0 12px 40px rgb(107 70 193 / 0.12);
+
+  --focus-ring: 0 0 0 3px rgb(107 70 193 / 0.35);
+
+  --sidebar-width: 240px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-block-size: 100dvh;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+/* Typography scale */
+h1,
+.text-h1 {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+}
+
+h2,
+.text-h2 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+}
+
+h3,
+.text-h3 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.text-body-lg {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.text-small {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Text-like form controls: one shared look for every field in the app.
+   Defined globally (not in a CSS Module) so it is always loaded on every screen. */
+input:not([type="hidden"], [type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="submit"], [type="button"]),
+select,
+textarea {
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding-block: 10px;
+  padding-inline: 14px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: 16px;
+  line-height: 24px;
+  text-align: start;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* LTR content (email) stays right-aligned inside the RTL form */
+input[dir="ltr"] {
+  text-align: right;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--color-input-border-hover);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+img {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

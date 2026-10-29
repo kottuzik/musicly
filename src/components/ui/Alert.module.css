@@ -1,0 +1,41 @@
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 12px;
+  padding-inline: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-block-start: 1px;
+}
+
+/* Border tints are the light semantic colors darkened by 20% (lightness). */
+.info {
+  background: var(--color-info-bg);
+  border-color: #57c2fa;
+  color: var(--color-info-text);
+}
+
+.success {
+  background: var(--color-success-bg);
+  border-color: #4de7a0;
+  color: var(--color-success-text);
+}
+
+.warning {
+  background: var(--color-warning-bg);
+  border-color: #fbd126;
+  color: var(--color-warning-text);
+}
+
+.error {
+  background: var(--color-error-bg);
+  border-color: #fc6666;
+  color: var(--color-error-text);
+}
