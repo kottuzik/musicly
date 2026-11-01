@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ColorChip } from "@/components/ui/Badge";
-import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { PageHeader } from "@/components/ui/PageHeader";
 import stack from "@/components/ui/Stack.module.css";
 import table from "@/components/ui/Table.module.css";
@@ -9,7 +8,7 @@ import { requireRole } from "@/lib/auth/session";
 import { colorLabel } from "@/lib/lesson-types/colors";
 import { createClient } from "@/lib/supabase/server";
 import { SettingsTabs } from "../SettingsTabs";
-import { deleteLessonType } from "./actions";
+import { DeleteLessonTypeDialog } from "./DeleteLessonTypeDialog";
 import { LessonTypeDialog } from "./LessonTypeDialog";
 
 export const metadata: Metadata = { title: "תחומי לימוד" };
@@ -60,20 +59,7 @@ export default async function LessonTypesPage() {
                     <td>
                       <div className={table.actions}>
                         <LessonTypeDialog lessonType={lt} />
-                        <ConfirmAction
-                          action={deleteLessonType}
-                          fields={{ id: lt.id }}
-                          trigger="מחיקה"
-                          triggerVariant="danger"
-                          title={`מחיקת התחום „${lt.name}”`}
-                          description={
-                            teacherCount > 0
-                              ? `לתחום משויכים ${teacherCount} מורים, ולכן לא ניתן למחוק אותו עד להסרת השיוך.`
-                              : "התחום יימחק מהמערכת. לא ניתן לבטל פעולה זו."
-                          }
-                          confirmLabel="מחק"
-                          confirmVariant="danger"
-                        />
+                        <DeleteLessonTypeDialog lessonType={{ id: lt.id, name: lt.name }} />
                       </div>
                     </td>
                   </tr>

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { Field } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
@@ -15,20 +15,18 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
-      <Field
+      <PasswordField
         label="סיסמה חדשה"
         name="password"
-        type="password"
         autoComplete="new-password"
         required
         minLength={PASSWORD_MIN_LENGTH}
         hint={`לפחות ${PASSWORD_MIN_LENGTH} תווים`}
         error={state.fieldErrors?.password}
       />
-      <Field
+      <PasswordField
         label="אימות סיסמה"
         name="confirmPassword"
-        type="password"
         autoComplete="new-password"
         required
         error={state.fieldErrors?.confirmPassword}

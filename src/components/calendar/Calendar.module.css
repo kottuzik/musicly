@@ -1,0 +1,161 @@
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+
+  /* FullCalendar classic theme, aligned with the style guide */
+  --fc-classic-primary: var(--color-primary);
+  --fc-classic-border: #dfe3ea;
+  --fc-classic-today: rgb(237 233 254 / 0.6);
+  --fc-classic-now: var(--color-accent);
+  --fc-classic-foreground: var(--color-text-primary);
+  --fc-classic-muted-foreground: var(--color-text-secondary);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nav,
+.views {
+  display: flex;
+  gap: 8px;
+}
+
+.title {
+  flex: 1 1 200px;
+  text-align: center;
+}
+
+.navButton,
+.todayButton,
+.viewButton {
+  display: inline-grid;
+  place-items: center;
+  min-block-size: 40px;
+  min-inline-size: 40px;
+  padding-inline: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navButton {
+  padding-inline: 0;
+}
+
+.navButton:hover,
+.todayButton:hover,
+.viewButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.navButton:focus-visible,
+.todayButton:focus-visible,
+.viewButton:focus-visible,
+.eventButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.todayButton[aria-disabled] {
+  color: var(--color-text-secondary);
+}
+
+.viewButton[aria-current="page"] {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.grid {
+  font-size: 13px;
+}
+
+.grid :global(a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+.event {
+  overflow: hidden;
+}
+
+.eventButton {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 2px 6px;
+  border: 0;
+  border-inline-start: 4px solid;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.eventTime {
+  font-size: 11px;
+  direction: ltr;
+  align-self: flex-start;
+}
+
+.eventTitle,
+.eventMeta {
+  max-inline-size: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.eventTitle {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.eventMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.closed,
+.cancelled {
+  opacity: 0.65;
+}
+
+.closed .eventTitle,
+.cancelled .eventTitle {
+  text-decoration: line-through;
+}
+
+@media (max-width: 640px) {
+  .calendar {
+    padding: 12px;
+  }
+
+  .title {
+    order: -1;
+    flex-basis: 100%;
+  }
+}

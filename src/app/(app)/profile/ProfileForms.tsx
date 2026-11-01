@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
@@ -59,27 +60,24 @@ export function PasswordForm({ email }: { email: string }) {
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {state.success && <Alert tone="success">{state.success}</Alert>}
       <input type="hidden" name="username" value={email} autoComplete="username" />
-      <Field
+      <PasswordField
         label="סיסמה נוכחית"
         name="currentPassword"
-        type="password"
         autoComplete="current-password"
         required
         error={state.fieldErrors?.currentPassword}
       />
-      <Field
+      <PasswordField
         label="סיסמה חדשה"
         name="password"
-        type="password"
         autoComplete="new-password"
         required
         hint={`לפחות ${PASSWORD_MIN_LENGTH} תווים`}
         error={state.fieldErrors?.password}
       />
-      <Field
+      <PasswordField
         label="אימות סיסמה חדשה"
         name="confirmPassword"
-        type="password"
         autoComplete="new-password"
         required
         error={state.fieldErrors?.confirmPassword}

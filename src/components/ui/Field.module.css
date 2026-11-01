@@ -22,3 +22,37 @@
   line-height: 16px;
   color: var(--color-text-secondary);
 }
+
+.withAdornment {
+  position: relative;
+}
+
+.withAdornment input {
+  inline-size: 100%;
+  padding-inline-end: 48px;
+}
+
+.adornmentButton {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 4px;
+  display: grid;
+  place-items: center;
+  inline-size: 40px;
+  margin-block: auto;
+  block-size: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.adornmentButton:hover {
+  color: var(--color-primary);
+}
+
+.adornmentButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

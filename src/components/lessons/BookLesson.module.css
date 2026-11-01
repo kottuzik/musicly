@@ -1,0 +1,138 @@
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-lighter);
+}
+
+.mode {
+  min-block-size: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mode[aria-checked="true"] {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.mode:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.readonly {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-background);
+}
+
+.meetings,
+.locations {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.meetings legend,
+.locations legend {
+  margin-block-end: 6px;
+  padding: 0;
+  font-weight: 500;
+}
+
+.meeting {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.meetings > button {
+  align-self: flex-start;
+}
+
+.locations {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.location,
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 32px;
+  cursor: pointer;
+}
+
+.location input,
+.confirm input {
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--color-primary);
+}
+
+.confirm {
+  margin-block-start: 8px;
+  font-weight: 500;
+}
+
+.help,
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-secondary-light);
+  border-radius: var(--radius-md);
+  background: var(--color-info-bg);
+}
+
+.help ul,
+.skipped {
+  margin: 0;
+  padding-inline-start: 18px;
+}
+
+.helpTitle {
+  font-weight: 600;
+}
+
+.previewItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.previewItem + .previewItem {
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--color-secondary-light);
+}
+
+.error {
+  color: var(--color-error-text);
+  font-size: 13px;
+}
+
+@media (max-width: 479px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

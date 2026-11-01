@@ -7,7 +7,7 @@ test.skip(!users, "Run `npm run seed-test-users` first (needs .env for Developme
 async function login(page: Page, user: TestUser, path = "/login") {
   await page.goto(path);
   await page.getByLabel("אימייל").fill(user.email);
-  await page.getByLabel("סיסמה").fill(user.password);
+  await page.getByLabel("סיסמה", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "התחברות" }).click();
 }
 
@@ -35,7 +35,7 @@ test("shows validation and wrong-credentials errors", async ({ page }) => {
   await expect(page.getByText("יש להזין כתובת אימייל")).toBeVisible();
 
   await page.getByLabel("אימייל").fill(users!.teacher.email);
-  await page.getByLabel("סיסמה").fill("definitely-wrong-password");
+  await page.getByLabel("סיסמה", { exact: true }).fill("definitely-wrong-password");
   await page.getByRole("button", { name: "התחברות" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "האימייל או הסיסמה שגויים" })).toBeVisible();
 });
@@ -92,7 +92,7 @@ test("deep link returns to the requested page after login", async ({ page }) => 
   await page.goto("/teacher");
   await expect(page).toHaveURL(/\/login\?next=%2Fteacher/);
   await page.getByLabel("אימייל").fill(users!.teacher.email);
-  await page.getByLabel("סיסמה").fill(users!.teacher.password);
+  await page.getByLabel("סיסמה", { exact: true }).fill(users!.teacher.password);
   await page.getByRole("button", { name: "התחברות" }).click();
   await expect(page).toHaveURL(/\/teacher$/);
 });

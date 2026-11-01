@@ -1,0 +1,165 @@
+"use client";
+
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/react/daygrid";
+import heLocale from "@fullcalendar/react/locales/he";
+import themePlugin from "@fullcalendar/react/themes/classic";
+import timeGridPlugin from "@fullcalendar/react/timegrid";
+import "@fullcalendar/react/skeleton.css";
+import "@fullcalendar/react/themes/classic/theme.css";
+import "@fullcalendar/react/themes/classic/palette.css";
+import { ChevronLeft, ChevronRight, Video } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { LESSON_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
+import type { CalendarLesson } from "@/lib/lessons/queries";
+import {
+  CALENDAR_VIEWS,
+  SCHOOL_TIME_ZONE,
+  VIEW_LABELS,
+  shiftDate,
+  viewTitle,
+  type CalendarView,
+} from "@/lib/lessons/time";
+import { schoolToday } from "@/lib/students/age";
+import { LessonDetailsDialog } from "./LessonDetailsDialog";
+import styles from "./Calendar.module.css";
+
+const FC_VIEWS: Record<CalendarView, string> = { day: "timeGridDay", week: "timeGridWeek", month: "dayGridMonth" };
+
+// Light tint of the lesson type color as the block background, dark text for contrast.
+function tint(hex: string) {
+  return `color-mix(in srgb, ${hex} 22%, white)`;
+}
+
+type Props = {
+  lessons: CalendarLesson[];
+  view: CalendarView;
+  date: string;
+  // Admins see the teacher's name on each lesson; a teacher's calendar shows only their own.
+  showTeacher: boolean;
+  // The view was chosen in the URL; otherwise narrow screens switch to the day view.
+  viewFromUrl: boolean;
+  slotMinTime: string;
+  slotMaxTime: string;
+};
+
+export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, slotMinTime, slotMaxTime }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [openLesson, setOpenLesson] = useState<string | null>(null);
+
+  const href = (next: { view?: CalendarView; date?: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", next.view ?? view);
+    params.set("date", next.date ?? date);
+    return `${pathname}?${params}`;
+  };
+
+  // No layout of the week grid fits a phone: start there with a single day.
+  useEffect(() => {
+    if (!viewFromUrl && view !== "day" && window.matchMedia("(max-width: 640px)").matches) {
+      router.replace(href({ view: "day" }));
+    }
+    // Runs once per page load; href depends on values that are already in the URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const today = schoolToday();
+
+  return (
+    <div className={styles.calendar}>
+      <div className={styles.toolbar}>
+        <div className={styles.nav}>
+          <Link className={styles.navButton} href={href({ date: shiftDate(view, date, -1) })} aria-label="הקודם">
+            <ChevronRight size={20} aria-hidden="true" />
+          </Link>
+          <Link className={styles.navButton} href={href({ date: shiftDate(view, date, 1) })} aria-label="הבא">
+            <ChevronLeft size={20} aria-hidden="true" />
+          </Link>
+          <Link className={styles.todayButton} href={href({ date: today })} aria-disabled={date === today || undefined}>
+            היום
+          </Link>
+        </div>
+        <h2 className={`text-h3 ${styles.title}`} aria-live="polite">
+          {viewTitle(view, date)}
+        </h2>
+        <nav aria-label="תצוגת לוח" className={styles.views}>
+          {CALENDAR_VIEWS.map((v) => (
+            <Link key={v} href={href({ view: v })} className={styles.viewButton} aria-current={v === view ? "page" : undefined}>
+              {VIEW_LABELS[v]}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      <div className={styles.grid}>
+        <FullCalendar
+          key={`${view}:${date}`}
+          plugins={[themePlugin, dayGridPlugin, timeGridPlugin]}
+          initialView={FC_VIEWS[view]}
+          initialDate={date}
+          headerToolbar={false}
+          direction="rtl"
+          locale={heLocale}
+          timeZone={SCHOOL_TIME_ZONE}
+          firstDay={0}
+          allDaySlot={false}
+          nowIndicator
+          height="auto"
+          slotMinHeight={36}
+          slotMinTime={slotMinTime}
+          slotMaxTime={slotMaxTime}
+          dayMaxEvents={3}
+          eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+          events={lessons.map((l) => ({
+            id: l.id,
+            start: l.start_at,
+            end: l.end_at,
+            title: `${l.lesson_type_name} — ${l.student_name}`,
+            color: tint(l.color),
+            contrastColor: "#1f2937",
+            className: [
+              styles.event,
+              l.status === "closed_day" && styles.closed,
+              l.status === "cancelled" && styles.cancelled,
+            ]
+              .filter(Boolean)
+              .join(" "),
+            lesson: l,
+          }))}
+          eventContent={(info) => {
+            const l = info.event.extendedProps.lesson as CalendarLesson;
+            const status = l.status === "scheduled" ? null : LESSON_STATUS_LABELS[l.status].label;
+            return (
+              <button
+                type="button"
+                className={styles.eventButton}
+                style={{ borderInlineStartColor: l.color }}
+                title={`${l.lesson_type_name} — ${l.student_name}${showTeacher ? ` (${l.teacher_name})` : ""}`}
+                onClick={() => setOpenLesson(l.id)}
+                aria-label={`${info.timeText} ${l.lesson_type_name} — ${l.student_name}${showTeacher ? `, ${l.teacher_name}` : ""}${l.location === "zoom" ? `, ${LOCATION_LABELS.zoom}` : ""}${status ? `, ${status}` : ""}`}
+              >
+                <span className={styles.eventTime}>{info.timeText}</span>
+                <span className={styles.eventTitle}>
+                  {l.lesson_type_name} — {l.student_name}
+                </span>
+                {showTeacher && <span className={styles.eventMeta}>{l.teacher_name}</span>}
+                {l.location === "zoom" && (
+                  <span className={styles.eventMeta}>
+                    <Video size={12} aria-hidden="true" /> {LOCATION_LABELS.zoom}
+                  </span>
+                )}
+                {status && <span className={styles.eventMeta}>{status}</span>}
+              </button>
+            );
+          }}
+        />
+      </div>
+
+      <LessonDetailsDialog lessonId={openLesson} onClose={() => setOpenLesson(null)} />
+    </div>
+  );
+}

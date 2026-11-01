@@ -11,10 +11,23 @@ type ChoiceGroupProps = {
   defaultValue?: string[];
   error?: string;
   variant?: "list" | "swatches";
+  // Controlled use (checkbox groups whose options can change while the form is open).
+  value?: string[];
+  onChange?: (value: string[]) => void;
 };
 
 // Accessible checkbox/radio group in a fieldset. "swatches" shows color circles with visible names.
-export function ChoiceGroup({ legend, name, options, type, defaultValue = [], error, variant = "list" }: ChoiceGroupProps) {
+export function ChoiceGroup({
+  legend,
+  name,
+  options,
+  type,
+  defaultValue = [],
+  error,
+  variant = "list",
+  value,
+  onChange,
+}: ChoiceGroupProps) {
   const errorId = `${name}-error`;
   return (
     <fieldset
@@ -30,7 +43,25 @@ export function ChoiceGroup({ legend, name, options, type, defaultValue = [], er
             className={variant === "swatches" ? styles.swatch : styles.option}
             style={option.color ? ({ "--swatch-color": option.color } as CSSProperties) : undefined}
           >
-            <input type={type} name={name} value={option.value} defaultChecked={defaultValue.includes(option.value)} />
+            {value ? (
+              <input
+                type={type}
+                name={name}
+                value={option.value}
+                checked={value.includes(option.value)}
+                onChange={(e) =>
+                  onChange?.(
+                    type === "radio"
+                      ? [option.value]
+                      : e.target.checked
+                        ? [...value, option.value]
+                        : value.filter((v) => v !== option.value),
+                  )
+                }
+              />
+            ) : (
+              <input type={type} name={name} value={option.value} defaultChecked={defaultValue.includes(option.value)} />
+            )}
             {variant === "swatches" && <span className={styles.circle} aria-hidden="true" />}
             <span>{option.label}</span>
           </label>

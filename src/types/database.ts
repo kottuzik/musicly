@@ -132,6 +132,134 @@ export type Database = {
           },
         ]
       }
+      exception_booking_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          duration_minutes: number
+          end_date: string | null
+          first_start_at: string
+          id: string
+          kind: Database["public"]["Enums"]["exception_request_kind"]
+          lesson_id: string | null
+          lesson_type_id: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          outside_hours: boolean
+          requested_by: string
+          result_note: string | null
+          series_id: string | null
+          start_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["exception_request_status"]
+          student_id: string
+          teacher_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          duration_minutes: number
+          end_date?: string | null
+          first_start_at: string
+          id?: string
+          kind: Database["public"]["Enums"]["exception_request_kind"]
+          lesson_id?: string | null
+          lesson_type_id: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          outside_hours?: boolean
+          requested_by: string
+          result_note?: string | null
+          series_id?: string | null
+          start_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["exception_request_status"]
+          student_id: string
+          teacher_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          duration_minutes?: number
+          end_date?: string | null
+          first_start_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["exception_request_kind"]
+          lesson_id?: string | null
+          lesson_type_id?: string
+          location?: Database["public"]["Enums"]["lesson_location"]
+          outside_hours?: boolean
+          requested_by?: string
+          result_note?: string | null
+          series_id?: string | null
+          start_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["exception_request_status"]
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exception_booking_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exception_booking_requests_lesson_fk"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exception_booking_requests_lesson_type_id_fkey"
+            columns: ["lesson_type_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exception_booking_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exception_booking_requests_series_fk"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exception_booking_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exception_booking_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           created_at: string
@@ -189,6 +317,102 @@ export type Database = {
           },
         ]
       }
+      lesson_series: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_of_week: number
+          duration_minutes: number
+          end_date: string | null
+          exception_request_id: string | null
+          generated_until: string
+          id: string
+          lesson_type_id: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          outside_hours: boolean
+          start_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["series_status"]
+          student_id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week: number
+          duration_minutes: number
+          end_date?: string | null
+          exception_request_id?: string | null
+          generated_until: string
+          id?: string
+          lesson_type_id: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          outside_hours?: boolean
+          start_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["series_status"]
+          student_id: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number
+          duration_minutes?: number
+          end_date?: string | null
+          exception_request_id?: string | null
+          generated_until?: string
+          id?: string
+          lesson_type_id?: string
+          location?: Database["public"]["Enums"]["lesson_location"]
+          outside_hours?: boolean
+          start_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["series_status"]
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_series_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_series_exception_request_id_fkey"
+            columns: ["exception_request_id"]
+            isOneToOne: false
+            referencedRelation: "exception_booking_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_series_lesson_type_id_fkey"
+            columns: ["lesson_type_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_series_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_series_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_types: {
         Row: {
           color: string
@@ -215,6 +439,109 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      lessons: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_at: string
+          exception_request_id: string | null
+          id: string
+          lesson_type_id: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          occurrence_date: string
+          outside_hours: boolean
+          requires_attention: boolean
+          series_id: string | null
+          start_at: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
+          teacher_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_at: string
+          exception_request_id?: string | null
+          id?: string
+          lesson_type_id: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          occurrence_date: string
+          outside_hours?: boolean
+          requires_attention?: boolean
+          series_id?: string | null
+          start_at: string
+          status?: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
+          teacher_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_at?: string
+          exception_request_id?: string | null
+          id?: string
+          lesson_type_id?: string
+          location?: Database["public"]["Enums"]["lesson_location"]
+          occurrence_date?: string
+          outside_hours?: boolean
+          requires_attention?: boolean
+          series_id?: string | null
+          start_at?: string
+          status?: Database["public"]["Enums"]["lesson_status"]
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_exception_request_id_fkey"
+            columns: ["exception_request_id"]
+            isOneToOne: false
+            referencedRelation: "exception_booking_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_lesson_type_id_fkey"
+            columns: ["lesson_type_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operating_hours: {
         Row: {
@@ -666,11 +993,40 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      book_lesson: {
+        Args: {
+          p_confirm_outside_hours: boolean
+          p_date: string
+          p_duration: number
+          p_lesson_type_id: string
+          p_location: Database["public"]["Enums"]["lesson_location"]
+          p_start_time: string
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: Json
+      }
       cancel_availability_request: {
         Args: { p_id: string; p_version: number }
         Returns: undefined
       }
       cancel_closure: { Args: { p_id: string }; Returns: undefined }
+      cancel_exception_request: {
+        Args: { p_id: string; p_version: number }
+        Returns: undefined
+      }
+      check_booking: {
+        Args: {
+          p_duration: number
+          p_lesson_type: string
+          p_series: boolean
+          p_start: string
+          p_student: string
+          p_teacher: string
+        }
+        Returns: undefined
+      }
+      closure_on: { Args: { p_date: string }; Returns: boolean }
       create_invitation: {
         Args: {
           p_email: string
@@ -680,6 +1036,18 @@ export type Database = {
           p_token_hash: string
         }
         Returns: string
+      }
+      create_series: {
+        Args: {
+          p_confirm_outside_hours: boolean
+          p_end_date: string
+          p_lesson_type_id: string
+          p_location: Database["public"]["Enums"]["lesson_location"]
+          p_meetings: Json
+          p_start_date: string
+          p_student_id: string
+        }
+        Returns: Json
       }
       current_teacher_id: { Args: never; Returns: string }
       current_user_role: {
@@ -695,13 +1063,104 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_lesson_type: {
+        Args: { p_id: string; p_remove_from_teachers: boolean }
+        Returns: undefined
+      }
       email_in_use: {
         Args: { p_email: string; p_except_teacher?: string }
         Returns: boolean
       }
+      expire_exception_requests: { Args: never; Returns: number }
+      generate_series_occurrences: {
+        Args: { p_series_id: string; p_until: string }
+        Returns: Json
+      }
+      get_lesson: {
+        Args: { p_id: string }
+        Returns: {
+          color: string
+          end_at: string
+          id: string
+          is_substitute: boolean
+          lesson_type_name: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          outside_hours: boolean
+          series_day: number
+          series_end_date: string
+          series_id: string
+          series_start_time: string
+          start_at: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
+          student_name: string
+          teacher_id: string
+          teacher_name: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_my_student: { Args: { p_student_id: string }; Returns: boolean }
       is_quarter_hour: { Args: { p_time: string }; Returns: boolean }
+      lesson_conflict: {
+        Args: {
+          p_end: string
+          p_start: string
+          p_student: string
+          p_teacher: string
+        }
+        Returns: string
+      }
+      lesson_type_delete_info: { Args: { p_id: string }; Returns: Json }
+      list_calendar_lessons: {
+        Args: {
+          p_from: string
+          p_include_cancelled: boolean
+          p_lesson_type_id: string
+          p_student_id: string
+          p_teacher_id: string
+          p_to: string
+        }
+        Returns: {
+          color: string
+          end_at: string
+          id: string
+          lesson_type_id: string
+          lesson_type_name: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          requires_attention: boolean
+          series_id: string
+          start_at: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
+          student_name: string
+          teacher_id: string
+          teacher_name: string
+        }[]
+      }
+      list_exception_requests: {
+        Args: { p_pending_only: boolean }
+        Returns: {
+          color: string
+          created_at: string
+          decided_at: string
+          decision_note: string
+          duration_minutes: number
+          end_date: string
+          id: string
+          kind: Database["public"]["Enums"]["exception_request_kind"]
+          lesson_type_name: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          outside_hours: boolean
+          result_note: string
+          start_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["exception_request_status"]
+          student_name: string
+          teacher_id: string
+          teacher_name: string
+          version: number
+        }[]
+      }
       list_open_invitations: {
         Args: never
         Returns: {
@@ -720,7 +1179,19 @@ export type Database = {
           id: string
         }[]
       }
+      local_ts: { Args: { p_date: string; p_time: string }; Returns: string }
+      overlap_error: { Args: { p_constraint: string }; Returns: string }
       pick_lesson_type_color: { Args: { p_palette: string[] }; Returns: string }
+      preview_series: {
+        Args: {
+          p_end_date: string
+          p_lesson_type_id: string
+          p_meetings: Json
+          p_start_date: string
+          p_student_id: string
+        }
+        Returns: Json
+      }
       remove_availability: {
         Args: {
           p_availability_id: string
@@ -747,6 +1218,15 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       require_super_admin: { Args: never; Returns: undefined }
+      respond_exception_request: {
+        Args: {
+          p_approve: boolean
+          p_id: string
+          p_note: string
+          p_version: number
+        }
+        Returns: Json
+      }
       revoke_invitation: {
         Args: { p_invitation_id: string }
         Returns: undefined
@@ -795,6 +1275,25 @@ export type Database = {
         Returns: string
       }
       school_today: { Args: never; Returns: string }
+      series_plan: {
+        Args: {
+          p_check_availability: boolean
+          p_day: number
+          p_duration: number
+          p_from: string
+          p_start: string
+          p_student: string
+          p_teacher: string
+          p_until: string
+        }
+        Returns: {
+          end_at: string
+          occurrence_date: string
+          outcome: string
+          start_at: string
+        }[]
+      }
+      series_window_end: { Args: { p_end_date: string }; Returns: string }
       set_admin_permissions: {
         Args: { p_delete_student_history: boolean; p_profile_id: string }
         Returns: undefined
@@ -823,6 +1322,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      subject_has_lessons: {
+        Args: { p_lesson_type: string; p_student: string }
+        Returns: boolean
+      }
+      teacher_covers: {
+        Args: {
+          p_date: string
+          p_end: string
+          p_include_absences: boolean
+          p_start: string
+          p_teacher: string
+        }
+        Returns: boolean
+      }
       transfer_super_admin: {
         Args: { p_target_profile_id: string }
         Returns: undefined
@@ -848,8 +1361,19 @@ export type Database = {
       availability_request_kind: "remove_weekly" | "remove_once" | "absence"
       closure_source: "holiday" | "custom"
       closure_status: "active" | "cancelled"
+      exception_request_kind: "single" | "series"
+      exception_request_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "expired"
+        | "cannot_schedule"
+        | "cancelled"
       invitation_role: "admin" | "teacher"
+      lesson_location: "school" | "zoom"
+      lesson_status: "scheduled" | "cancelled" | "closed_day"
       request_status: "pending" | "approved" | "rejected" | "cancelled"
+      series_status: "active" | "ended"
       student_level: "beginner" | "intermediate" | "advanced"
       student_return_mode: "notify" | "auto"
       user_role: "super_admin" | "admin" | "teacher"
@@ -984,8 +1508,20 @@ export const Constants = {
       availability_request_kind: ["remove_weekly", "remove_once", "absence"],
       closure_source: ["holiday", "custom"],
       closure_status: ["active", "cancelled"],
+      exception_request_kind: ["single", "series"],
+      exception_request_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "expired",
+        "cannot_schedule",
+        "cancelled",
+      ],
       invitation_role: ["admin", "teacher"],
+      lesson_location: ["school", "zoom"],
+      lesson_status: ["scheduled", "cancelled", "closed_day"],
       request_status: ["pending", "approved", "rejected", "cancelled"],
+      series_status: ["active", "ended"],
       student_level: ["beginner", "intermediate", "advanced"],
       student_return_mode: ["notify", "auto"],
       user_role: ["super_admin", "admin", "teacher"],

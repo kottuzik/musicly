@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/components/calendar/Calendar.module.css"
+        ],
+        "createdAt": "2026-11-01T10:34:05.172Z",
+        "reason": "Claude: calendar event blocks use a lesson-type color stripe (standard calendar convention); the pale tint alone is too faint for light colors like yellow"
+      }
+    ]
+  }
+}

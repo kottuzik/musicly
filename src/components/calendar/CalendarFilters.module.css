@@ -1,0 +1,23 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-weight: 500;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 44px;
+  cursor: pointer;
+}
+
+.check input {
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--color-primary);
+}

@@ -17,7 +17,7 @@ function service() {
 async function login(page: Page, user: TestUser) {
   await page.goto("/login");
   await page.getByLabel("אימייל").fill(user.email);
-  await page.getByLabel("סיסמה").fill(user.password);
+  await page.getByLabel("סיסמה", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "התחברות" }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }

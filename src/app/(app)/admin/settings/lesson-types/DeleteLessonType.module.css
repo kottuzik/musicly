@@ -1,0 +1,18 @@
+.list {
+  margin: 4px 0 0;
+  padding-inline-start: 20px;
+}
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.confirm input {
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--color-error);
+}

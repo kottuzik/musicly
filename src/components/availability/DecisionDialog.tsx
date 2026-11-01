@@ -58,7 +58,7 @@ function DecisionForm({ request, decision, onDone }: Omit<Props, "summary"> & { 
       <input type="hidden" name="id" value={request.id} />
       <input type="hidden" name="version" value={request.version} />
       <input type="hidden" name="decision" value={decision} />
-      {approve && <p className="text-secondary">אין שיעורים מושפעים. השינוי ייכנס לתוקף מיד עם האישור.</p>}
+      {approve && <p className="text-secondary">השינוי ייכנס לתוקף מיד עם האישור. שיעורים שכבר נקבעו אינם משתנים אוטומטית.</p>}
       <TextareaField
         label="הערה למורה (לא חובה)"
         name="note"

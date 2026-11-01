@@ -16,7 +16,7 @@ function service() {
 async function login(page: Page, user: TestUser) {
   await page.goto("/login");
   await page.getByLabel("אימייל").fill(user.email);
-  await page.getByLabel("סיסמה").fill(user.password);
+  await page.getByLabel("סיסמה", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "התחברות" }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
@@ -95,12 +95,14 @@ test.describe("staff management", () => {
     await expect(page.getByText(piano)).toBeVisible();
     await expect(page.getByText(guitar)).toBeVisible();
 
-    // A lesson type that is taught cannot be deleted.
+    // Deleting a lesson type that is taught lists its teachers and needs explicit confirmation.
     const detailsUrl = page.url();
     await page.goto("/admin/settings/lesson-types");
     await page.getByRole("row").filter({ hasText: piano }).getByRole("button", { name: "מחיקה" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "מחק" }).click();
-    await expect(page.getByRole("dialog").getByRole("alert")).toContainText("לא ניתן למחוק");
+    const deleteDialog = page.getByRole("dialog");
+    await expect(deleteDialog.getByRole("listitem").filter({ hasText: "מורה E2E" })).toBeVisible();
+    await expect(deleteDialog.getByRole("button", { name: "מחיקה" })).toBeDisabled();
+    await expect(deleteDialog.getByLabel("הסרת התחום מכל המורים ומחיקתו")).not.toBeChecked();
     await page.keyboard.press("Escape");
 
     // Search and filter find the teacher.

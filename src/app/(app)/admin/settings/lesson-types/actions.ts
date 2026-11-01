@@ -21,7 +21,10 @@ function parse(formData: FormData) {
   });
 }
 
-export async function createLessonType(_prev: ActionState, formData: FormData): Promise<ActionState> {
+type CreatedLessonType = { id: string; name: string; color: string };
+
+// Shared by the settings page and the "new lesson type" form inside the teacher dialog.
+async function insertLessonType(formData: FormData): Promise<ActionState & { lessonType?: CreatedLessonType }> {
   await requireRole(ADMIN_ROLES);
   const parsed = parse(formData);
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
@@ -34,15 +37,26 @@ export async function createLessonType(_prev: ActionState, formData: FormData): 
     color = data;
   }
 
-  const { error } = await supabase.from("lesson_types").insert({
-    name: parsed.data.name,
-    default_duration_minutes: parsed.data.defaultDurationMinutes,
-    color,
-  });
+  const { data, error } = await supabase
+    .from("lesson_types")
+    .insert({ name: parsed.data.name, default_duration_minutes: parsed.data.defaultDurationMinutes, color })
+    .select("id, name, color")
+    .single();
   if (error) return { error: dbErrorMessage(error, NAME_TAKEN) };
 
   revalidatePath(PATH);
-  return { ok: true, success: "התחום נוסף." };
+  revalidatePath("/admin/teachers");
+  return { ok: true, success: "התחום נוסף.", lessonType: data };
+}
+
+export async function createLessonType(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const result = await insertLessonType(formData);
+  delete result.lessonType;
+  return result;
+}
+
+export async function createLessonTypeInline(formData: FormData) {
+  return insertLessonType(formData);
 }
 
 export async function updateLessonType(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -69,23 +83,32 @@ export async function updateLessonType(_prev: ActionState, formData: FormData): 
   return { ok: true, success: "התחום עודכן." };
 }
 
+export type LessonTypeDeleteInfo = {
+  students: number;
+  lessons: number;
+  teachers: { id: string; name: string; only_skill: boolean }[];
+};
+
+// What blocks deleting a lesson type, and which teachers would lose it.
+export async function getLessonTypeDeleteInfo(id: string): Promise<LessonTypeDeleteInfo | null> {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("lesson_type_delete_info", { p_id: id });
+  if (error) return null;
+  return data as LessonTypeDeleteInfo;
+}
+
+// Deletes the lesson type, and (when confirmed) removes it from all its teachers in the same transaction.
 export async function deleteLessonType(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole(ADMIN_ROLES);
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("lesson_types")
-    .delete()
-    .eq("id", String(formData.get("id") ?? ""))
-    .select("id");
-  if (error) {
-    return {
-      error: dbErrorMessage(error, {
-        "23503": "לא ניתן למחוק תחום שמשויכים אליו מורים או תלמידים. הסירו קודם את התחום מהמורים ומהתלמידים.",
-      }),
-    };
-  }
-  if (!data?.length) return { error: dbErrorMessage({ message: "not_found" }) };
+  const { error } = await supabase.rpc("delete_lesson_type", {
+    p_id: String(formData.get("id") ?? ""),
+    p_remove_from_teachers: formData.get("removeFromTeachers") === "true",
+  });
+  if (error) return { error: dbErrorMessage(error) };
 
   revalidatePath(PATH);
+  revalidatePath("/admin/teachers");
   return { ok: true };
 }

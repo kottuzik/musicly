@@ -16,6 +16,8 @@ type SelectFieldProps = {
   placeholder?: string;
   error?: string;
   hideLabel?: boolean;
+  // Controlled use (e.g. dependent fields); otherwise the field keeps its own state.
+  value?: string;
   onValueChange?: (value: string) => void;
 };
 
@@ -24,10 +26,21 @@ const EMPTY = "__empty__";
 
 // Dropdown whose list opens as a card below the field. The chosen value is submitted
 // through a hidden input, so it works in both server-action and GET forms.
-export function SelectField({ label, name, options, defaultValue = "", placeholder, error, hideLabel, onValueChange }: SelectFieldProps) {
+export function SelectField({
+  label,
+  name,
+  options,
+  defaultValue = "",
+  placeholder,
+  error,
+  hideLabel,
+  value: controlled,
+  onValueChange,
+}: SelectFieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
-  const [value, setValue] = useState(defaultValue);
+  const [inner, setValue] = useState(defaultValue);
+  const value = controlled ?? inner;
 
   return (
     <div className={fieldStyles.field}>

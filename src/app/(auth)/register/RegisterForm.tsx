@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
@@ -18,19 +19,17 @@ export function RegisterForm({ token, email, fullName }: { token: string; email:
       <input type="hidden" name="token" value={token} />
       <Field label="שם" value={fullName} readOnly />
       <Field label="אימייל" value={email} dir="ltr" readOnly autoComplete="username" />
-      <Field
+      <PasswordField
         label="סיסמה"
         name="password"
-        type="password"
         autoComplete="new-password"
         required
         hint={`לפחות ${PASSWORD_MIN_LENGTH} תווים`}
         error={state.fieldErrors?.password}
       />
-      <Field
+      <PasswordField
         label="אימות סיסמה"
         name="confirmPassword"
-        type="password"
         autoComplete="new-password"
         required
         error={state.fieldErrors?.confirmPassword}

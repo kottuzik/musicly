@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { login, type FormState } from "../actions";
@@ -28,10 +29,9 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
         defaultValue={state.values?.email}
         error={state.fieldErrors?.email}
       />
-      <Field
+      <PasswordField
         label="סיסמה"
         name="password"
-        type="password"
         autoComplete="current-password"
         required
         error={state.fieldErrors?.password}
