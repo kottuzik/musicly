@@ -9,6 +9,7 @@ import { ChoiceGroup } from "@/components/ui/ChoiceGroup";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import stack from "@/components/ui/Stack.module.css";
 import { saveTeacher } from "./actions";
@@ -69,7 +70,7 @@ function TeacherForm({
   lessonTypes: LessonTypeOption[];
   onDone: () => void;
 }) {
-  const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await saveTeacher(prev, formData);
     if (result.ok) onDone();
     return result;
@@ -77,7 +78,7 @@ function TeacherForm({
 
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {teacher && <input type="hidden" name="id" value={teacher.id} />}
       <Field label="שם מלא" name="fullName" required autoComplete="off" defaultValue={teacher?.full_name} error={state.fieldErrors?.fullName} />
@@ -116,7 +117,7 @@ function TeacherForm({
         <Button variant="ghost" onClick={onDone}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="שומרים...">
+        <SubmitButton pending={pending} fullWidth={false} pendingText="שומרים...">
           שמירה
         </SubmitButton>
       </DialogActions>

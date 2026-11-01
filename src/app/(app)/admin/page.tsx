@@ -15,11 +15,10 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
     <div className={styles.page}>
       <NoticeAlert notice={notice} />
       <div className={styles.heading}>
-        <h1>סקירה כללית</h1>
+        <h1>ברוכים הבאים למערכת ניהול בית הספר</h1>
         <p className="text-body-lg text-secondary">שלום, {profile.full_name}</p>
       </div>
       <Card className={styles.welcome}>
-        <h2 className="text-h3">ברוכים הבאים למערכת ניהול בית הספר</h2>
         <p className="text-body-lg text-secondary">
           כאן יוצגו נתוני בית הספר — תלמידים, מורים, שיעורים ובקשות — כשיתווספו למערכת.
         </p>

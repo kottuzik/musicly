@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import stack from "@/components/ui/Stack.module.css";
 import type { ActionState } from "@/lib/actions";
 import { ageOn, isMinor, schoolToday } from "@/lib/students/age";
@@ -55,7 +56,7 @@ export function StudentDialog({ student }: { student?: StudentFormValues }) {
 
 function StudentForm({ student, onDone }: { student?: StudentFormValues; onDone: () => void }) {
   const [birthDate, setBirthDate] = useState(student?.birth_date ?? "");
-  const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await saveStudent(prev, formData);
     if (result.ok) onDone();
     return result;
@@ -66,7 +67,7 @@ function StudentForm({ student, onDone }: { student?: StudentFormValues; onDone:
   const showParent = (validDate && isMinor(birthDate)) || hasParentData;
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {student && <input type="hidden" name="id" value={student.id} />}
       <Field label="שם מלא" name="fullName" required autoComplete="off" defaultValue={student?.full_name} error={state.fieldErrors?.fullName} />
@@ -140,7 +141,7 @@ function StudentForm({ student, onDone }: { student?: StudentFormValues; onDone:
         <Button variant="ghost" onClick={onDone}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="שומרים...">
+        <SubmitButton pending={pending} fullWidth={false} pendingText="שומרים...">
           שמירה
         </SubmitButton>
       </DialogActions>

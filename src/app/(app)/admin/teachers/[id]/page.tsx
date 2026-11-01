@@ -2,7 +2,9 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AvailabilityPanel } from "@/components/availability/AvailabilityPanel";
 import { CreateInviteButton } from "@/components/invitations/CreateInviteButton";
+import { LiveRefresh } from "@/components/realtime/LiveRefresh";
 import { Alert } from "@/components/ui/Alert";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge, ColorChip } from "@/components/ui/Badge";
@@ -14,6 +16,7 @@ import stack from "@/components/ui/Stack.module.css";
 import table from "@/components/ui/Table.module.css";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
+import { loadTeacherAvailability } from "@/lib/availability/queries";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState, formatDate } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
 import { createTeacherInvitation, revokeInvitation, setTeacherStatus } from "../actions";
@@ -22,10 +25,13 @@ import styles from "./TeacherDetails.module.css";
 
 export const metadata: Metadata = { title: "פרטי מורה" };
 
+const LIVE_TABLES = ["teacher_availability", "availability_requests", "teacher_absences", "operating_hours"];
+
 export default async function TeacherDetailsPage({ params, searchParams }: PageProps<"/admin/teachers/[id]">) {
   await requireRole(ADMIN_ROLES);
   const { id } = await params;
-  const { notice } = await searchParams;
+  const { notice, tab: tabParam } = await searchParams;
+  const tab = tabParam === "availability" ? "availability" : "general";
 
   const supabase = await createClient();
   const [{ data: teacher }, { data: lessonTypes }, { data: invitations }] = await Promise.all([
@@ -94,64 +100,79 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
         }
       />
 
-      {/* Availability (M4) and lesson history (M5) tabs are added in later milestones. */}
-      <Tabs label="פרטי מורה" items={[{ key: "general", href: `/admin/teachers/${teacher.id}`, label: "פרטים כלליים" }]} current="general" />
+      {/* The lesson history tab is added with scheduling (M5). */}
+      <Tabs
+        label="פרטי מורה"
+        items={[
+          { key: "general", href: `/admin/teachers/${teacher.id}`, label: "פרטים כלליים" },
+          { key: "availability", href: `/admin/teachers/${teacher.id}?tab=availability`, label: "זמינות" },
+        ]}
+        current={tab}
+      />
 
-      <div className={styles.grid}>
-        <Card>
-          <h2 className={`text-h3 ${stack.sectionTitle}`}>פרטים כלליים</h2>
-          <dl className={stack.details}>
-            <dt>טלפון</dt>
-            <dd className={table.ltr}>{teacher.phone || "—"}</dd>
-            <dt>אימייל</dt>
-            <dd className={table.ltr}>{teacher.email}</dd>
-            <dt>תחומי הוראה</dt>
-            <dd>
-              <div className={table.chips}>
-                {skills.map((s) => (
-                  <ColorChip key={s.id} color={s.color}>
-                    {s.name}
-                  </ColorChip>
-                ))}
-              </div>
-            </dd>
-          </dl>
-        </Card>
+      {tab === "availability" ? (
+        <>
+          <LiveRefresh tables={LIVE_TABLES} />
+          {!active && <Alert tone="warning">המורה אינו פעיל, ולכן אי אפשר להוסיף לו זמינות.</Alert>}
+          <AvailabilityPanel mode="admin" teacherId={teacher.id} data={await loadTeacherAvailability(supabase, teacher.id)} />
+        </>
+      ) : (
+        <div className={styles.grid}>
+          <Card>
+            <h2 className={`text-h3 ${stack.sectionTitle}`}>פרטים כלליים</h2>
+            <dl className={stack.details}>
+              <dt>טלפון</dt>
+              <dd className={table.ltr}>{teacher.phone || "—"}</dd>
+              <dt>אימייל</dt>
+              <dd className={table.ltr}>{teacher.email}</dd>
+              <dt>תחומי הוראה</dt>
+              <dd>
+                <div className={table.chips}>
+                  {skills.map((s) => (
+                    <ColorChip key={s.id} color={s.color}>
+                      {s.name}
+                    </ColorChip>
+                  ))}
+                </div>
+              </dd>
+            </dl>
+          </Card>
 
-        <Card>
-          <h2 className={`text-h3 ${stack.sectionTitle}`}>חשבון במערכת</h2>
-          <div className={styles.account}>
-            <Badge tone={ACCOUNT_LABELS[account.kind].tone}>{ACCOUNT_LABELS[account.kind].label}</Badge>
-            <p className="text-secondary">
-              {account.kind === "registered" && "המורה נרשם ויכול להתחבר עם האימייל והסיסמה שלו."}
-              {account.kind === "invited" && `נוצר קישור הרשמה שתקף עד ${formatDate(account.expiresAt)}.`}
-              {account.kind === "expired" && `תוקף הקישור פג ב־${formatDate(account.expiresAt)}. צרו קישור חדש.`}
-              {account.kind === "none" && "המורה עדיין לא קיבל קישור הרשמה."}
-            </p>
-          </div>
-          {account.kind !== "registered" && (
-            <div className={stack.inlineActions}>
-              <CreateInviteButton
-                action={createTeacherInvitation}
-                fields={{ id: teacher.id }}
-                label={account.kind === "none" ? "צור קישור הרשמה" : "צור קישור חדש"}
-              />
-              {account.kind !== "none" && (
-                <ConfirmAction
-                  action={revokeInvitation}
-                  fields={{ id: account.invitationId, teacherId: teacher.id }}
-                  trigger="בטל קישור"
-                  triggerVariant="ghost"
-                  title="ביטול קישור ההרשמה"
-                  description="הקישור שנשלח למורה יפסיק לעבוד. אפשר ליצור קישור חדש בכל עת."
-                  confirmLabel="בטל קישור"
-                  confirmVariant="danger"
-                />
-              )}
+          <Card>
+            <h2 className={`text-h3 ${stack.sectionTitle}`}>חשבון במערכת</h2>
+            <div className={styles.account}>
+              <Badge tone={ACCOUNT_LABELS[account.kind].tone}>{ACCOUNT_LABELS[account.kind].label}</Badge>
+              <p className="text-secondary">
+                {account.kind === "registered" && "המורה נרשם ויכול להתחבר עם האימייל והסיסמה שלו."}
+                {account.kind === "invited" && `נוצר קישור הרשמה שתקף עד ${formatDate(account.expiresAt)}.`}
+                {account.kind === "expired" && `תוקף הקישור פג ב־${formatDate(account.expiresAt)}. צרו קישור חדש.`}
+                {account.kind === "none" && "המורה עדיין לא קיבל קישור הרשמה."}
+              </p>
             </div>
-          )}
-        </Card>
-      </div>
+            {account.kind !== "registered" && (
+              <div className={stack.inlineActions}>
+                <CreateInviteButton
+                  action={createTeacherInvitation}
+                  fields={{ id: teacher.id }}
+                  label={account.kind === "none" ? "צור קישור הרשמה" : "צור קישור חדש"}
+                />
+                {account.kind !== "none" && (
+                  <ConfirmAction
+                    action={revokeInvitation}
+                    fields={{ id: account.invitationId, teacherId: teacher.id }}
+                    trigger="בטל קישור"
+                    triggerVariant="ghost"
+                    title="ביטול קישור ההרשמה"
+                    description="הקישור שנשלח למורה יפסיק לעבוד. אפשר ליצור קישור חדש בכל עת."
+                    confirmLabel="בטל קישור"
+                    confirmVariant="danger"
+                  />
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

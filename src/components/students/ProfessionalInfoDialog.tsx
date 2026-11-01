@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ChoiceGroup } from "@/components/ui/ChoiceGroup";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { TextareaField } from "@/components/ui/TextareaField";
 import stack from "@/components/ui/Stack.module.css";
 import type { ActionState } from "@/lib/actions";
@@ -41,14 +42,14 @@ export function ProfessionalInfoDialog(props: Props) {
 }
 
 function ProfessionalInfoForm({ studentId, subjectId, level, background, onDone }: Props & { onDone: () => void }) {
-  const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await updateProfessionalInfo(prev, formData);
     if (result.ok) onDone();
     return result;
   }, {});
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="id" value={subjectId} />
       <input type="hidden" name="studentId" value={studentId} />
@@ -71,7 +72,7 @@ function ProfessionalInfoForm({ studentId, subjectId, level, background, onDone 
         <Button variant="ghost" onClick={onDone}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="שומרים...">
+        <SubmitButton pending={pending} fullWidth={false} pendingText="שומרים...">
           שמירה
         </SubmitButton>
       </DialogActions>

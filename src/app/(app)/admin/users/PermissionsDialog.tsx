@@ -5,6 +5,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import stack from "@/components/ui/Stack.module.css";
 import { setAdminPermissions } from "./actions";
@@ -34,7 +35,7 @@ export function PermissionsDialog({ profileId, name, deleteStudentHistory }: { p
 }
 
 function PermissionsForm({ profileId, defaultChecked, onDone }: { profileId: string; defaultChecked: boolean; onDone: () => void }) {
-  const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await setAdminPermissions(prev, formData);
     if (result.ok) onDone();
     return result;
@@ -42,7 +43,7 @@ function PermissionsForm({ profileId, defaultChecked, onDone }: { profileId: str
 
 
   return (
-    <form action={formAction} className={stack.form}>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form}>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="id" value={profileId} />
       <label className={styles.toggle}>
@@ -59,7 +60,7 @@ function PermissionsForm({ profileId, defaultChecked, onDone }: { profileId: str
         <Button variant="ghost" onClick={onDone}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="שומרים...">
+        <SubmitButton pending={pending} fullWidth={false} pendingText="שומרים...">
           שמירה
         </SubmitButton>
       </DialogActions>

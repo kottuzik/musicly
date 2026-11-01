@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { SelectField } from "@/components/ui/SelectField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import stack from "@/components/ui/Stack.module.css";
 import { transferSuperAdmin } from "./actions";
@@ -43,9 +44,9 @@ export function TransferDialog({ admins }: { admins: { id: string; full_name: st
 }
 
 function TransferForm({ admins, onCancel }: { admins: { id: string; full_name: string }[]; onCancel: () => void }) {
-  const [state, formAction] = useActionState<ActionState, FormData>(transferSuperAdmin, {});
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(transferSuperAdmin, {});
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <SelectField
         label="מנהל ראשי חדש"
@@ -67,7 +68,7 @@ function TransferForm({ admins, onCancel }: { admins: { id: string; full_name: s
         <Button variant="ghost" onClick={onCancel}>
           ביטול
         </Button>
-        <SubmitButton variant="danger" fullWidth={false} pendingText="מעבירים...">
+        <SubmitButton pending={pending} variant="danger" fullWidth={false} pendingText="מעבירים...">
           העבר תפקיד
         </SubmitButton>
       </DialogActions>

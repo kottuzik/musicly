@@ -1,6 +1,6 @@
 import { isAdminRole, type Role, type UserStatus } from "@/lib/auth/roles";
 
-export type NavIcon = "home" | "students" | "teachers" | "users" | "settings" | "profile";
+export type NavIcon = "home" | "students" | "teachers" | "requests" | "availability" | "users" | "settings" | "profile";
 
 export type NavItem = { href: string; label: string; icon: NavIcon };
 
@@ -12,6 +12,7 @@ export function navItemsForRole(role: Role, status: UserStatus = "active"): NavI
       { href: "/admin", label: "בית", icon: "home" },
       { href: "/admin/students", label: "תלמידים", icon: "students" },
       { href: "/admin/teachers", label: "מורים", icon: "teachers" },
+      { href: "/admin/requests", label: "בקשות", icon: "requests" },
       { href: "/admin/users", label: "משתמשים", icon: "users" },
       { href: "/admin/settings", label: "הגדרות", icon: "settings" },
       profile,
@@ -22,6 +23,7 @@ export function navItemsForRole(role: Role, status: UserStatus = "active"): NavI
   return [
     { href: "/teacher", label: "בית", icon: "home" },
     { href: "/teacher/students", label: "התלמידים שלי", icon: "students" },
+    { href: "/teacher/availability", label: "הזמינות שלי", icon: "availability" },
     profile,
   ];
 }

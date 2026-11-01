@@ -9,13 +9,14 @@ type TextareaFieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   maxLength: number;
 };
 
-// Multi-line field with a live character counter.
-export function TextareaField({ label, error, id, maxLength, defaultValue, ...props }: TextareaFieldProps) {
+// Multi-line field with a live character counter. Works controlled (value + onChange) or uncontrolled.
+export function TextareaField({ label, error, id, maxLength, defaultValue, value, onChange, ...props }: TextareaFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const errorId = `${inputId}-error`;
   const counterId = `${inputId}-counter`;
-  const [length, setLength] = useState(String(defaultValue ?? "").length);
+  const [ownLength, setLength] = useState(String(defaultValue ?? "").length);
+  const length = value === undefined ? ownLength : String(value).length;
 
   return (
     <div className={styles.field}>
@@ -26,10 +27,14 @@ export function TextareaField({ label, error, id, maxLength, defaultValue, ...pr
         id={inputId}
         rows={4}
         maxLength={maxLength}
-        defaultValue={defaultValue}
+        value={value}
+        defaultValue={value === undefined ? defaultValue : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={[error && errorId, counterId].filter(Boolean).join(" ")}
-        onChange={(e) => setLength(e.target.value.length)}
+        onChange={(e) => {
+          setLength(e.target.value.length);
+          onChange?.(e);
+        }}
         {...props}
       />
       <p id={counterId} className={styles.hint}>

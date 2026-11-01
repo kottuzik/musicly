@@ -40,6 +40,98 @@ export type Database = {
           },
         ]
       }
+      availability_requests: {
+        Row: {
+          availability_id: string | null
+          created_at: string
+          day_of_week: number | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          end_date: string | null
+          end_time: string | null
+          id: string
+          kind: Database["public"]["Enums"]["availability_request_kind"]
+          reason: string | null
+          requested_by: string
+          start_date: string
+          start_time: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          teacher_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          availability_id?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["availability_request_kind"]
+          reason?: string | null
+          requested_by: string
+          start_date: string
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          teacher_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          availability_id?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["availability_request_kind"]
+          reason?: string | null
+          requested_by?: string
+          start_date?: string
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          teacher_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_requests_availability_id_fkey"
+            columns: ["availability_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_availability"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           created_at: string
@@ -124,6 +216,38 @@ export type Database = {
         }
         Relationships: []
       }
+      operating_hours: {
+        Row: {
+          close_time: string
+          day_of_week: number
+          open_time: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          close_time: string
+          day_of_week: number
+          open_time: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          close_time?: string
+          day_of_week?: number
+          open_time?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_hours_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -156,6 +280,66 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      school_closures: {
+        Row: {
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string
+          holiday_key: string | null
+          id: string
+          name: string
+          source: Database["public"]["Enums"]["closure_source"]
+          start_date: string
+          status: Database["public"]["Enums"]["closure_status"]
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          holiday_key?: string | null
+          id?: string
+          name: string
+          source: Database["public"]["Enums"]["closure_source"]
+          start_date: string
+          status?: Database["public"]["Enums"]["closure_status"]
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          holiday_key?: string | null
+          id?: string
+          name?: string
+          source?: Database["public"]["Enums"]["closure_source"]
+          start_date?: string
+          status?: Database["public"]["Enums"]["closure_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_closures_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_closures_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_contacts: {
         Row: {
@@ -287,6 +471,108 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_absences: {
+        Row: {
+          created_at: string
+          end_date: string
+          end_time: string | null
+          id: string
+          request_id: string
+          start_date: string
+          start_time: string | null
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          end_time?: string | null
+          id?: string
+          request_id: string
+          start_date: string
+          start_time?: string | null
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          end_time?: string | null
+          id?: string
+          request_id?: string
+          start_date?: string
+          start_time?: string | null
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_absences_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "availability_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_absences_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_availability: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          start_time: string
+          teacher_id: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          start_time: string
+          teacher_id: string
+          updated_at?: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          start_time?: string
+          teacher_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_availability_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_availability_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_skills: {
         Row: {
           lesson_type_id: string
@@ -367,6 +653,24 @@ export type Database = {
         Args: { p_token_hash: string; p_user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      add_availability: {
+        Args: {
+          p_day: number
+          p_end: string
+          p_start: string
+          p_teacher_id: string
+        }
+        Returns: string
+      }
+      apply_availability_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      cancel_availability_request: {
+        Args: { p_id: string; p_version: number }
+        Returns: undefined
+      }
+      cancel_closure: { Args: { p_id: string }; Returns: undefined }
       create_invitation: {
         Args: {
           p_email: string
@@ -382,12 +686,22 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      decide_availability_request: {
+        Args: {
+          p_approve: boolean
+          p_id: string
+          p_note: string
+          p_version: number
+        }
+        Returns: undefined
+      }
       email_in_use: {
         Args: { p_email: string; p_except_teacher?: string }
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       is_my_student: { Args: { p_student_id: string }; Returns: boolean }
+      is_quarter_hour: { Args: { p_time: string }; Returns: boolean }
       list_open_invitations: {
         Args: never
         Returns: {
@@ -407,7 +721,27 @@ export type Database = {
         }[]
       }
       pick_lesson_type_color: { Args: { p_palette: string[] }; Returns: string }
+      remove_availability: {
+        Args: {
+          p_availability_id: string
+          p_date: string
+          p_kind: Database["public"]["Enums"]["availability_request_kind"]
+          p_reason: string
+        }
+        Returns: string
+      }
       remove_student_subject: { Args: { p_id: string }; Returns: undefined }
+      report_absence: {
+        Args: {
+          p_end_date: string
+          p_end_time: string
+          p_reason: string
+          p_start_date: string
+          p_start_time: string
+          p_teacher_id: string
+        }
+        Returns: string
+      }
       require_admin: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -416,6 +750,15 @@ export type Database = {
       revoke_invitation: {
         Args: { p_invitation_id: string }
         Returns: undefined
+      }
+      save_closure: {
+        Args: {
+          p_end_date: string
+          p_holiday_key: string
+          p_name: string
+          p_start_date: string
+        }
+        Returns: string
       }
       save_student: {
         Args: {
@@ -463,6 +806,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_operating_hours: { Args: { p_days: Json }; Returns: number }
       set_student_status: {
         Args: {
           p_id: string
@@ -495,9 +839,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      within_operating_hours: {
+        Args: { p_day: number; p_end: string; p_start: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      availability_request_kind: "remove_weekly" | "remove_once" | "absence"
+      closure_source: "holiday" | "custom"
+      closure_status: "active" | "cancelled"
       invitation_role: "admin" | "teacher"
+      request_status: "pending" | "approved" | "rejected" | "cancelled"
       student_level: "beginner" | "intermediate" | "advanced"
       student_return_mode: "notify" | "auto"
       user_role: "super_admin" | "admin" | "teacher"
@@ -629,7 +981,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      availability_request_kind: ["remove_weekly", "remove_once", "absence"],
+      closure_source: ["holiday", "custom"],
+      closure_status: ["active", "cancelled"],
       invitation_role: ["admin", "teacher"],
+      request_status: ["pending", "approved", "rejected", "cancelled"],
       student_level: ["beginner", "intermediate", "advanced"],
       student_return_mode: ["notify", "auto"],
       user_role: ["super_admin", "admin", "teacher"],

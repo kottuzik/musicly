@@ -9,7 +9,8 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: { default: "בית הספר למוזיקה", template: "%s · בית הספר למוזיקה" },
+  // Every tab shows the app name only (page titles are ignored by the template).
+  title: { default: "מוזיקלי", template: "מוזיקלי" },
   description: "מערכת ניהול בית הספר למוזיקה",
   robots: { index: false, follow: false, nocache: true },
 };

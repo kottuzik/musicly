@@ -43,7 +43,7 @@ test("shows validation and wrong-credentials errors", async ({ page }) => {
 test("admin signs in, reaches the admin home, and signs out", async ({ page }) => {
   await login(page, users!.admin);
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole("heading", { name: "סקירה כללית" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ברוכים הבאים למערכת ניהול בית הספר" })).toBeVisible();
   await expect(page.getByText("שלום, מנהל בדיקה")).toBeVisible();
 
   await logout(page);
@@ -60,7 +60,7 @@ test("teacher reaches the teacher home and is blocked from the admin area", asyn
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/forbidden$/);
   await expect(page.getByRole("heading", { name: "אין לך הרשאה לצפות בדף זה" })).toBeVisible();
-  await expect(page.getByText("סקירה כללית")).toHaveCount(0);
+  await expect(page.getByText("ברוכים הבאים למערכת ניהול בית הספר")).toHaveCount(0);
 });
 
 test("admin is blocked from the teacher area", async ({ page }) => {

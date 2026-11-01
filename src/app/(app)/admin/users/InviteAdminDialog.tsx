@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import stack from "@/components/ui/Stack.module.css";
 import { inviteAdmin } from "./actions";
 
@@ -49,14 +50,14 @@ export function InviteAdminDialog() {
 }
 
 function InviteAdminForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: (invite: InviteLink) => void }) {
-  const [state, formAction] = useActionState(async (prev: InviteState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: InviteState, formData: FormData) => {
     const result = await inviteAdmin(prev, formData);
     if (result.invite) onCreated(result.invite);
     return result;
   }, {});
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <Field label="שם מלא" name="fullName" required autoComplete="off" error={state.fieldErrors?.fullName} />
       <Field
@@ -73,7 +74,7 @@ function InviteAdminForm({ onCancel, onCreated }: { onCancel: () => void; onCrea
         <Button variant="ghost" onClick={onCancel}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="יוצרים קישור...">
+        <SubmitButton pending={pending} fullWidth={false} pendingText="יוצרים קישור...">
           צור קישור הרשמה
         </SubmitButton>
       </DialogActions>

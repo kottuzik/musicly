@@ -9,6 +9,7 @@ import { ChoiceGroup } from "@/components/ui/ChoiceGroup";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { SelectField } from "@/components/ui/SelectField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { TextareaField } from "@/components/ui/TextareaField";
 import stack from "@/components/ui/Stack.module.css";
 import type { ActionState } from "@/lib/actions";
@@ -81,7 +82,7 @@ export function StudentSubjectDialog(props: Props) {
 
 function SubjectForm({ studentId, availableLessonTypes, teachers, subject, onDone }: Props & { onDone: () => void }) {
   const [lessonTypeId, setLessonTypeId] = useState(subject?.lessonTypeId ?? "");
-  const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await saveStudentSubject(prev, formData);
     if (result.ok) onDone();
     return result;
@@ -93,7 +94,7 @@ function SubjectForm({ studentId, availableLessonTypes, teachers, subject, onDon
     .map((t) => ({ value: t.id, label: t.active ? t.full_name : `${t.full_name} (לא פעיל)` }));
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="studentId" value={studentId} />
       {subject ? (
@@ -149,7 +150,7 @@ function SubjectForm({ studentId, availableLessonTypes, teachers, subject, onDon
         <Button variant="ghost" onClick={onDone}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="שומרים..." disabled={Boolean(lessonTypeId) && !teacherOptions.length}>
+        <SubmitButton pending={pending} fullWidth={false} pendingText="שומרים..." disabled={Boolean(lessonTypeId) && !teacherOptions.length}>
           שמירה
         </SubmitButton>
       </DialogActions>

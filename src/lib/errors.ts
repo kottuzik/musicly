@@ -15,6 +15,15 @@ const MESSAGES: Record<string, string> = {
   birth_date_future: "תאריך הלידה לא יכול להיות בעתיד.",
   return_date_past: "תאריך החזרה צריך להיות אחרי היום.",
   return_mode_required: "יש לבחור מה יקרה בתאריך החזרה: התראה למנהלים או הפעלה אוטומטית.",
+  outside_operating_hours: "הטווח חורג משעות הפעילות של בית הספר ביום זה.",
+  availability_overlap: "הטווח חופף לזמינות קיימת.",
+  invalid_time_step: "יש לבחור שעות ברבע שעה עגול, ושעת הסיום צריכה להיות אחרי שעת ההתחלה.",
+  removal_pending: "כבר קיימת בקשה להסרה הזו.",
+  date_not_matching_day: "התאריך שנבחר אינו חל ביום השבוע של הטווח.",
+  slot_not_valid_on_date: "הטווח אינו בתוקף בתאריך שנבחר.",
+  date_past: "התאריך כבר עבר.",
+  request_already_handled: "הבקשה כבר טופלה בידי מנהל אחר. הרשימה עודכנה.",
+  closure_exists: "החג הזה כבר מוגדר כיום סגירה.",
 };
 
 export const GENERIC_ERROR = "אירעה שגיאה. נסו שוב בעוד רגע.";

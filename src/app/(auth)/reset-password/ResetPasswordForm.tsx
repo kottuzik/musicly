@@ -4,15 +4,16 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
 import { updatePassword, type FormState } from "../actions";
 import styles from "../AuthForm.module.css";
 
 export function ResetPasswordForm() {
-  const [state, formAction] = useActionState<FormState, FormData>(updatePassword, {});
+  const [state, formAction, pending] = useActionState<FormState, FormData>(updatePassword, {});
 
   return (
-    <form action={formAction} className={styles.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <Field
         label="סיסמה חדשה"
@@ -32,7 +33,7 @@ export function ResetPasswordForm() {
         required
         error={state.fieldErrors?.confirmPassword}
       />
-      <SubmitButton pendingText="שומרים...">שמירת סיסמה</SubmitButton>
+      <SubmitButton pending={pending} pendingText="שומרים...">שמירת סיסמה</SubmitButton>
     </form>
   );
 }

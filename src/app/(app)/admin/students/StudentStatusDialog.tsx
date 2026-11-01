@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import choice from "@/components/ui/ChoiceGroup.module.css";
 import stack from "@/components/ui/Stack.module.css";
 import type { ActionState } from "@/lib/actions";
@@ -56,7 +57,7 @@ export function StudentStatusDialog({ studentId, current }: Props) {
 
 function StatusForm({ studentId, current, onDone }: Props & { onDone: () => void }) {
   const [returnDate, setReturnDate] = useState(current?.returnDate ?? "");
-  const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await setStudentStatus(prev, formData);
     if (result.ok) onDone();
     return result;
@@ -64,7 +65,7 @@ function StatusForm({ studentId, current, onDone }: Props & { onDone: () => void
   const modeError = state.fieldErrors?.returnMode;
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="id" value={studentId} />
       <input type="hidden" name="status" value="inactive" />
@@ -108,7 +109,7 @@ function StatusForm({ studentId, current, onDone }: Props & { onDone: () => void
         <Button variant="ghost" onClick={onDone}>
           ביטול
         </Button>
-        <SubmitButton fullWidth={false} pendingText="שומרים...">
+        <SubmitButton pending={pending} fullWidth={false} pendingText="שומרים...">
           {current ? "שמירה" : "הפוך ללא פעיל"}
         </SubmitButton>
       </DialogActions>

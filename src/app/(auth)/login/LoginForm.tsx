@@ -5,14 +5,15 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { login, type FormState } from "../actions";
 import styles from "../AuthForm.module.css";
 
 export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
-  const [state, formAction] = useActionState<FormState, FormData>(login, {});
+  const [state, formAction, pending] = useActionState<FormState, FormData>(login, {});
 
   return (
-    <form action={formAction} className={styles.form} noValidate>
+    <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {notice && !state.error && <Alert tone="info">{notice}</Alert>}
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="next" value={next ?? ""} />
@@ -35,7 +36,7 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
         required
         error={state.fieldErrors?.password}
       />
-      <SubmitButton pendingText="מתחברים...">התחברות</SubmitButton>
+      <SubmitButton pending={pending} pendingText="מתחברים...">התחברות</SubmitButton>
       <p className={styles.footer}>
         <Link href="/forgot-password" className={styles.link}>
           שכחת סיסמה?

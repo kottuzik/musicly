@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, House, Music, Settings, UserRound, Users } from "lucide-react";
+import { CalendarClock, ClipboardCheck, GraduationCap, House, Music, Settings, UserRound, Users } from "lucide-react";
 import type { NavIcon, NavItem } from "@/lib/nav/items";
 import styles from "./AppShell.module.css";
 
@@ -10,6 +10,8 @@ const ICONS: Record<NavIcon, typeof House> = {
   home: House,
   students: GraduationCap,
   teachers: Music,
+  requests: ClipboardCheck,
+  availability: CalendarClock,
   users: Users,
   settings: Settings,
   profile: UserRound,

@@ -1,0 +1,138 @@
+.days {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 16px;
+  align-items: start;
+  padding-block: 14px;
+  border-block-end: 1px solid #e5e7eb;
+}
+
+.day:last-child {
+  border-block-end: 0;
+}
+
+.dayName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-block: 6px;
+  padding-inline: 12px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fbfaff;
+}
+
+.time {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItem {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block: 8px;
+  border-block-end: 1px solid #e5e7eb;
+}
+
+.listItem:last-child {
+  border-block-end: 0;
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-end: 16px;
+}
+
+/* minmax(0, …): a wide table inside a column must not stretch it past the screen (min-width: auto). */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+.stackGap {
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.note {
+  margin-block-start: 4px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 599px) {
+  .day {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
