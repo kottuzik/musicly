@@ -202,6 +202,29 @@ describe.skipIf(!users)("Changing, cancelling and restoring one lesson (Developm
     expect((await row(id)).start_at).toBe(utc(d, "19:00").replace(/\.000Z$/, "+00:00"));
   });
 
+  it("a new change replaces an earlier request to the teacher that was not answered", async () => {
+    const d = day(30);
+    const id = await newLesson(studentIds.s2, "13:00", d);
+    const first = await update(id, d, "19:00");
+    const firstId = result(first.data).id;
+    expect(result(first.data).result).toBe("request");
+
+    const second = await update(id, d, "19:15");
+    expect(second.error).toBeNull();
+    expect(result(second.data).result).toBe("request");
+    expect(result(second.data).id).not.toBe(firstId);
+    expect((await service.from("exception_booking_requests").select("id").eq("id", firstId)).data).toEqual([]);
+    const { data: pending } = await service.from("exception_booking_requests").select("id").eq("target_lesson_id", id).eq("status", "pending");
+    expect(pending).toHaveLength(1);
+    expect((await service.from("audit_events").select("action").eq("entity_id", id).eq("action", "change_request_replaced")).data).toHaveLength(1);
+
+    // A change into the teacher's availability applies at once and leaves no request waiting.
+    const direct = await update(id, d, "15:00");
+    expect(result(direct.data).result).toBe("lesson");
+    const { data: left } = await service.from("exception_booking_requests").select("id").eq("target_lesson_id", id).eq("status", "pending");
+    expect(left).toEqual([]);
+  });
+
   it("an approval fails cleanly when the time was taken in the meantime", async () => {
     const d = day(4);
     const id = await newLesson(studentIds.s1, "14:00", d);

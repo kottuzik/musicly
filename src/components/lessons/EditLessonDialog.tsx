@@ -23,6 +23,7 @@ import { schoolToday } from "@/lib/students/age";
 import { TIME_OPTIONS, WEEKDAY_LABELS, dayOfWeek } from "@/lib/time/weekdays";
 import booking from "./BookLesson.module.css";
 import styles from "./LessonChange.module.css";
+import { TeacherWeekHelp } from "./TeacherWeekHelp";
 import { useTimeOptions } from "./useBusyTimes";
 
 type Scope = "one" | "from" | "all";
@@ -303,6 +304,14 @@ function EditForm({ lesson, options, onOpenChange, onDone, changeRequestId, prop
           </label>
         ))}
       </fieldset>
+
+      <TeacherWeekHelp
+        teacherId={teacherId}
+        teacherName={options.teachers.find((t) => t.id === teacherId)?.name ?? lesson.teacher_name}
+        options={options}
+        date={seriesScope ? undefined : date}
+        chosenDays={seriesScope ? [Number(day)] : date ? [dayOfWeek(date)] : []}
+      />
 
       {preview && <SeriesPreviewTable preview={preview} />}
 

@@ -73,6 +73,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   lesson_restored: "שיעור שוחזר",
   lesson_updated: "שיעור שונה",
   lesson_change_requested: "נשלחה למורה בקשה לשינוי שיעור",
+  change_request_replaced: "בקשה קודמת למורה שלא נענתה הוחלפה בבקשה חדשה",
   lesson_restore_requested: "נשלחה למורה בקשה לשחזור שיעור",
   teacher_restore_outside_hours: "מורה שחזר שיעור מחוץ לשעות הפעילות",
   attention_cleared: "השיעור נשאר כפי שהוא",

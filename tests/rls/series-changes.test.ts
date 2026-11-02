@@ -248,16 +248,25 @@ describe.skipIf(!users)("Changing, stopping and extending series (Development)",
     expect(res.result).toBe("request");
     // Nothing changed yet.
     expect((await lessonsOf(id)).every((l) => localTime(l.start_at) === "10:00")).toBe(true);
-    expect((await change(id, start, "19:15")).error?.message).toBe("change_request_pending");
 
-    const { data: req } = await service.from("exception_booking_requests").select("kind, version, apply_from, target_series_id").eq("id", res.id).single();
+    // A second change replaces the first request, which is deleted.
+    const second = await change(id, start, "19:15");
+    expect(second.error).toBeNull();
+    const res2 = second.data as { result: string; id: string };
+    expect(res2.result).toBe("request");
+    expect(res2.id).not.toBe(res.id);
+    expect((await service.from("exception_booking_requests").select("id").eq("id", res.id)).data).toEqual([]);
+    const { data: pending } = await service.from("exception_booking_requests").select("id").eq("target_series_id", id).eq("status", "pending");
+    expect(pending).toHaveLength(1);
+
+    const { data: req } = await service.from("exception_booking_requests").select("kind, version, apply_from, target_series_id").eq("id", res2.id).single();
     expect(req).toMatchObject({ kind: "series_change", apply_from: start, target_series_id: id });
-    const approved = await teacher.rpc("respond_exception_request", { p_id: res.id, p_version: req!.version, p_approve: true, p_note: "" });
+    const approved = await teacher.rpc("respond_exception_request", { p_id: res2.id, p_version: req!.version, p_approve: true, p_note: "" });
     expect((approved.data as { result: string }).result).toBe("approved");
-    const after = (await service.from("exception_booking_requests").select("series_id").eq("id", res.id).single()).data!;
+    const after = (await service.from("exception_booking_requests").select("series_id").eq("id", res2.id).single()).data!;
     const moved = await lessonsOf(after.series_id!);
     expect(moved).toHaveLength(6);
-    expect(moved.every((l) => localTime(l.start_at) === "19:00")).toBe(true);
+    expect(moved.every((l) => localTime(l.start_at) === "19:15")).toBe(true);
   });
 
   it("stops a series from a date, then resumes it later without creating the weeks in between", async () => {
