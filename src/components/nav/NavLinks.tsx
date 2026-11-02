@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarClock, CalendarDays, ClipboardCheck, GraduationCap, House, Music, Settings, UserRound, Users } from "lucide-react";
 import type { NavIcon, NavItem } from "@/lib/nav/items";
@@ -39,10 +39,17 @@ export function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?:
             >
               <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
               <span>{item.label}</span>
+              <PendingMark />
             </Link>
           </li>
         );
       })}
     </ul>
   );
+}
+
+// A small spinner on the link that was clicked, until the next page shows (or its loader does).
+function PendingMark() {
+  const { pending } = useLinkStatus();
+  return pending ? <span className={styles.navPending} aria-hidden="true" /> : null;
 }

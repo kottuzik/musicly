@@ -58,5 +58,90 @@ export const exceptionDecisionSchema = z.object({
   note: z.string().trim().max(500, "הטקסט ארוך מדי (עד 500 תווים)"),
 });
 
+const optionalDate = z.union([z.literal(""), z.string().regex(DATE, "תאריך לא תקין")]);
+const optionalTime = z.union([z.literal(""), time]);
+const reasonText = z.string().trim().max(500, "הטקסט ארוך מדי (עד 500 תווים)");
+const versionField = z.coerce.number().int().positive();
+
+export const editLessonSchema = z.object({
+  lessonId: z.uuid(),
+  version: versionField,
+  date: date("יש לבחור תאריך"),
+  start: time,
+  duration: bookLessonSchema.shape.duration,
+  teacherId: z.uuid({ error: "יש לבחור מורה" }),
+  location,
+  confirmOutsideHours: confirm,
+  changeRequestId: z.union([z.literal(""), z.uuid()]).optional(),
+});
+
+export const cancelLessonSchema = z.object({ id: z.uuid(), version: versionField, reason: reasonText });
+
+export const restoreLessonSchema = z
+  .object({
+    id: z.uuid(),
+    version: versionField,
+    date: optionalDate,
+    start: optionalTime,
+    confirmOutsideHours: confirm,
+  })
+  .refine((v) => (v.date === "") === (v.start === ""), { path: ["start"], message: "יש לבחור תאריך ושעה יחד" });
+
+export const attentionSchema = z.object({ id: z.uuid(), version: versionField });
+
+export const seriesChangeSchema = z.object({
+  seriesId: z.uuid(),
+  fromDate: date("יש לבחור תאריך"),
+  day: z.coerce.number().int().min(0).max(6),
+  start: time,
+  duration: bookLessonSchema.shape.duration,
+  teacherId: z.uuid({ error: "יש לבחור מורה" }),
+  location,
+  confirmOutsideHours: confirm,
+});
+
+export const stopSeriesSchema = z.object({ seriesId: z.uuid(), fromDate: date("יש לבחור תאריך") });
+
+export const extendSeriesSchema = z.object({
+  seriesId: z.uuid(),
+  endDate: optionalDate,
+  resumeFrom: optionalDate,
+});
+
+export const lessonChangeRequestSchema = z
+  .object({
+    lessonId: z.uuid(),
+    kind: z.enum(["cancel", "change"], { error: "יש לבחור סוג בקשה" }),
+    date: optionalDate,
+    start: optionalTime,
+    reason: reasonText,
+  })
+  .refine((v) => (v.date === "") === (v.start === ""), { path: ["start"], message: "יש לבחור תאריך ושעה יחד" });
+
+export const decideChangeRequestSchema = z.object({
+  id: z.uuid(),
+  version: versionField,
+  decision: z.enum(["approve", "reject"]),
+  note: reasonText,
+});
+
+// What the admin decides for each lesson a teacher's absence or removed availability touches.
+export const lessonDecisionsSchema = z.array(
+  z.object({
+    lessonId: z.uuid(),
+    action: z.enum(["cancel", "substitute", "move", "keep"]),
+    teacherId: z.uuid().optional(),
+    date: optionalDate.optional(),
+    start: optionalTime.optional(),
+  }),
+);
+
+export const durationSeriesSchema = z.array(
+  z.object({
+    seriesId: z.uuid(),
+    alternatives: z.array(z.object({ lessonId: z.uuid(), start: optionalTime.nullable() })),
+  }),
+);
+
 export type BookLessonInput = z.infer<typeof bookLessonSchema>;
 export type SeriesInput = z.infer<typeof seriesSchema>;

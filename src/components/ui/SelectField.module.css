@@ -128,6 +128,13 @@
   background: var(--color-primary-lighter);
 }
 
+.item[data-disabled] {
+  color: var(--color-text-secondary);
+  background: var(--color-background);
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
 .item[data-state="checked"] {
   font-weight: 700;
   color: var(--color-primary);
@@ -150,4 +157,10 @@
     opacity: 0;
     scale: 0.98;
   }
+}
+
+.trigger[data-disabled] {
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
 }

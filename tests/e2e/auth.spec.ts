@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loadTestUsers, type TestUser } from "../test-users";
+import { forgetSession, login as sharedLogin } from "./session";
 
 const users = loadTestUsers();
 test.skip(!users, "Run `npm run seed-test-users` first (needs .env for Development).");
@@ -43,10 +44,11 @@ test("shows validation and wrong-credentials errors", async ({ page }) => {
 test("admin signs in, reaches the admin home, and signs out", async ({ page }) => {
   await login(page, users!.admin);
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole("heading", { name: "ברוכים הבאים למערכת ניהול בית הספר" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "סקירה כללית" })).toBeVisible();
   await expect(page.getByText("שלום, מנהל בדיקה")).toBeVisible();
 
   await logout(page);
+  forgetSession(users!.admin);
   await expect(page.getByText("התנתקת מהמערכת.")).toBeVisible();
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/login\?next=%2Fadmin/);
@@ -64,7 +66,7 @@ test("teacher reaches the teacher home and is blocked from the admin area", asyn
 });
 
 test("admin is blocked from the teacher area", async ({ page }) => {
-  await login(page, users!.admin);
+  await sharedLogin(page, users!.admin);
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/teacher");
   await expect(page).toHaveURL(/\/forbidden$/);
@@ -114,7 +116,7 @@ test("reset password without a valid link asks for a new one", async ({ page }) 
 });
 
 test("navigation works at this viewport", async ({ page }, testInfo) => {
-  await login(page, users!.admin);
+  await sharedLogin(page, users!.admin);
   await expect(page).toHaveURL(/\/admin$/);
   const isDesktop = testInfo.project.name === "desktop";
   if (isDesktop) {

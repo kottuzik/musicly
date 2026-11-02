@@ -31,7 +31,7 @@ export default async function TeacherCalendarPage({ searchParams }: PageProps<"/
 
   return (
     <div className={stack.page}>
-      <LiveRefresh tables={["lessons"]} />
+      <LiveRefresh tables={["lessons", "lesson_change_requests"]} />
       <PageHeader title="הלוח שלי" subtitle="השיעורים שלך. לחיצה על שיעור פותחת את פרטיו." />
       <CalendarFilters params={params} />
       <LessonCalendar

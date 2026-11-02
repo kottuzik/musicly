@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { loadTestUsers, type TestUser } from "../test-users";
+import { login } from "./session";
 
 const users = loadTestUsers();
 test.skip(!users, "Run `npm run seed-test-users` first (needs .env for Development).");
@@ -13,14 +14,6 @@ function service() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-}
-
-async function login(page: Page, user: TestUser) {
-  await page.goto("/login");
-  await page.getByLabel("אימייל").fill(user.email);
-  await page.getByLabel("סיסמה", { exact: true }).fill(user.password);
-  await page.getByRole("button", { name: "התחברות" }).click();
-  await expect(page).not.toHaveURL(/\/login/);
 }
 
 async function asUser(browser: Browser, testInfo: TestInfo, user: TestUser) {

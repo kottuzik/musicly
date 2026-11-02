@@ -67,7 +67,7 @@ function AbsenceForm({ mode, teacherId, today, hours, onDone }: Props & { onDone
   const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await reportAbsence(prev, formData);
     setErrors(result.fieldErrors ?? {});
-    if (result.ok) onDone();
+    if (result.ok && !result.success) onDone();
     return result;
   }, {});
 
@@ -77,6 +77,17 @@ function AbsenceForm({ mode, teacherId, today, hours, onDone }: Props & { onDone
   const times = open ? timesWithin(open) : [];
   const startOptions = times.slice(0, -1).map((t) => ({ value: t, label: t }));
   const endOptions = times.filter((t) => t > (startTime || times[0])).map((t) => ({ value: t, label: t }));
+
+  if (state.ok && state.success) {
+    return (
+      <div className={stack.form}>
+        <Alert tone="success">{state.success}</Alert>
+        <DialogActions>
+          <Button onClick={onDone}>סגירה</Button>
+        </DialogActions>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>

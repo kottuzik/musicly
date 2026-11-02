@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { loadTestUsers, type TestUser } from "../test-users";
+import { login } from "./session";
 
 const users = loadTestUsers();
 test.skip(!users, "Run `npm run seed-test-users` first (needs .env for Development).");
@@ -12,14 +13,6 @@ function service() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-}
-
-async function login(page: Page, user: TestUser) {
-  await page.goto("/login");
-  await page.getByLabel("אימייל").fill(user.email);
-  await page.getByLabel("סיסמה", { exact: true }).fill(user.password);
-  await page.getByRole("button", { name: "התחברות" }).click();
-  await expect(page).not.toHaveURL(/\/login/);
 }
 
 // Another signed-in user in their own browser context, with this project's device settings.
@@ -146,7 +139,8 @@ test.describe("availability", () => {
     const row = admin.getByRole("row").filter({ hasText: teacherName }).filter({ hasText: "הסרה קבועה" });
     await row.getByRole("button", { name: "אישור" }).click();
     dialog = admin.getByRole("dialog");
-    await expect(dialog).toContainText("אין שיעורים מושפעים");
+    await expect(dialog).toContainText("השינוי ייכנס לתוקף מיד עם האישור");
+    await expect(dialog).toContainText("אין שיעורים עתידיים שהבקשה משפיעה עליהם");
     await dialog.getByRole("button", { name: "אישור" }).click();
     await expect(dialog).toBeHidden();
     await expect(admin2.getByRole("row").filter({ hasText: teacherName }).filter({ hasText: "הסרה קבועה" })).toHaveCount(0, { timeout: 15_000 });
@@ -158,6 +152,8 @@ test.describe("availability", () => {
     await page.getByRole("button", { name: "דיווח היעדרות" }).click();
     dialog = page.getByRole("dialog");
     await dialog.getByLabel("שעות ביום אחד").check();
+    // A Sunday (open 10:00–18:00): the default date is today, which may be a closed day.
+    await dialog.getByLabel("תאריך", { exact: true }).fill(nextWeekday(0));
     await choose(page, dialog, "משעה", "13:00");
     await choose(page, dialog, "עד שעה", "15:00");
     await dialog.getByRole("button", { name: "שליחת בקשה" }).click();

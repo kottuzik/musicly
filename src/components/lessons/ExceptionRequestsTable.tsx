@@ -2,7 +2,7 @@ import { Badge, ColorChip } from "@/components/ui/Badge";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import table from "@/components/ui/Table.module.css";
 import { cancelExceptionRequest } from "@/lib/lessons/actions";
-import { EXCEPTION_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
+import { EXCEPTION_KIND_LABELS, EXCEPTION_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
 import type { ExceptionRequest } from "@/lib/lessons/queries";
 import { addMinutes } from "@/lib/lessons/time";
 import { formatDay } from "@/lib/students/age";
@@ -14,6 +14,11 @@ export function describeBooking(r: ExceptionRequest): string {
   // Isolated left-to-right so the range is not reversed inside Hebrew text.
   const time = `\u2066${shortTime(r.start_time)}–${addMinutes(shortTime(r.start_time), r.duration_minutes)}\u2069`;
   if (r.kind === "single") return `${formatDay(r.start_date)}, ${time}`;
+  if (r.kind === "lesson_change") return `שינוי שיעור למועד: ${formatDay(r.start_date)}, ${time}`;
+  if (r.kind === "restore") return `שחזור שיעור למועד: ${formatDay(r.start_date)}, ${time}`;
+  if (r.kind === "series_change") {
+    return `שינוי סדרה: כל יום ${WEEKDAY_LABELS[dayOfWeek(r.start_date)]} ${time}, החל מ־${formatDay(r.start_date)}`;
+  }
   const until = r.end_date ? ` עד ${formatDay(r.end_date)}` : " ללא תאריך סיום";
   return `סדרה: כל יום ${WEEKDAY_LABELS[dayOfWeek(r.start_date)]} ${time}, מ־${formatDay(r.start_date)}${until}`;
 }
@@ -69,6 +74,9 @@ export function ExceptionRequestsTable({ rows, mode, empty }: { rows: ExceptionR
               </td>
               <td data-label="סטטוס">
                 <Badge tone={status.tone}>{status.label}</Badge>
+                {r.kind !== "single" && r.kind !== "series" && (
+                  <div className="text-small text-secondary">{EXCEPTION_KIND_LABELS[r.kind]}</div>
+                )}
                 {r.result_note && <div className="text-small text-secondary">{r.result_note}</div>}
                 {r.decision_note && <div className="text-small text-secondary">הערת המורה: {r.decision_note}</div>}
               </td>

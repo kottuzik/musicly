@@ -59,12 +59,53 @@ export async function addCustomClosure(_prev: ActionState, formData: FormData): 
   return { ok: true };
 }
 
-export async function cancelClosure(_prev: ActionState, formData: FormData): Promise<ActionState> {
+export type ClosureLesson = {
+  lessonId: string;
+  startAt: string;
+  endAt: string;
+  studentName: string;
+  teacherName: string;
+  lessonTypeName: string;
+  // False when the lesson's time was taken while the day was closed: it cannot come back.
+  free: boolean;
+};
+
+// Lessons "not held" because of the closure, for the admin to choose which come back.
+export async function getClosureImpact(id: string): Promise<ClosureLesson[]> {
   await requireRole(ADMIN_ROLES);
   const supabase = await createClient();
-  const { error } = await supabase.rpc("cancel_closure", { p_id: String(formData.get("id") ?? "") });
-  if (error) return { error: dbErrorMessage(error) };
+  const { data } = await supabase.rpc("closure_impact", { p_id: id });
+  return (data ?? []).map((l) => ({
+    lessonId: l.lesson_id,
+    startAt: l.start_at,
+    endAt: l.end_at,
+    studentName: l.student_name,
+    teacherName: l.teacher_name,
+    lessonTypeName: l.lesson_type_name,
+    free: l.free,
+  }));
+}
 
+// Fields: id; "choose" = true with one "restore" value per lesson to bring back (the rest are
+// cancelled). Without "choose", every lesson that is still free comes back.
+export async function cancelClosure(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const choose = formData.get("choose") === "true";
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("cancel_closure", {
+    p_id: String(formData.get("id") ?? ""),
+    ...(choose ? { p_restore: formData.getAll("restore").map(String) } : {}),
+  });
   revalidateClosures();
-  return { ok: true };
+  revalidatePath("/admin/calendar");
+  revalidatePath("/admin");
+  if (error) {
+    const failed = error.message === "decision_failed" ? (error as { details?: string }).details : undefined;
+    return { error: dbErrorMessage(error), failedId: failed };
+  }
+  const result = data as { restored: number; cancelled: number };
+  return {
+    ok: true,
+    success: result.restored || result.cancelled ? `יום הסגירה בוטל. ${result.restored} שיעורים שוחזרו, ${result.cancelled} בוטלו.` : undefined,
+  };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
@@ -11,17 +11,20 @@ import stack from "@/components/ui/Stack.module.css";
 import {
   bookLesson,
   createSeries,
+  getTeacherLessons,
   previewSeries,
   type BookingState,
   type SeriesPreview,
   type SeriesState,
+  type WeekLesson,
 } from "@/lib/lessons/actions";
 import { LOCATION_LABELS, SKIP_REASON_LABELS, type LessonLocation } from "@/lib/lessons/labels";
 import type { BookingOptions } from "@/lib/lessons/queries";
-import { addMinutes } from "@/lib/lessons/time";
+import { addMinutes, weekStart } from "@/lib/lessons/time";
 import { formatDay, schoolToday } from "@/lib/students/age";
-import { TIME_OPTIONS, WEEKDAY_LABELS, dayOfWeek, shortTime, timeRange } from "@/lib/time/weekdays";
+import { TIME_OPTIONS, WEEKDAY_LABELS, addDays, dayOfWeek, shortTime, timeRange } from "@/lib/time/weekdays";
 import styles from "./BookLesson.module.css";
+import { useTimeOptions } from "./useBusyTimes";
 
 type Mode = "single" | "series";
 type Meeting = { day: string; start: string };
@@ -108,24 +111,67 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
     reset();
   }
 
+  // The teacher's week next to the school's hours: availability and the lessons already booked.
+  // A single lesson shows the week of the chosen date (with dates); a series shows the coming week.
+  const weekFrom = weekStart(mode === "single" && date ? date : schoolToday());
+  const [weekLessons, setWeekLessons] = useState<WeekLesson[]>([]);
+  useEffect(() => {
+    let active = true;
+    if (!effectiveTeacherId) {
+      void Promise.resolve().then(() => active && setWeekLessons([]));
+    } else {
+      void getTeacherLessons({ teacherId: effectiveTeacherId, from: weekFrom, to: addDays(weekFrom, 6) }).then(
+        (list) => active && setWeekLessons(list),
+      );
+    }
+    return () => {
+      active = false;
+    };
+  }, [effectiveTeacherId, weekFrom]);
+
   const availabilityText = useMemo(() => {
     if (!effectiveTeacherId) return null;
     const today = schoolToday();
-    const days = mode === "single" ? (date ? [dayOfWeek(date)] : []) : [...new Set(meetings.filter((m) => m.day).map((m) => Number(m.day)))];
-    if (!days.length) return null;
-    return days.map((d) => {
+    const chosen = new Set(
+      mode === "single" ? (date ? [dayOfWeek(date)] : []) : meetings.filter((m) => m.day).map((m) => Number(m.day)),
+    );
+    const rows = [0, 1, 2, 3, 4, 5, 6].map((d) => {
+      const day = addDays(weekFrom, d);
+      // Availability valid on that date (single lesson), or from today on (series).
+      const onDate = mode === "single" && date ? day : today;
       const slots = options.slots
         .filter((s) => s.teacher_id === effectiveTeacherId && s.day_of_week === d)
-        .filter((s) => (mode === "single" && date ? s.valid_from <= date && (!s.valid_to || s.valid_to >= date) : !s.valid_to || s.valid_to >= today))
+        .filter((s) => (mode === "single" && date ? s.valid_from <= onDate : true) && (!s.valid_to || s.valid_to >= onDate))
         .map((s) => timeRange(s.start_time, s.end_time));
+      const booked = weekLessons.filter((l) => l.date === day).map((l) => `${l.start}–${l.end}`);
       const hours = options.hours.find((h) => h.day_of_week === d);
       return {
+        key: d,
         day: WEEKDAY_LABELS[d],
-        slots: slots.length ? slots.join(", ") : "אין זמינות",
-        hours: hours ? timeRange(hours.open_time, hours.close_time) : "בית הספר סגור",
+        date: mode === "single" && date ? formatDay(day).slice(0, 5) : null,
+        chosen: chosen.has(d),
+        slots: slots.length ? slots.join(", ") : null,
+        booked: booked.length ? booked.join(", ") : null,
+        hours: hours ? timeRange(hours.open_time, hours.close_time) : "סגור",
       };
     });
-  }, [effectiveTeacherId, mode, date, meetings, options.slots, options.hours]);
+    const anyAvailability = options.slots.some(
+      (s) => s.teacher_id === effectiveTeacherId && (!s.valid_to || s.valid_to >= today),
+    );
+    return { rows, anyAvailability };
+  }, [effectiveTeacherId, mode, date, meetings, options.slots, options.hours, weekFrom, weekLessons]);
+
+  // Whether the teacher has any availability on a date (single lesson) or a weekday (series).
+  // Without it the time cannot be picked at all.
+  const availableOnDate = (d: string) =>
+    options.slots.some(
+      (s) => s.teacher_id === effectiveTeacherId && s.day_of_week === dayOfWeek(d) && s.valid_from <= d && (!s.valid_to || s.valid_to >= d),
+    );
+  const availableOnDay = (day: number) =>
+    options.slots.some(
+      (s) => s.teacher_id === effectiveTeacherId && s.day_of_week === day && (!s.valid_to || s.valid_to >= schoolToday()),
+    );
+  const singleUnavailable = Boolean(date && effectiveTeacherId) && !availableOnDate(date);
 
   const commonInput = { studentId, lessonTypeId, location, confirmOutsideHours: confirmHours };
 
@@ -160,6 +206,12 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
 
   const errors = state.fieldErrors ?? {};
   const durationNumber = Number(duration) || lessonType?.duration || 0;
+  // Times already taken by the teacher or the student on that date are shown but cannot be chosen.
+  const singleTimeOptions = useTimeOptions(TIME_OPTIONS, durationNumber, {
+    date: mode === "single" ? date : "",
+    teacherId: teacherId || undefined,
+    studentId: studentId || undefined,
+  });
 
   // Final screens: what was created.
   if (state.ok) {
@@ -220,6 +272,7 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
         name="lessonTypeId"
         value={lessonTypeId}
         placeholder={student ? "בחרו תחום" : "בחרו קודם תלמיד"}
+        disabled={!student}
         options={subjectOptions}
         onValueChange={(v) => chooseSubject(v)}
         error={errors.lessonTypeId}
@@ -231,6 +284,7 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
           name="teacherId"
           value={teacherId}
           placeholder={lessonTypeId ? "בחרו מורה" : "בחרו קודם תחום"}
+          disabled={!lessonTypeId}
           options={teacherOptions}
           onValueChange={(v) => {
             setTeacherId(v);
@@ -255,9 +309,13 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
             name="date"
             type="date"
             min={schoolToday()}
+            disabled={!lessonTypeId}
+            hint={lessonTypeId ? undefined : "בחרו קודם תלמיד ותחום"}
             value={date}
             onChange={(e) => {
               setDate(e.target.value);
+              // A time picked earlier does not carry over to a day the teacher is not available.
+              if (e.target.value && !availableOnDate(e.target.value)) setStart("");
               reset();
             }}
             error={errors.date}
@@ -267,8 +325,9 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
               label="שעת התחלה"
               name="start"
               value={start}
-              placeholder="בחרו שעה"
-              options={timeOptions}
+              placeholder={singleUnavailable ? "המורה לא זמין" : date && lessonTypeId ? "בחרו שעה" : "בחרו קודם תאריך"}
+              disabled={!date || !lessonTypeId || singleUnavailable}
+              options={singleTimeOptions}
               onValueChange={(v) => {
                 setStart(v);
                 reset();
@@ -277,6 +336,7 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
             />
             <Field
               label="משך (דקות)"
+              disabled={!lessonTypeId}
               name="duration"
               type="number"
               inputMode="numeric"
@@ -306,6 +366,7 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
               name="startDate"
               type="date"
               min={schoolToday()}
+              disabled={!lessonTypeId}
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value);
@@ -317,6 +378,7 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
               label="תאריך סיום (לא חובה)"
               name="endDate"
               type="date"
+              disabled={!lessonTypeId}
               min={startDate}
               value={endDate}
               onChange={(e) => {
@@ -335,10 +397,12 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
                   label={`יום — מפגש ${i + 1}`}
                   name={`meetingDay${i}`}
                   value={m.day}
-                  placeholder="יום"
+                  placeholder={lessonTypeId ? "יום" : "בחרו קודם תחום"}
+                  disabled={!lessonTypeId}
                   options={dayOptions}
                   onValueChange={(v) => {
-                    setMeetings((list) => list.map((x, j) => (j === i ? { ...x, day: v } : x)));
+                    const clear = effectiveTeacherId !== "" && !availableOnDay(Number(v));
+                    setMeetings((list) => list.map((x, j) => (j === i ? { ...x, day: v, start: clear ? "" : x.start } : x)));
                     reset();
                   }}
                 />
@@ -346,7 +410,14 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
                   label={`שעה — מפגש ${i + 1}`}
                   name={`meetingStart${i}`}
                   value={m.start}
-                  placeholder="שעה"
+                  placeholder={
+                    m.day && effectiveTeacherId && !availableOnDay(Number(m.day))
+                      ? "המורה לא זמין"
+                      : m.day && lessonTypeId
+                        ? "שעה"
+                        : "בחרו קודם יום"
+                  }
+                  disabled={!m.day || !lessonTypeId || (Boolean(effectiveTeacherId) && !availableOnDay(Number(m.day)))}
                   options={timeOptions}
                   onValueChange={(v) => {
                     setMeetings((list) => list.map((x, j) => (j === i ? { ...x, start: v } : x)));
@@ -409,14 +480,38 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
       {availabilityText && (
         <div className={styles.help} aria-live="polite">
           <p className={styles.helpTitle}>זמינות {teacher?.name ?? "המורה"} ושעות הפעילות</p>
-          <ul>
-            {availabilityText.map((a) => (
-              <li key={a.day}>
-                יום {a.day}: זמינות <span dir="ltr">{a.slots}</span> · בית הספר <span dir="ltr">{a.hours}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-secondary">מועד מחוץ לזמינות יישלח למורה לאישור.</p>
+          {!availabilityText.anyAvailability && (
+            <p>
+              <strong>למורה לא הוגדרה זמינות שבועית.</strong> כל מועד שתבחרו יישלח למורה לאישור. אפשר להגדיר לו זמינות בדף
+              המורה, בלשונית „זמינות”.
+            </p>
+          )}
+          <table className={styles.weekTable}>
+            <thead>
+              <tr>
+                <th scope="col">יום</th>
+                <th scope="col">זמינות</th>
+                <th scope="col">שיעורים קיימים</th>
+                <th scope="col">בית הספר</th>
+              </tr>
+            </thead>
+            <tbody>
+              {availabilityText.rows.map((a) => (
+                <tr key={a.key} className={a.chosen ? styles.chosenDay : undefined}>
+                  <th scope="row">
+                    {a.day}
+                    {a.date && <span className={styles.weekDate}> {a.date}</span>}
+                  </th>
+                  <td>{a.slots ? <bdi dir="ltr">{a.slots}</bdi> : <span className="text-secondary">אין</span>}</td>
+                  <td>{a.booked ? <bdi dir="ltr">{a.booked}</bdi> : <span className="text-secondary">—</span>}</td>
+                  <td>
+                    <bdi dir="ltr">{a.hours}</bdi>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-secondary">מועד מחוץ לזמינות יישלח למורה לאישור, והשעה לא תישמר עד שיאשר.</p>
         </div>
       )}
 

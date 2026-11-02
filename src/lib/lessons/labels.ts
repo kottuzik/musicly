@@ -4,6 +4,10 @@ import type { Database } from "@/types/database";
 export type LessonLocation = Database["public"]["Enums"]["lesson_location"];
 export type LessonStatus = Database["public"]["Enums"]["lesson_status"];
 export type ExceptionStatus = Database["public"]["Enums"]["exception_request_status"];
+export type ExceptionKind = Database["public"]["Enums"]["exception_request_kind"];
+export type AttentionReason = Database["public"]["Enums"]["attention_reason"];
+export type CancelSource = Database["public"]["Enums"]["cancel_source"];
+export type LessonChangeKind = Database["public"]["Enums"]["lesson_change_kind"];
 
 export const LOCATION_LABELS: Record<LessonLocation, string> = {
   school: "בבית הספר",
@@ -30,4 +34,58 @@ export const SKIP_REASON_LABELS: Record<string, string> = {
   teacher_busy: "המורה תפוס בשעה זו",
   student_busy: "התלמיד תפוס בשעה זו",
   teacher_unavailable: "המורה אינו זמין (היעדרות או זמינות שהסתיימה)",
+};
+
+export const EXCEPTION_KIND_LABELS: Record<ExceptionKind, string> = {
+  single: "שיעור חדש",
+  series: "סדרה שבועית",
+  lesson_change: "שינוי שיעור",
+  series_change: "שינוי סדרה מתאריך",
+  restore: "שחזור שיעור",
+};
+
+export const LESSON_CHANGE_KIND_LABELS: Record<LessonChangeKind, string> = {
+  cancel: "ביטול שיעור",
+  change: "שינוי שיעור",
+};
+
+// Why a lesson is flagged "needs attention".
+export const ATTENTION_REASON_LABELS: Record<AttentionReason, string> = {
+  outside_hours: "מחוץ לשעות הפעילות",
+  teacher_inactive: "המורה אינו פעיל",
+  teacher_absent: "המורה נעדר",
+  availability_removed: "זמינות המורה הוסרה",
+  series_change_conflict: "התנגשות בשינוי סדרה",
+};
+
+export const CANCEL_SOURCE_LABELS: Record<CancelSource, string> = {
+  admin: "בוטל בידי מנהל",
+  teacher_request: "בוטל לפי בקשת המורה",
+  student_inactive: "התלמיד הושבת",
+  series_stopped: "הסדרה הופסקה",
+  closure_removed: "יום הסגירה בוטל והשיעור לא שוחזר",
+};
+
+// Entries of the change log, as shown on the admin home and in a lesson's history.
+export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  lesson_cancelled: "שיעור בוטל",
+  lesson_restored: "שיעור שוחזר",
+  lesson_updated: "שיעור שונה",
+  lesson_change_requested: "נשלחה למורה בקשה לשינוי שיעור",
+  lesson_restore_requested: "נשלחה למורה בקשה לשחזור שיעור",
+  teacher_restore_outside_hours: "מורה שחזר שיעור מחוץ לשעות הפעילות",
+  attention_cleared: "השיעור נשאר כפי שהוא",
+  series_changed: "סדרה שונתה",
+  series_change_requested: "נשלחה למורה בקשה לשינוי סדרה",
+  series_stopped: "סדרה הופסקה",
+  series_extended: "סדרה הוארכה",
+  series_resumed: "סדרה חודשה",
+  closure_cancelled: "יום סגירה בוטל",
+  change_requested: "מורה ביקש שינוי או ביטול",
+  change_request_approved: "בקשת מורה אושרה",
+  change_request_rejected: "בקשת מורה נדחתה",
+  duration_changed: "משך תחום שונה",
+  student_deactivated: "תלמיד הושבת",
+  teacher_deactivated: "מורה הושבת",
+  regular_teacher_changed: "המורה הקבוע הוחלף",
 };

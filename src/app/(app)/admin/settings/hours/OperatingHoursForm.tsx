@@ -12,6 +12,9 @@ import { saveOperatingHours } from "./actions";
 import styles from "./Hours.module.css";
 
 const OPTIONS = TIME_OPTIONS.map((t) => ({ value: t, label: t }));
+// A day opened in the form starts with the school's default hours.
+const DEFAULT_OPEN = "10:00";
+const DEFAULT_CLOSE = "22:00";
 
 export function OperatingHoursForm({ hours }: { hours: Hours[] }) {
   const [open, setOpen] = useState(() => new Set(hours.map((h) => h.day_of_week)));
@@ -48,7 +51,7 @@ export function OperatingHoursForm({ hours }: { hours: Hours[] }) {
                     hideLabel
                     name={`start${day}`}
                     placeholder="פתיחה"
-                    defaultValue={current ? shortTime(current.open_time) : ""}
+                    defaultValue={current ? shortTime(current.open_time) : DEFAULT_OPEN}
                     options={OPTIONS}
                   />
                   <span aria-hidden="true">–</span>
@@ -57,7 +60,7 @@ export function OperatingHoursForm({ hours }: { hours: Hours[] }) {
                     hideLabel
                     name={`end${day}`}
                     placeholder="סגירה"
-                    defaultValue={current ? shortTime(current.close_time) : ""}
+                    defaultValue={current ? shortTime(current.close_time) : DEFAULT_CLOSE}
                     options={OPTIONS}
                   />
                 </div>

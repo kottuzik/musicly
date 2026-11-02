@@ -149,6 +149,19 @@
   text-decoration: line-through;
 }
 
+.attention {
+  box-shadow: inset 0 0 0 2px var(--color-warning-text, #b45309);
+}
+
+.eventAttention {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-warning-text, #b45309);
+}
+
 @media (max-width: 640px) {
   .calendar {
     padding: 12px;

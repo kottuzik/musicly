@@ -1,0 +1,90 @@
+.scope {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.scope legend {
+  margin-block-end: 6px;
+  padding: 0;
+  font-weight: 500;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-block-size: 32px;
+  cursor: pointer;
+}
+
+.option input {
+  inline-size: 18px;
+  block-size: 18px;
+  margin-block-start: 3px;
+  accent-color: var(--color-primary);
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 6px 8px;
+  text-align: start;
+  border-block-end: 1px solid var(--color-secondary-light);
+  vertical-align: top;
+}
+
+.tableWrap {
+  max-block-size: 260px;
+  overflow: auto;
+  border: 1px solid var(--color-secondary-light);
+  border-radius: var(--radius-sm);
+}
+
+.problem {
+  color: var(--color-error-text);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attention {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 20px;
+}
+
+/* Same size for every action; the destructive ones come last. */
+.actions button {
+  min-inline-size: 120px;
+}
+
+.history {
+  margin: 0;
+  padding-inline-start: 18px;
+  font-size: 14px;
+}
+
+.sectionTitle {
+  margin-block: 20px 8px;
+  font-weight: 600;
+}

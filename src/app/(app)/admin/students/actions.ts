@@ -126,3 +126,13 @@ export async function removeStudentSubject(_prev: ActionState, formData: FormDat
   revalidateStudents(text(formData, "studentId"));
   return { ok: true };
 }
+
+export type StudentStatusImpact = { lessons: number; series: number; requests: number };
+
+// What deactivating a student would cancel, shown in the warning before confirming.
+export async function getStudentStatusImpact(id: string): Promise<StudentStatusImpact | null> {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("student_status_impact", { p_id: id });
+  return error ? null : (data as StudentStatusImpact);
+}

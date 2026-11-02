@@ -19,6 +19,7 @@ import { requireRole } from "@/lib/auth/session";
 import { loadTeacherAvailability } from "@/lib/availability/queries";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState, formatDate } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
+import { TeacherImpactNotice } from "@/components/impact/ImpactNotices";
 import { createTeacherInvitation, revokeInvitation, setTeacherStatus } from "../actions";
 import { TeacherDialog } from "../TeacherDialog";
 import styles from "./TeacherDetails.module.css";
@@ -95,7 +96,9 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
                   : "המורה יוכל שוב להתחבר ולעבוד במערכת באופן מלא."
               }
               confirmLabel={active ? "הפוך ללא פעיל" : "הפוך לפעיל"}
-            />
+            >
+              {active && <TeacherImpactNotice teacherId={teacher.id} />}
+            </ConfirmAction>
           </>
         }
       />

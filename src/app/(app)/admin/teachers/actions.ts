@@ -80,3 +80,13 @@ export async function revokeInvitation(_prev: ActionState, formData: FormData): 
   revalidateTeachers(String(formData.get("teacherId") ?? "") || undefined);
   return { ok: true };
 }
+
+export type TeacherStatusImpact = { lessons: number; requests: number };
+
+// Upcoming lessons that would be flagged, and pending requests that would close, if the teacher is deactivated.
+export async function getTeacherStatusImpact(id: string): Promise<TeacherStatusImpact | null> {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("teacher_status_impact", { p_id: id });
+  return error ? null : (data as TeacherStatusImpact);
+}

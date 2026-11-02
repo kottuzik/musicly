@@ -1,82 +1,281 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { EditLessonDialog } from "@/components/lessons/EditLessonDialog";
+import { ExtendSeriesDialog } from "@/components/lessons/ExtendSeriesDialog";
+import { LessonChangeRequestDialog } from "@/components/lessons/LessonChangeRequestDialog";
+import { RestoreLessonDialog } from "@/components/lessons/RestoreLessonDialog";
+import lessonChange from "@/components/lessons/LessonChange.module.css";
 import { Alert } from "@/components/ui/Alert";
 import { Badge, ColorChip } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { Dialog } from "@/components/ui/Dialog";
+import { Field } from "@/components/ui/Field";
 import stack from "@/components/ui/Stack.module.css";
-import { getLessonDetails } from "@/lib/lessons/actions";
-import { LESSON_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
-import type { LessonDetails } from "@/lib/lessons/queries";
-import { formatLessonDate, lessonTimeRange } from "@/lib/lessons/time";
-import { formatDay } from "@/lib/students/age";
+import { TextareaField } from "@/components/ui/TextareaField";
+import { clearAttention, cancelLesson, getLessonDetails, getLessonHistory, stopSeries } from "@/lib/lessons/actions";
+import {
+  ATTENTION_REASON_LABELS,
+  AUDIT_ACTION_LABELS,
+  CANCEL_SOURCE_LABELS,
+  LESSON_CHANGE_KIND_LABELS,
+  LESSON_STATUS_LABELS,
+  LOCATION_LABELS,
+} from "@/lib/lessons/labels";
+import type { BookingOptions, LessonDetails, LessonHistoryEntry } from "@/lib/lessons/queries";
+import { formatLessonDate, lessonTimeRange, schoolTime } from "@/lib/lessons/time";
+import { formatDay, schoolToday } from "@/lib/students/age";
 import { WEEKDAY_LABELS, shortTime } from "@/lib/time/weekdays";
 
-// Read-only lesson panel. Editing, cancelling and restoring come with Milestone 6.
-export function LessonDetailsDialog({ lessonId, onClose }: { lessonId: string | null; onClose: () => void }) {
+type Dialogs = "edit" | "restore" | "extend" | "request" | null;
+
+type Props = {
+  lessonId: string | null;
+  onClose: () => void;
+  // Admins edit, cancel and restore; a teacher can ask for a change and restore their own cancelled lessons.
+  isAdmin: boolean;
+  // Admins: what the change dialog needs (teachers by subject).
+  options?: BookingOptions;
+};
+
+// The lesson panel: details, and the actions the viewer is allowed to take.
+export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Props) {
   const [lesson, setLesson] = useState<LessonDetails | null | "missing">(null);
+  const [history, setHistory] = useState<LessonHistoryEntry[]>([]);
+  const [dialog, setDialog] = useState<Dialogs>(null);
+  // When the details were loaded: decides whether the lesson is still ahead.
+  const [loadedAt, setLoadedAt] = useState(0);
+
+  const load = useCallback(
+    async (id: string) => {
+      const data = await getLessonDetails(id);
+      setLoadedAt(Date.now());
+      setLesson(data ?? "missing");
+      if (data && isAdmin) setHistory(await getLessonHistory(id));
+    },
+    [isAdmin],
+  );
 
   useEffect(() => {
     if (!lessonId) return;
     let active = true;
-    void getLessonDetails(lessonId).then((data) => {
-      if (active) setLesson(data ?? "missing");
+    void getLessonDetails(lessonId).then(async (data) => {
+      if (!active) return;
+      setLoadedAt(Date.now());
+      setLesson(data ?? "missing");
+      if (data && isAdmin) {
+        const entries = await getLessonHistory(lessonId);
+        if (active) setHistory(entries);
+      }
     });
     return () => {
       active = false;
       setLesson(null);
+      setHistory([]);
+      setDialog(null);
     };
-  }, [lessonId]);
+  }, [lessonId, isAdmin]);
 
-  const minutes = lesson && lesson !== "missing"
-    ? Math.round((new Date(lesson.end_at).getTime() - new Date(lesson.start_at).getTime()) / 60000)
-    : 0;
+  const reload = () => {
+    if (lessonId) void load(lessonId);
+  };
+
+  const ready = lesson && lesson !== "missing" ? lesson : null;
+  const upcoming = ready ? new Date(ready.start_at).getTime() > loadedAt : false;
+  const scheduled = ready?.status === "scheduled";
+  const sameDay = ready ? ready.occurrence_date <= schoolToday() : false;
+  const inActiveSeries = Boolean(ready?.series_id) && ready?.series_status === "active";
+  const canResume = Boolean(ready?.series_id) && ready?.series_status === "ended";
+  const fields: Record<string, string> = ready ? { id: ready.id, version: String(ready.version) } : {};
 
   return (
     <Dialog
       open={lessonId !== null}
       onOpenChange={(open) => !open && onClose()}
-      title={lesson && lesson !== "missing" ? `שיעור ${lesson.lesson_type_name}` : "פרטי שיעור"}
+      title={ready ? `שיעור ${ready.lesson_type_name}` : "פרטי שיעור"}
     >
       {lesson === null && <p className="text-secondary">טוענים...</p>}
       {lesson === "missing" && <Alert tone="error">השיעור לא נמצא. ייתכן שהוא שונה בינתיים.</Alert>}
-      {lesson && lesson !== "missing" && (
-        <dl className={stack.details}>
-          <dt>תלמיד</dt>
-          <dd>{lesson.student_name}</dd>
-          <dt>מורה</dt>
-          <dd>
-            {lesson.teacher_name}
-            {lesson.is_substitute && <> (מורה מחליף)</>}
-          </dd>
-          <dt>תחום</dt>
-          <dd>
-            <ColorChip color={lesson.color}>{lesson.lesson_type_name}</ColorChip>
-          </dd>
-          <dt>תאריך</dt>
-          <dd>{formatLessonDate(lesson.start_at)}</dd>
-          <dt>שעה</dt>
-          <dd>
-            <bdi dir="ltr">{lessonTimeRange(lesson.start_at, lesson.end_at)}</bdi>
-          </dd>
-          <dt>משך</dt>
-          <dd>{minutes} דקות</dd>
-          <dt>מיקום</dt>
-          <dd>{LOCATION_LABELS[lesson.location]}</dd>
-          <dt>סטטוס</dt>
-          <dd>
-            <Badge tone={LESSON_STATUS_LABELS[lesson.status].tone}>{LESSON_STATUS_LABELS[lesson.status].label}</Badge>
-            {lesson.outside_hours && <> · שובץ מחוץ לשעות הפעילות</>}
-          </dd>
-          <dt>סוג</dt>
-          <dd>
-            {lesson.series_id && lesson.series_day !== null
-              ? `סדרה שבועית — יום ${WEEKDAY_LABELS[lesson.series_day]} בשעה ${shortTime(lesson.series_start_time ?? "")}, ${
-                  lesson.series_end_date ? `עד ${formatDay(lesson.series_end_date)}` : "ללא תאריך סיום"
-                }`
-              : "שיעור בודד"}
-          </dd>
-        </dl>
+      {ready && (
+        <>
+          {isAdmin && ready.requires_attention && ready.attention_reason && (
+            <Alert tone="warning">
+              <p className={lessonChange.attention}>דורש טיפול: {ATTENTION_REASON_LABELS[ready.attention_reason]}</p>
+              <p>אפשר לשנות את השיעור, לבטל אותו, או להשאיר אותו כפי שהוא.</p>
+            </Alert>
+          )}
+          {ready.pending_change_request_id && ready.pending_change_request_kind && (
+            <Alert tone="info">
+              קיימת בקשה ממתינה: {LESSON_CHANGE_KIND_LABELS[ready.pending_change_request_kind]}.{" "}
+              {isAdmin ? "אפשר לטפל בה בדף הבקשות." : "המנהל עוד לא ענה."}
+            </Alert>
+          )}
+
+          <dl className={stack.details}>
+            <dt>תלמיד</dt>
+            <dd>{ready.student_name}</dd>
+            <dt>מורה</dt>
+            <dd>
+              {ready.teacher_name}
+              {ready.is_substitute && <> (מורה מחליף)</>}
+            </dd>
+            <dt>תחום</dt>
+            <dd>
+              <ColorChip color={ready.color}>{ready.lesson_type_name}</ColorChip>
+            </dd>
+            <dt>תאריך</dt>
+            <dd>{formatLessonDate(ready.start_at)}</dd>
+            <dt>שעה</dt>
+            <dd>
+              <bdi dir="ltr">{lessonTimeRange(ready.start_at, ready.end_at)}</bdi>
+            </dd>
+            <dt>משך</dt>
+            <dd>{ready.duration_minutes} דקות</dd>
+            <dt>מיקום</dt>
+            <dd>{LOCATION_LABELS[ready.location]}</dd>
+            <dt>סטטוס</dt>
+            <dd>
+              <Badge tone={LESSON_STATUS_LABELS[ready.status].tone}>{LESSON_STATUS_LABELS[ready.status].label}</Badge>
+              {ready.outside_hours && <> · שובץ מחוץ לשעות הפעילות</>}
+              {ready.status === "cancelled" && ready.cancel_source && (
+                <>
+                  <br />
+                  <span className="text-secondary">
+                    {CANCEL_SOURCE_LABELS[ready.cancel_source]}
+                    {ready.cancel_reason && ` — ${ready.cancel_reason}`}
+                  </span>
+                </>
+              )}
+            </dd>
+            <dt>סוג</dt>
+            <dd>
+              {ready.series_id && ready.series_day !== null
+                ? `סדרה שבועית${ready.series_status === "ended" ? " (הסתיימה)" : ""} — יום ${WEEKDAY_LABELS[ready.series_day]} בשעה ${shortTime(ready.series_start_time ?? "")}, ${
+                    ready.series_end_date ? `עד ${formatDay(ready.series_end_date)}` : "ללא תאריך סיום"
+                  }`
+                : "שיעור בודד"}
+            </dd>
+          </dl>
+
+          <div className={lessonChange.actions}>
+            {isAdmin && scheduled && upcoming && options && (
+              <Button variant="ghost" size="small" onClick={() => setDialog("edit")}>
+                שינוי
+              </Button>
+            )}
+            {isAdmin && inActiveSeries && upcoming && ready.series_end_date && (
+              <Button variant="ghost" size="small" onClick={() => setDialog("extend")}>
+                הארכת הסדרה
+              </Button>
+            )}
+            {isAdmin && canResume && (
+              <Button variant="ghost" size="small" onClick={() => setDialog("extend")}>
+                חידוש הסדרה
+              </Button>
+            )}
+            {isAdmin && ready.requires_attention && scheduled && (
+              <ConfirmAction
+                action={clearAttention}
+                fields={fields}
+                trigger="השארה כמו שהוא"
+                triggerVariant="ghost"
+                title="השארת השיעור כמו שהוא"
+                description="הסימון ”דורש טיפול” יוסר, והשיעור יישאר ללא שינוי."
+                confirmLabel="השאר כמו שהוא"
+                onDone={reload}
+              />
+            )}
+            {ready.status === "cancelled" && (
+              <Button variant="ghost" size="small" onClick={() => setDialog("restore")}>
+                שחזור השיעור
+              </Button>
+            )}
+            {isAdmin && scheduled && upcoming && options && (
+              <ConfirmAction
+                action={cancelLesson}
+                fields={fields}
+                trigger="ביטול שיעור"
+                triggerVariant="danger"
+                title="ביטול שיעור"
+                description={`השיעור של ${ready.student_name} יבוטל וישמר ברשימת השיעורים המבוטלים. אפשר לשחזר אותו בהמשך.`}
+                confirmLabel="בטל שיעור"
+                confirmVariant="danger"
+                onDone={reload}
+              >
+                <TextareaField label="סיבה (לא חובה)" name="reason" maxLength={500} />
+              </ConfirmAction>
+            )}
+            {isAdmin && inActiveSeries && upcoming && (
+              <ConfirmAction
+                action={stopSeries}
+                fields={{ seriesId: ready.series_id ?? "" }}
+                trigger="הפסקת הסדרה"
+                triggerVariant="danger"
+                title="הפסקת הסדרה"
+                description="כל המפגשים העתידיים מהתאריך שתבחרו יבוטלו, והסדרה תסתיים. שיעורי עבר לא משתנים."
+                confirmLabel="הפסק סדרה"
+                confirmVariant="danger"
+                onDone={reload}
+              >
+                <Field label="הפסקה מתאריך (כולל)" name="fromDate" type="date" min={schoolToday()} defaultValue={ready.occurrence_date} />
+              </ConfirmAction>
+            )}
+            {!isAdmin && scheduled && upcoming && !ready.pending_change_request_id && !sameDay && (
+              <Button variant="ghost" size="small" onClick={() => setDialog("request")}>
+                בקשת שינוי או ביטול
+              </Button>
+            )}
+          </div>
+          {!isAdmin && scheduled && upcoming && sameDay && (
+            <p className="text-secondary">השיעור מתקיים היום, ולכן שינוי או ביטול מתואמים ישירות עם המנהל.</p>
+          )}
+
+          {isAdmin && history.length > 0 && (
+            <>
+              <p className={lessonChange.sectionTitle}>היסטוריית שינויים</p>
+              <ul className={lessonChange.history}>
+                {history.map((h) => (
+                  <li key={h.id}>
+                    {AUDIT_ACTION_LABELS[h.action] ?? h.action}
+                    {h.actor_name && ` — ${h.actor_name}`}{" "}
+                    <span className="text-secondary">
+                      ({formatLessonDate(h.created_at)} {schoolTime(h.created_at)})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {options && (
+            <EditLessonDialog
+              lesson={ready}
+              options={options}
+              open={dialog === "edit"}
+              onOpenChange={(open) => setDialog(open ? "edit" : null)}
+              onDone={reload}
+            />
+          )}
+          <RestoreLessonDialog
+            lesson={ready}
+            open={dialog === "restore"}
+            onOpenChange={(open) => setDialog(open ? "restore" : null)}
+            onDone={reload}
+          />
+          <ExtendSeriesDialog
+            lesson={ready}
+            open={dialog === "extend"}
+            onOpenChange={(open) => setDialog(open ? "extend" : null)}
+            onDone={reload}
+          />
+          <LessonChangeRequestDialog
+            lesson={ready}
+            open={dialog === "request"}
+            onOpenChange={(open) => setDialog(open ? "request" : null)}
+            onDone={reload}
+          />
+        </>
       )}
     </Dialog>
   );

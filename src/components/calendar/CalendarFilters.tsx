@@ -11,6 +11,7 @@ type Params = {
   studentId: string;
   lessonTypeId: string;
   includeCancelled: boolean;
+  attentionOnly?: boolean;
 };
 
 // GET form: filters are kept in the URL next to the view and date. Teachers get the
@@ -20,11 +21,14 @@ export function CalendarFilters({
   teachers,
   students,
   lessonTypes,
+  showAttention = false,
 }: {
   params: Params;
   teachers?: SelectOption[];
   students?: SelectOption[];
   lessonTypes?: SelectOption[];
+  // Admins: filter to lessons flagged "needs attention".
+  showAttention?: boolean;
 }) {
   return (
     <form className={toolbar.toolbar} role="search" aria-label="סינון לוח השנה">
@@ -46,6 +50,12 @@ export function CalendarFilters({
         <input type="checkbox" name="cancelled" value="1" defaultChecked={params.includeCancelled} />
         הצג שיעורים מבוטלים
       </label>
+      {showAttention && (
+        <label className={styles.check}>
+          <input type="checkbox" name="attention" value="1" defaultChecked={params.attentionOnly} />
+          רק שיעורים שדורשים טיפול
+        </label>
+      )}
       <Button type="submit" variant="secondary">
         הצגה
       </Button>

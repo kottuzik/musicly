@@ -62,11 +62,13 @@ describe.skipIf(!users)("RLS and RPCs for staff management (Development)", () =>
       expect(error).toBeNull();
       lessonTypeId = data!.id;
 
-      const { error: updateError } = await admin
-        .from("lesson_types")
-        .update({ default_duration_minutes: 60 })
-        .eq("id", lessonTypeId);
+      // Name and color are edited directly; the duration only through the function that settles series.
+      const { error: updateError } = await admin.from("lesson_types").update({ color: "#0EA5E9" }).eq("id", lessonTypeId);
       expect(updateError).toBeNull();
+      const direct = await admin.from("lesson_types").update({ default_duration_minutes: 60 }).eq("id", lessonTypeId);
+      expect(direct.error).not.toBeNull();
+      const viaFunction = await admin.rpc("apply_lesson_type_duration", { p_id: lessonTypeId, p_new_duration: 60, p_series: [] });
+      expect(viaFunction.error).toBeNull();
 
       const temp = await admin
         .from("lesson_types")

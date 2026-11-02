@@ -87,7 +87,7 @@ function ClosureForm({ today, onDone }: { today: string; onDone: () => void }) {
         }}
         error={errors.endDate}
       />
-      <p className="text-small text-secondary">אין שיעורים מושפעים.</p>
+      <p className="text-small text-secondary">שיעורים שכבר נקבעו בימים האלה יסומנו ”לא מתקיים – יום סגירה”.</p>
       <DialogActions>
         <Button variant="ghost" onClick={onDone}>
           ביטול

@@ -8,12 +8,12 @@ import timeGridPlugin from "@fullcalendar/react/timegrid";
 import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/classic/theme.css";
 import "@fullcalendar/react/themes/classic/palette.css";
-import { ChevronLeft, ChevronRight, Video } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Video } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LESSON_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
-import type { CalendarLesson } from "@/lib/lessons/queries";
+import { ATTENTION_REASON_LABELS, LESSON_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
+import type { BookingOptions, CalendarLesson } from "@/lib/lessons/queries";
 import {
   CALENDAR_VIEWS,
   SCHOOL_TIME_ZONE,
@@ -43,9 +43,12 @@ type Props = {
   viewFromUrl: boolean;
   slotMinTime: string;
   slotMaxTime: string;
+  // Admins see "needs attention" flags and can change lessons; options feed the change dialog.
+  isAdmin?: boolean;
+  options?: BookingOptions;
 };
 
-export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, slotMinTime, slotMaxTime }: Props) {
+export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, slotMinTime, slotMaxTime, isAdmin = false, options }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -125,6 +128,7 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
               styles.event,
               l.status === "closed_day" && styles.closed,
               l.status === "cancelled" && styles.cancelled,
+              isAdmin && l.requires_attention && l.status === "scheduled" && styles.attention,
             ]
               .filter(Boolean)
               .join(" "),
@@ -133,6 +137,8 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
           eventContent={(info) => {
             const l = info.event.extendedProps.lesson as CalendarLesson;
             const status = l.status === "scheduled" ? null : LESSON_STATUS_LABELS[l.status].label;
+            const attention = isAdmin && l.requires_attention && l.status === "scheduled";
+            const attentionLabel = l.attention_reason ? ATTENTION_REASON_LABELS[l.attention_reason] : "דורש טיפול";
             return (
               <button
                 type="button"
@@ -140,7 +146,7 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
                 style={{ borderInlineStartColor: l.color }}
                 title={`${l.lesson_type_name} — ${l.student_name}${showTeacher ? ` (${l.teacher_name})` : ""}`}
                 onClick={() => setOpenLesson(l.id)}
-                aria-label={`${info.timeText} ${l.lesson_type_name} — ${l.student_name}${showTeacher ? `, ${l.teacher_name}` : ""}${l.location === "zoom" ? `, ${LOCATION_LABELS.zoom}` : ""}${status ? `, ${status}` : ""}`}
+                aria-label={`${info.timeText} ${l.lesson_type_name} — ${l.student_name}${showTeacher ? `, ${l.teacher_name}` : ""}${l.location === "zoom" ? `, ${LOCATION_LABELS.zoom}` : ""}${status ? `, ${status}` : ""}${attention ? `, דורש טיפול: ${attentionLabel}` : ""}`}
               >
                 <span className={styles.eventTime}>{info.timeText}</span>
                 <span className={styles.eventTitle}>
@@ -153,13 +159,18 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
                   </span>
                 )}
                 {status && <span className={styles.eventMeta}>{status}</span>}
+                {attention && (
+                  <span className={styles.eventAttention}>
+                    <AlertTriangle size={12} aria-hidden="true" /> דורש טיפול
+                  </span>
+                )}
               </button>
             );
           }}
         />
       </div>
 
-      <LessonDetailsDialog lessonId={openLesson} onClose={() => setOpenLesson(null)} />
+      <LessonDetailsDialog lessonId={openLesson} onClose={() => setOpenLesson(null)} isAdmin={isAdmin} options={options} />
     </div>
   );
 }

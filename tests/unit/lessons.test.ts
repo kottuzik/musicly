@@ -9,7 +9,22 @@ import {
   utcBounds,
   viewRange,
 } from "@/lib/lessons/time";
-import { bookLessonSchema, seriesSchema } from "@/lib/validation/lessons";
+import { dbErrorMessage } from "@/lib/errors";
+import {
+  ATTENTION_REASON_LABELS,
+  CANCEL_SOURCE_LABELS,
+  EXCEPTION_KIND_LABELS,
+} from "@/lib/lessons/labels";
+import {
+  bookLessonSchema,
+  cancelLessonSchema,
+  durationSeriesSchema,
+  lessonChangeRequestSchema,
+  lessonDecisionsSchema,
+  restoreLessonSchema,
+  seriesChangeSchema,
+  seriesSchema,
+} from "@/lib/validation/lessons";
 
 describe("school time zone conversions", () => {
   it("converts local wall-clock time to UTC in winter and summer", () => {
@@ -108,7 +123,76 @@ describe("booking validation", () => {
 });
 
 describe("time grid without school hours", () => {
-  it("falls back to 08:00–20:00", () => {
-    expect(visibleHours([], [])).toEqual({ slotMinTime: "08:00", slotMaxTime: "20:00" });
+  it("falls back to the 10:00–22:00 default", () => {
+    expect(visibleHours([], [])).toEqual({ slotMinTime: "10:00", slotMaxTime: "22:00" });
+  });
+});
+
+describe("validation of lesson changes", () => {
+  const id = "3f1c6b0e-8a52-4d6f-9d1e-2b9f0a7c4e11";
+  const future = "2999-01-05";
+
+  it("a restore needs the date and the time together, or neither", () => {
+    expect(restoreLessonSchema.safeParse({ id, version: 2, date: "", start: "" }).success).toBe(true);
+    expect(restoreLessonSchema.safeParse({ id, version: 2, date: future, start: "16:15" }).success).toBe(true);
+    expect(restoreLessonSchema.safeParse({ id, version: 2, date: future, start: "" }).success).toBe(false);
+    expect(restoreLessonSchema.safeParse({ id, version: 2, date: "", start: "16:15" }).success).toBe(false);
+  });
+
+  it("a teacher's request may suggest a time, but only as date and time together", () => {
+    const base = { lessonId: id, kind: "change", reason: "מופע" };
+    expect(lessonChangeRequestSchema.safeParse({ ...base, date: "", start: "" }).success).toBe(true);
+    expect(lessonChangeRequestSchema.safeParse({ ...base, date: future, start: "17:00" }).success).toBe(true);
+    expect(lessonChangeRequestSchema.safeParse({ ...base, date: future, start: "" }).success).toBe(false);
+    expect(lessonChangeRequestSchema.safeParse({ ...base, kind: "other", date: "", start: "" }).success).toBe(false);
+    expect(lessonChangeRequestSchema.safeParse({ ...base, date: "", start: "", reason: "א".repeat(501) }).success).toBe(false);
+  });
+
+  it("a cancellation reason is limited to 500 characters", () => {
+    expect(cancelLessonSchema.safeParse({ id, version: 1, reason: "" }).success).toBe(true);
+    expect(cancelLessonSchema.safeParse({ id, version: 1, reason: "א".repeat(501) }).success).toBe(false);
+  });
+
+  it("a series change needs a quarter-hour start and a valid weekday", () => {
+    const base = { seriesId: id, fromDate: future, day: 2, start: "16:15", duration: 45, teacherId: id, location: "school" };
+    expect(seriesChangeSchema.safeParse(base).success).toBe(true);
+    expect(seriesChangeSchema.safeParse({ ...base, start: "16:10" }).success).toBe(false);
+    expect(seriesChangeSchema.safeParse({ ...base, day: 7 }).success).toBe(false);
+    expect(seriesChangeSchema.safeParse({ ...base, fromDate: "2000-01-03" }).success).toBe(false);
+  });
+
+  it("per-lesson decisions accept only the four actions", () => {
+    expect(lessonDecisionsSchema.safeParse([{ lessonId: id, action: "cancel" }]).success).toBe(true);
+    expect(lessonDecisionsSchema.safeParse([{ lessonId: id, action: "substitute", teacherId: id }]).success).toBe(true);
+    expect(lessonDecisionsSchema.safeParse([{ lessonId: id, action: "move", date: future, start: "10:00" }]).success).toBe(true);
+    expect(lessonDecisionsSchema.safeParse([{ lessonId: id, action: "delete" }]).success).toBe(false);
+  });
+
+  it("duration choices may leave a meeting without a new start", () => {
+    expect(durationSeriesSchema.safeParse([{ seriesId: id, alternatives: [{ lessonId: id, start: null }] }]).success).toBe(true);
+    expect(durationSeriesSchema.safeParse([{ seriesId: id, alternatives: [{ lessonId: id, start: "14:00" }] }]).success).toBe(true);
+  });
+});
+
+describe("Hebrew texts for the new states", () => {
+  it("every attention reason, cancellation source and request kind has a label", () => {
+    expect(Object.keys(ATTENTION_REASON_LABELS).sort()).toEqual(
+      ["availability_removed", "outside_hours", "series_change_conflict", "teacher_absent", "teacher_inactive"],
+    );
+    expect(Object.keys(CANCEL_SOURCE_LABELS)).toHaveLength(5);
+    expect(Object.keys(EXCEPTION_KIND_LABELS)).toEqual(
+      expect.arrayContaining(["single", "series", "lesson_change", "series_change", "restore"]),
+    );
+  });
+
+  it("business errors from the database become Hebrew messages", () => {
+    expect(dbErrorMessage({ message: "lesson_changed" })).toContain("השיעור שונה");
+    expect(dbErrorMessage({ message: "request_too_late" })).toContain("היום שלפני השיעור");
+  });
+
+  it("a failed per-lesson decision adds the reason from the hint", () => {
+    const message = dbErrorMessage({ message: "decision_failed", hint: "slot_taken" });
+    expect(message).toContain("לא נשמר שום שינוי");
+    expect(message).toContain("השעה הזו כבר תפוסה");
   });
 });

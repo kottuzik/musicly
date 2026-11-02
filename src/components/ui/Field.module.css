@@ -56,3 +56,9 @@
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+.field input:disabled {
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}

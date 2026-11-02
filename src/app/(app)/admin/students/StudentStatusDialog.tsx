@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { StudentImpactNotice } from "@/components/impact/ImpactNotices";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -67,6 +68,7 @@ function StatusForm({ studentId, current, onDone }: Props & { onDone: () => void
   return (
     <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
+      {!current && <StudentImpactNotice studentId={studentId} />}
       <input type="hidden" name="id" value={studentId} />
       <input type="hidden" name="status" value="inactive" />
       <Field

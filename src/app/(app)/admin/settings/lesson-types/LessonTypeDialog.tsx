@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil, Plus } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGroup } from "@/components/ui/ChoiceGroup";
@@ -11,8 +11,12 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import { LESSON_TYPE_COLORS } from "@/lib/lesson-types/colors";
+import lessonChange from "@/components/lessons/LessonChange.module.css";
 import stack from "@/components/ui/Stack.module.css";
-import { createLessonType, updateLessonType } from "./actions";
+import { SelectField } from "@/components/ui/SelectField";
+import { WEEKDAY_LABELS } from "@/lib/time/weekdays";
+import { formatDay } from "@/lib/students/age";
+import { createLessonType, getDurationImpact, updateLessonType, type DurationImpactSeries } from "./actions";
 
 type LessonType = { id: string; name: string; default_duration_minutes: number; color: string };
 
@@ -54,11 +58,44 @@ function LessonTypeForm({ lessonType, onDone }: { lessonType?: LessonType; onDon
     return result;
   }, {});
 
+  // A changed duration can also be applied to existing weekly series: the admin chooses which,
+  // and what happens to the meetings that would clash.
+  const [duration, setDuration] = useState(String(lessonType?.default_duration_minutes ?? 45));
+  const [scope, setScope] = useState<"new" | "existing">("new");
+  const [impact, setImpact] = useState<DurationImpactSeries[] | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [alternatives, setAlternatives] = useState<Record<string, string>>({});
+  const newMinutes = Number(duration);
+  const changed = Boolean(lessonType) && Number.isInteger(newMinutes) && newMinutes >= 5 && newMinutes <= 240 && newMinutes !== lessonType?.default_duration_minutes;
+
+  useEffect(() => {
+    if (!lessonType || !changed || scope !== "existing") return;
+    let active = true;
+    void getDurationImpact(lessonType.id, newMinutes).then((list) => {
+      if (!active) return;
+      setImpact(list);
+      setPicked(new Set(list.map((x) => x.series_id)));
+    });
+    return () => {
+      active = false;
+    };
+  }, [lessonType, changed, scope, newMinutes]);
+
+  const durationSeries =
+    scope === "existing" && changed && impact
+      ? impact
+          .filter((x) => picked.has(x.series_id))
+          .map((x) => ({
+            seriesId: x.series_id,
+            alternatives: x.conflicts.map((c) => ({ lessonId: c.lesson_id, start: alternatives[c.lesson_id] || null })),
+          }))
+      : [];
 
   return (
     <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {lessonType && <input type="hidden" name="id" value={lessonType.id} />}
+      {lessonType && <input type="hidden" name="durationSeries" value={JSON.stringify(durationSeries)} />}
       <Field label="שם התחום" name="name" required maxLength={60} defaultValue={lessonType?.name} error={state.fieldErrors?.name} />
       <Field
         label="משך שיעור ברירת מחדל (דקות)"
@@ -69,10 +106,79 @@ function LessonTypeForm({ lessonType, onDone }: { lessonType?: LessonType; onDon
         max={240}
         step={5}
         required
-        defaultValue={lessonType?.default_duration_minutes ?? 45}
+        value={duration}
+        onChange={(e) => setDuration(e.target.value)}
         error={state.fieldErrors?.defaultDurationMinutes}
-        hint={lessonType ? "השינוי יחול על שיעורים חדשים. טיפול בשיעורים קיימים יתווסף בהמשך." : undefined}
+        hint={lessonType ? "השינוי יחול על שיעורים חדשים. שיעורים בודדים שכבר נקבעו לא משתנים." : undefined}
       />
+      {changed && (
+        <fieldset className={lessonChange.scope}>
+          <legend>מה לעשות עם סדרות שבועיות קיימות?</legend>
+          {(
+            [
+              ["new", "רק שיבוצים חדשים", "הסדרות הקיימות נשארות באורך הנוכחי."],
+              ["existing", "גם סדרות קיימות", "אפשר לבחור אילו סדרות יתעדכנו, ומה לעשות במפגשים שמתנגשים."],
+            ] as const
+          ).map(([value, title, hint]) => (
+            <label key={value} className={lessonChange.option}>
+              <input type="radio" name="durationScope" checked={scope === value} onChange={() => setScope(value)} />
+              <span>
+                <strong>{title}</strong>
+                <br />
+                <span className="text-secondary">{hint}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+      {changed && scope === "existing" && impact === null && <p className="text-secondary">בודקים אילו סדרות מושפעות...</p>}
+      {changed && scope === "existing" && impact && impact.length === 0 && (
+        <p className="text-secondary">אין סדרות פעילות בתחום הזה עם מפגשים עתידיים.</p>
+      )}
+      {changed && scope === "existing" && impact && impact.length > 0 && (
+        <div className={lessonChange.scope}>
+          {impact.map((x) => (
+            <fieldset key={x.series_id} className={lessonChange.scope}>
+              <label className={lessonChange.option}>
+                <input
+                  type="checkbox"
+                  checked={picked.has(x.series_id)}
+                  onChange={(e) =>
+                    setPicked((set) => {
+                      const next = new Set(set);
+                      if (e.target.checked) next.add(x.series_id);
+                      else next.delete(x.series_id);
+                      return next;
+                    })
+                  }
+                />
+                <span>
+                  <strong>{x.student_name}</strong> — {x.teacher_name}, יום {WEEKDAY_LABELS[x.day]} {x.start}
+                  <br />
+                  <span className="text-secondary">
+                    {x.meetings} מפגשים עתידיים, כיום {x.current_duration} דקות
+                    {x.conflicts.length > 0 && ` · ${x.conflicts.length} מתנגשים`}
+                  </span>
+                </span>
+              </label>
+              {picked.has(x.series_id) &&
+                x.conflicts.map((c) => (
+                  <SelectField
+                    key={c.lesson_id}
+                    label={`מפגש מתנגש — ${formatDay(c.date)} ${c.start}`}
+                    name={`alt-${c.lesson_id}`}
+                    value={alternatives[c.lesson_id] ?? ""}
+                    options={[
+                      { value: "", label: "ללא שינוי למפגש הזה (נשאר באורך הישן)" },
+                      ...c.suggestions.map((t) => ({ value: t, label: `להעביר ל־${t}` })),
+                    ]}
+                    onValueChange={(v) => setAlternatives((all) => ({ ...all, [c.lesson_id]: v }))}
+                  />
+                ))}
+            </fieldset>
+          ))}
+        </div>
+      )}
       {lessonType ? (
         <ChoiceGroup
           legend="צבע בלוח השנה"

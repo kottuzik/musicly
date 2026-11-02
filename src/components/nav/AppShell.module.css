@@ -270,3 +270,19 @@
     transform: translateX(100%);
   }
 }
+
+.navPending {
+  inline-size: 14px;
+  block-size: 14px;
+  margin-inline-start: auto;
+  border: 2px solid var(--color-primary-lighter);
+  border-block-start-color: var(--color-primary);
+  border-radius: 50%;
+  animation: nav-spin 800ms linear infinite;
+}
+
+@keyframes nav-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

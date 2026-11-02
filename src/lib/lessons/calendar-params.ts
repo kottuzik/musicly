@@ -20,13 +20,14 @@ export function parseCalendarParams(params: Params) {
     studentId: uuid(params.student),
     lessonTypeId: uuid(params.type),
     includeCancelled: one(params.cancelled) === "1",
+    attentionOnly: one(params.attention) === "1",
   };
 }
 
-// Hours shown in the time grid: the school's opening hours (08:00–20:00 until they are set),
+// Hours shown in the time grid: the school's opening hours (the 10:00–22:00 default until they are set),
 // widened to fit any lesson outside them.
 export function visibleHours(hours: { open_time: string; close_time: string }[], lessons: CalendarLesson[]) {
-  const opening = hours.length ? hours : [{ open_time: "08:00", close_time: "20:00" }];
+  const opening = hours.length ? hours : [{ open_time: "10:00", close_time: "22:00" }];
   const starts = [...opening.map((h) => h.open_time.slice(0, 5)), ...lessons.map((l) => schoolTime(l.start_at))];
   const ends = [...opening.map((h) => h.close_time.slice(0, 5)), ...lessons.map((l) => schoolTime(l.end_at))];
   const min = starts.reduce((a, b) => (a < b ? a : b));

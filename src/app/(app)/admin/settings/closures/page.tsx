@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { PageHeader } from "@/components/ui/PageHeader";
 import stack from "@/components/ui/Stack.module.css";
 import table from "@/components/ui/Table.module.css";
@@ -13,7 +12,7 @@ import { formatDay, schoolToday } from "@/lib/students/age";
 import { createClient } from "@/lib/supabase/server";
 import { addDays } from "@/lib/time/weekdays";
 import { SettingsTabs } from "../SettingsTabs";
-import { cancelClosure } from "./actions";
+import { CancelClosureDialog } from "./CancelClosureDialog";
 import { CustomClosureDialog } from "./CustomClosureDialog";
 import { HolidayButton } from "./HolidayButton";
 import styles from "./Closures.module.css";
@@ -83,16 +82,7 @@ export default async function ClosuresPage({ searchParams }: PageProps<"/admin/s
                     <td>
                       {c.status === "active" && (
                         <div className={table.actions}>
-                          <ConfirmAction
-                            action={cancelClosure}
-                            fields={{ id: c.id }}
-                            trigger="ביטול"
-                            triggerVariant="ghost"
-                            title={`ביטול יום הסגירה „${c.name}”`}
-                            description="בית הספר ייחשב פתוח בימים אלה. אין שיעורים מושפעים."
-                            confirmLabel="ביטול יום הסגירה"
-                            confirmVariant="danger"
-                          />
+                          <CancelClosureDialog id={c.id} name={c.name} />
                         </div>
                       )}
                     </td>

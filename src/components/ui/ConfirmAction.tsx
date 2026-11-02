@@ -12,10 +12,15 @@ type ConfirmActionProps = {
   fields: Record<string, string>;
   trigger: ReactNode;
   triggerVariant?: ButtonVariant;
+  triggerClassName?: string;
   title: string;
   description: ReactNode;
   confirmLabel: string;
   confirmVariant?: ButtonVariant;
+  // Extra form fields (e.g. a reason) shown inside the confirmation, submitted with the action.
+  children?: ReactNode;
+  // Called after the action succeeded.
+  onDone?: () => void;
 };
 
 // A button that asks for explicit confirmation before running a server action.
@@ -24,21 +29,27 @@ export function ConfirmAction({
   fields,
   trigger,
   triggerVariant = "outline",
+  triggerClassName,
   title,
   description,
   confirmLabel,
   confirmVariant = "primary",
+  children,
+  onDone,
 }: ConfirmActionProps) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await action(prev, formData);
-    if (result.ok) setOpen(false);
+    if (result.ok) {
+      setOpen(false);
+      onDone?.();
+    }
     return result;
   }, {});
 
   return (
     <>
-      <Button variant={triggerVariant} size="small" onClick={() => setOpen(true)}>
+      <Button variant={triggerVariant} size="small" className={triggerClassName} onClick={() => setOpen(true)}>
         {trigger}
       </Button>
       <Dialog open={open} onOpenChange={setOpen} title={title} description={description}>
@@ -46,6 +57,7 @@ export function ConfirmAction({
           {Object.entries(fields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
           ))}
+          {children}
           {state.error && <Alert tone="error">{state.error}</Alert>}
           <DialogActions>
             <Button variant="ghost" onClick={() => setOpen(false)}>

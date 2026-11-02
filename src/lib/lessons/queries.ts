@@ -10,12 +10,18 @@ type Client = SupabaseClient<Database>;
 export type CalendarLesson = Database["public"]["Functions"]["list_calendar_lessons"]["Returns"][number];
 export type LessonDetails = Database["public"]["Functions"]["get_lesson"]["Returns"][number];
 export type ExceptionRequest = Database["public"]["Functions"]["list_exception_requests"]["Returns"][number];
+export type LessonChangeRequest = Database["public"]["Functions"]["list_lesson_change_requests"]["Returns"][number];
+export type AttentionLesson = Database["public"]["Functions"]["list_attention_lessons"]["Returns"][number];
+export type RecentChange = Database["public"]["Functions"]["list_recent_changes"]["Returns"][number];
+export type LessonHistoryEntry = Database["public"]["Functions"]["list_lesson_history"]["Returns"][number];
 
 export type CalendarFilters = {
   teacherId?: string;
   studentId?: string;
   lessonTypeId?: string;
   includeCancelled?: boolean;
+  // Admins: only lessons flagged "needs attention".
+  attentionOnly?: boolean;
 };
 
 // Lessons shown between two local dates (inclusive). Teachers get only their own (enforced in the DB).
@@ -29,6 +35,7 @@ export async function loadCalendarLessons(supabase: Client, from: string, to: st
     p_student_id: (filters.studentId || null) as unknown as string,
     p_lesson_type_id: (filters.lessonTypeId || null) as unknown as string,
     p_include_cancelled: filters.includeCancelled ?? false,
+    p_attention_only: filters.attentionOnly ?? false,
   });
   return data ?? [];
 }
@@ -105,6 +112,30 @@ export async function loadExceptionRequests(supabase: Client, pendingOnly = fals
   return data ?? [];
 }
 
+// Teacher requests to change or cancel a lesson: admins see all, a teacher their own.
+export async function loadLessonChangeRequests(supabase: Client, pendingOnly = false) {
+  const { data } = await supabase.rpc("list_lesson_change_requests", { p_pending_only: pendingOnly });
+  return data ?? [];
+}
+
+// Admins: upcoming lessons flagged "needs attention".
+export async function loadAttentionLessons(supabase: Client) {
+  const { data } = await supabase.rpc("list_attention_lessons");
+  return data ?? [];
+}
+
+// Admins: the latest logged changes and cancellations.
+export async function loadRecentChanges(supabase: Client, limit = 10) {
+  const { data } = await supabase.rpc("list_recent_changes", { p_limit: limit });
+  return data ?? [];
+}
+
+// Admins: everything that happened to one lesson, newest first.
+export async function loadLessonHistory(supabase: Client, lessonId: string) {
+  const { data } = await supabase.rpc("list_lesson_history", { p_lesson_id: lessonId });
+  return data ?? [];
+}
+
 // Admin home: counts and today's upcoming lessons.
 export async function loadAdminDashboard(supabase: Client) {
   const today = schoolToday();
@@ -112,9 +143,10 @@ export async function loadAdminDashboard(supabase: Client) {
   const todayBounds = utcBounds(today, today);
   const weekBounds = utcBounds(week, addDays(week, 6));
   await supabase.rpc("expire_exception_requests");
+  await supabase.rpc("expire_lesson_change_requests");
 
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
-  const [students, teachers, todayCount, weekCount, availabilityRequests, exceptionRequests, todayLessons] = await Promise.all([
+  const [students, teachers, todayCount, weekCount, availabilityRequests, exceptionRequests, changeRequests, attention, recent, todayLessons] = await Promise.all([
     count(supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active")),
     count(supabase.from("teachers").select("id", { count: "exact", head: true }).eq("status", "active")),
     count(
@@ -135,6 +167,9 @@ export async function loadAdminDashboard(supabase: Client) {
     ),
     count(supabase.from("availability_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
     count(supabase.from("exception_booking_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    count(supabase.from("lesson_change_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    loadAttentionLessons(supabase),
+    loadRecentChanges(supabase, 8),
     loadCalendarLessons(supabase, today, today),
   ]);
 
@@ -144,7 +179,9 @@ export async function loadAdminDashboard(supabase: Client) {
     teachers,
     todayCount,
     weekCount,
-    pendingRequests: availabilityRequests + exceptionRequests,
+    pendingRequests: availabilityRequests + exceptionRequests + changeRequests,
+    attention,
+    recent,
     upcoming: todayLessons.filter((l) => l.status === "scheduled" && l.end_at > now),
   };
 }

@@ -24,7 +24,7 @@ export function navItemsForRole(role: Role, status: UserStatus = "active"): NavI
   return [
     { href: "/teacher", label: "בית", icon: "home" },
     { href: "/teacher/calendar", label: "לוח שנה", icon: "calendar" },
-    { href: "/teacher/requests", label: "בקשות שיבוץ", icon: "requests" },
+    { href: "/teacher/requests", label: "בקשות", icon: "requests" },
     { href: "/teacher/students", label: "התלמידים שלי", icon: "students" },
     { href: "/teacher/availability", label: "הזמינות שלי", icon: "availability" },
     profile,

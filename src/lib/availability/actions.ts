@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/actions";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
+import { isAdminRole } from "@/lib/auth/roles";
 import { requireProfile, requireRole } from "@/lib/auth/session";
 import { dbErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { fieldErrors } from "@/lib/validation/auth";
+import { lessonDecisionsSchema } from "@/lib/validation/lessons";
 import {
   absenceSchema,
   availabilitySlotSchema,
@@ -14,6 +16,15 @@ import {
   removalSchema,
   requestVersionSchema,
 } from "@/lib/validation/availability";
+
+// After an admin's direct change, how many upcoming lessons it hit (they are flagged "needs attention").
+async function flaggedMessage(supabase: Awaited<ReturnType<typeof createClient>>, requestId: string, done: string) {
+  const { data } = await supabase.rpc("availability_request_impact", { p_request_id: requestId });
+  const count = data?.length ?? 0;
+  if (!count) return undefined;
+  const lessons = count === 1 ? "שיעור עתידי אחד" : `${count} שיעורים עתידיים`;
+  return `${done} ${lessons} ${count === 1 ? "סומן" : "סומנו"} ”דורש טיפול” בלוח השנה, ולא שונו.`;
+}
 
 // Shared by teachers and admins. Whether the caller may act for this teacher, and whether a removal
 // is a pending request (teacher) or applied at once (admin), is decided by the database from the
@@ -63,7 +74,7 @@ export async function removeAvailability(_prev: ActionState, formData: FormData)
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("remove_availability", {
+  const { data: requestId, error } = await supabase.rpc("remove_availability", {
     p_availability_id: parsed.data.availabilityId,
     p_kind: parsed.data.kind,
     p_date: parsed.data.date,
@@ -77,7 +88,10 @@ export async function removeAvailability(_prev: ActionState, formData: FormData)
   }
 
   revalidateAvailability();
-  return { ok: true };
+  revalidatePath("/admin/calendar");
+  const profile = await requireProfile();
+  const success = isAdminRole(profile.role) ? await flaggedMessage(supabase, requestId, "הזמינות הוסרה.") : undefined;
+  return { ok: true, success };
 }
 
 export async function reportAbsence(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -96,7 +110,7 @@ export async function reportAbsence(_prev: ActionState, formData: FormData): Pro
   const v = parsed.data;
   const hours = v.mode === "hours";
   const supabase = await createClient();
-  const { error } = await supabase.rpc("report_absence", {
+  const { data: requestId, error } = await supabase.rpc("report_absence", {
     p_teacher_id: v.teacherId,
     p_start_date: v.startDate,
     p_end_date: hours ? v.startDate : v.endDate,
@@ -107,7 +121,10 @@ export async function reportAbsence(_prev: ActionState, formData: FormData): Pro
   if (error) return { error: dbErrorMessage(error) };
 
   revalidateAvailability();
-  return { ok: true };
+  revalidatePath("/admin/calendar");
+  const profile = await requireProfile();
+  const success = isAdminRole(profile.role) ? await flaggedMessage(supabase, requestId, "ההיעדרות נשמרה.") : undefined;
+  return { ok: true, success };
 }
 
 export async function cancelRequest(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -124,6 +141,32 @@ export async function cancelRequest(_prev: ActionState, formData: FormData): Pro
   return { ok: true };
 }
 
+export type ImpactedLesson = {
+  lessonId: string;
+  startAt: string;
+  endAt: string;
+  studentName: string;
+  lessonTypeName: string;
+  color: string;
+  location: "school" | "zoom";
+};
+
+// Lessons an approval would take out of the teacher's availability (admins only).
+export async function getAvailabilityImpact(requestId: string): Promise<ImpactedLesson[]> {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("availability_request_impact", { p_request_id: requestId });
+  return (data ?? []).map((l) => ({
+    lessonId: l.lesson_id,
+    startAt: l.start_at,
+    endAt: l.end_at,
+    studentName: l.student_name,
+    lessonTypeName: l.lesson_type_name,
+    color: l.color,
+    location: l.location,
+  }));
+}
+
 export async function decideRequest(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole(ADMIN_ROLES);
   const parsed = decisionSchema.safeParse({
@@ -134,15 +177,46 @@ export async function decideRequest(_prev: ActionState, formData: FormData): Pro
   });
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
 
+  // Per-lesson decisions come from the approval dialog as JSON; none means "keep and flag".
+  let decisions: ReturnType<typeof lessonDecisionsSchema.parse> = [];
+  const raw = text(formData, "decisions");
+  if (raw) {
+    try {
+      decisions = lessonDecisionsSchema.parse(JSON.parse(raw));
+    } catch {
+      return { error: dbErrorMessage({ message: "invalid_input" }) };
+    }
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.rpc("decide_availability_request", {
+  const { data, error } = await supabase.rpc("decide_availability_request", {
     p_id: parsed.data.id,
     p_version: parsed.data.version,
     p_approve: parsed.data.decision === "approve",
     p_note: parsed.data.note,
+    p_decisions: decisions.map((d) => ({
+      lesson_id: d.lessonId,
+      action: d.action,
+      teacher_id: d.teacherId,
+      date: d.date || undefined,
+      start: d.start || undefined,
+    })),
   });
   // Refresh either way: on a conflict the list must show the other admin's decision.
   revalidateAvailability();
-  if (error) return { error: dbErrorMessage(error) };
-  return { ok: true };
+  revalidatePath("/admin/calendar");
+  revalidatePath("/admin");
+  if (error) {
+    const failed = error.message === "decision_failed" ? (error as { details?: string }).details : undefined;
+    return { error: dbErrorMessage(error), failedId: failed };
+  }
+  const result = data as { cancelled: number; substituted: number; moved: number; requested: number; kept: number };
+  const parts = [
+    result.cancelled && `${result.cancelled} בוטלו`,
+    result.substituted && `${result.substituted} הועברו למורה מחליף`,
+    result.moved && `${result.moved} הועברו למועד אחר`,
+    result.requested && `${result.requested} ממתינים לאישור מורה`,
+    result.kept && `${result.kept} סומנו ”דורש טיפול”`,
+  ].filter(Boolean);
+  return { ok: true, success: parts.length ? `הבקשה אושרה. שיעורים: ${parts.join(", ")}.` : undefined };
 }

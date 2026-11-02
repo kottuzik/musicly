@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import { RequestsTable } from "@/components/availability/RequestsTable";
 import { ExceptionRequestsTable } from "@/components/lessons/ExceptionRequestsTable";
+import { LessonChangeRequestsTable } from "@/components/lessons/LessonChangeRequestsTable";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -14,7 +15,7 @@ import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
 import { REQUEST_KIND_LABELS, type RequestKind } from "@/lib/availability/labels";
 import { REQUEST_COLUMNS } from "@/lib/availability/queries";
-import { loadExceptionRequests } from "@/lib/lessons/queries";
+import { loadBookingOptions, loadExceptionRequests, loadLessonChangeRequests } from "@/lib/lessons/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "בקשות אישור" };
@@ -29,6 +30,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/admin/r
   await requireRole(ADMIN_ROLES);
   const params = await searchParams;
   if (one(params.section) === "booking") return <BookingRequests handled={one(params.tab) === "handled"} />;
+  if (one(params.section) === "changes") return <ChangeRequests handled={one(params.tab) === "handled"} />;
   const tab = one(params.tab) === "handled" ? "handled" : "pending";
   const kind = KINDS.includes(one(params.kind) as RequestKind) ? (one(params.kind) as RequestKind) : "";
   const q = one(params.q).trim();
@@ -94,7 +96,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/admin/r
   );
 }
 
-function SectionTabs({ current }: { current: "availability" | "booking" }) {
+function SectionTabs({ current }: { current: "availability" | "booking" | "changes" }) {
   return (
     <Tabs
       label="סוג בקשות"
@@ -102,6 +104,7 @@ function SectionTabs({ current }: { current: "availability" | "booking" }) {
       items={[
         { key: "availability", href: "/admin/requests", label: "זמינות והיעדרויות" },
         { key: "booking", href: "/admin/requests?section=booking", label: "שיבוץ מחוץ לזמינות" },
+        { key: "changes", href: "/admin/requests?section=changes", label: "שינוי וביטול שיעורים" },
       ]}
     />
   );
@@ -135,6 +138,42 @@ async function BookingRequests({ handled }: { handled: boolean }) {
           rows={rows}
           mode="admin"
           empty={handled ? "אין בקשות שהסתיימו." : "אין בקשות שיבוץ ממתינות."}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Teachers' requests to change or cancel one of their lessons, for an admin to answer.
+async function ChangeRequests({ handled }: { handled: boolean }) {
+  const supabase = await createClient();
+  await supabase.rpc("expire_lesson_change_requests");
+  const [all, options] = await Promise.all([loadLessonChangeRequests(supabase), loadBookingOptions(supabase)]);
+  const pending = all.filter((r) => r.status === "pending");
+  const rows = handled ? all.filter((r) => r.status !== "pending") : pending;
+
+  return (
+    <div className={stack.page}>
+      <LiveRefresh tables={["lesson_change_requests", "lessons"]} />
+      <PageHeader
+        title="בקשות אישור"
+        subtitle="מורים יכולים לבקש שינוי או ביטול של שיעור עד היום שלפני השיעור. ביטול מאשרים כאן; שינוי מאשרים בקביעת המועד החדש."
+      />
+      <SectionTabs current="changes" />
+      <Tabs
+        label="סטטוס בקשות"
+        current={handled ? "handled" : "pending"}
+        items={[
+          { key: "pending", href: "/admin/requests?section=changes", label: `ממתינות (${pending.length})` },
+          { key: "handled", href: "/admin/requests?section=changes&tab=handled", label: "טופלו" },
+        ]}
+      />
+      <div className={table.wrapper}>
+        <LessonChangeRequestsTable
+          rows={rows}
+          mode="admin"
+          options={options}
+          empty={handled ? "אין בקשות שטופלו." : "אין בקשות ממתינות לשינוי או לביטול שיעור."}
         />
       </div>
     </div>

@@ -246,9 +246,20 @@ function RemoveSlotForm({ mode, slot, today, onDone }: { mode: Mode; slot: Slot;
   const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await removeAvailability(prev, formData);
     setErrors(result.fieldErrors ?? {});
-    if (result.ok) onDone();
+    if (result.ok && !result.success) onDone();
     return result;
   }, {});
+
+  if (state.ok && state.success) {
+    return (
+      <div className={stack.form}>
+        <Alert tone="success">{state.success}</Alert>
+        <DialogActions>
+          <Button onClick={onDone}>סגירה</Button>
+        </DialogActions>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
@@ -315,7 +326,11 @@ function RemoveSlotForm({ mode, slot, today, onDone }: { mode: Mode; slot: Slot;
         }}
         error={errors.reason}
       />
-      <p className="text-small text-secondary">אין שיעורים מושפעים.</p>
+      <p className="text-small text-secondary">
+        {mode === "admin"
+          ? "שיעורים עתידיים בטווח שהוסר יסומנו ”דורש טיפול” בלוח השנה, ולא ישונו אוטומטית."
+          : "אחרי אישור המנהל, שיעורים שכבר נקבעו בטווח הזה יטופלו על ידו אחד אחד."}
+      </p>
       <DialogActions>
         <Button variant="ghost" onClick={onDone}>
           ביטול

@@ -136,3 +136,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+.weekTable {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.weekTable th,
+.weekTable td {
+  padding: 5px 6px;
+  text-align: start;
+  vertical-align: top;
+}
+
+.weekTable thead th {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  border-block-end: 1px solid var(--color-secondary-light);
+}
+
+.weekTable tbody th {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.weekTable td bdi {
+  white-space: nowrap;
+}
+
+.weekTable tr.chosenDay {
+  background: var(--color-primary-lighter);
+  font-weight: 600;
+}
+
+.weekDate {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}

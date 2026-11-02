@@ -96,3 +96,18 @@
   color: var(--color-primary);
   font-weight: 500;
 }
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feed li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

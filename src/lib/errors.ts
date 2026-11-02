@@ -34,22 +34,40 @@ const MESSAGES: Record<string, string> = {
   no_occurrences: "אין אף מפגש בין תאריך ההתחלה לתאריך הסיום שנבחרו.",
   subject_has_lessons: "לתלמיד יש שיעורים מתוכננים או בקשת שיבוץ בתחום הזה, ולכן לא ניתן להסיר אותו כעת.",
   regular_teacher_has_lessons:
-    "לתלמיד יש שיעורים מתוכננים בתחום הזה, ולכן אי אפשר להחליף כרגע את המורה הקבוע. החלפת מורה בסדרה תתאפשר בהמשך.",
+    "לתלמיד יש שיעורים מתוכננים בתחום הזה. להחלפת המורה הקבוע יש להשתמש ב„החלפת מורה בסדרה” בסדרה של התלמיד.",
   lesson_type_has_students: "רשומים לתחום תלמידים. הסירו קודם את התחום מהתלמידים.",
   lesson_type_has_lessons: "קיימים שיעורים או בקשות שיבוץ בתחום הזה, ולכן לא ניתן למחוק אותו.",
   lesson_type_only_skill: "זה התחום היחיד של חלק מהמורים. הוסיפו להם תחום אחר קודם.",
   lesson_type_has_teachers: "משויכים לתחום מורים. יש לאשר את הסרתו מכל המורים.",
+  lesson_changed: "השיעור שונה בינתיים. הנתונים עודכנו — בדקו ונסו שוב.",
+  lesson_past: "השיעור כבר התחיל או עבר, ולא ניתן לשנות אותו.",
+  lesson_not_scheduled: "השיעור אינו מתוכנן (הוא בוטל או שאינו מתקיים).",
+  lesson_not_cancelled: "השיעור אינו מבוטל.",
+  lesson_already_cancelled: "השיעור כבר בוטל.",
+  date_taken: "בתאריך הזה כבר יש מפגש אחר של אותה סדרה.",
+  slot_taken: "השעה הזו כבר תפוסה.",
+  outside_hours: "המועד מחוץ לשעות הפעילות של בית הספר.",
+  request_too_late: "אפשר לבקש שינוי או ביטול עד היום שלפני השיעור. ביום השיעור יש לתאם ישירות עם המנהל.",
+  change_request_pending: "כבר קיימת בקשה ממתינה לשיעור או לסדרה הזו.",
+  change_requires_update: "בקשת שינוי מאשרים בקביעת המועד החדש של השיעור.",
+  series_ended: "הסדרה כבר הסתיימה.",
+  no_future_lessons: "אין מפגשים עתידיים בסדרה מהתאריך שנבחר.",
+  decision_failed: "לא ניתן לבצע את ההחלטה לאחד השיעורים. לא נשמר שום שינוי.",
+  not_impacted: "ההחלטה מתייחסת לשיעור שאינו מושפע.",
+  series_not_active: "אחת הסדרות כבר אינה פעילה.",
 };
 
 export const GENERIC_ERROR = "אירעה שגיאה. נסו שוב בעוד רגע.";
 
-type DbError = { message?: string; code?: string } | null | undefined;
+type DbError = { message?: string; code?: string; hint?: string } | null | undefined;
 
 export function dbErrorMessage(error: DbError, overrides: Record<string, string> = {}): string {
   if (!error) return GENERIC_ERROR;
   const key = error.message ?? "";
   if (overrides[key]) return overrides[key];
   if (error.code && overrides[error.code]) return overrides[error.code];
+  // A failed per-lesson decision carries the reason as the hint.
+  if (key === "decision_failed" && error.hint && MESSAGES[error.hint]) return `${MESSAGES[key]} ${MESSAGES[error.hint]}`;
   if (MESSAGES[key]) return MESSAGES[key];
   if (key.includes("last active super admin")) return "חייב להישאר לפחות מנהל ראשי פעיל אחד.";
   if (error.code === "23505") return "הערך כבר קיים במערכת.";

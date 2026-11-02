@@ -5,7 +5,7 @@ import { CreateInviteButton } from "@/components/invitations/CreateInviteButton"
 import { Alert } from "@/components/ui/Alert";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SelectField } from "@/components/ui/SelectField";
@@ -16,7 +16,8 @@ import { ADMIN_ROLES, ROLE_LABELS, isSuperAdmin, type Role } from "@/lib/auth/ro
 import { requireRole } from "@/lib/auth/session";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState, formatDate } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
-import { revokeInvitation } from "../teachers/actions";
+import { TeacherImpactNotice } from "@/components/impact/ImpactNotices";
+import { revokeInvitation, setTeacherStatus } from "../teachers/actions";
 import { regenerateAdminInvitation, setAdminStatus } from "./actions";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { PermissionsDialog } from "./PermissionsDialog";
@@ -137,7 +138,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                       <Badge tone={STATUS_LABELS[u.status].tone}>{STATUS_LABELS[u.status].label}</Badge>
                     </td>
                     <td>
-                      <div className={table.actions}>
+                      <div className={`${table.actions} ${styles.actions}`}>
                         {canManage && u.role === "admin" && (
                           <>
                             <PermissionsDialog
@@ -149,7 +150,8 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                               action={setAdminStatus}
                               fields={{ id: u.id, status: u.status === "active" ? "inactive" : "active" }}
                               trigger={u.status === "active" ? "הסרה" : "הפעלה מחדש"}
-                              triggerVariant={u.status === "active" ? "danger" : "outline"}
+                              triggerVariant={u.status === "active" ? "danger" : "ghost"}
+                            triggerClassName={u.status === "active" ? undefined : styles.reactivate}
                               title={u.status === "active" ? `הסרת ${u.full_name}` : `הפעלת ${u.full_name} מחדש`}
                               description={
                                 u.status === "active"
@@ -162,9 +164,28 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                           </>
                         )}
                         {teacherId && (
-                          <Link href={`/admin/teachers/${teacherId}`} className="text-small">
+                          <ButtonLink href={`/admin/teachers/${teacherId}`} variant="ghost" size="small">
                             לפרטי המורה
-                          </Link>
+                          </ButtonLink>
+                        )}
+                        {canManage && teacherId && u.role === "teacher" && (
+                          <ConfirmAction
+                            action={setTeacherStatus}
+                            fields={{ id: teacherId, status: u.status === "active" ? "inactive" : "active" }}
+                            trigger={u.status === "active" ? "הסרה" : "הפעלה מחדש"}
+                            triggerVariant={u.status === "active" ? "danger" : "ghost"}
+                            triggerClassName={u.status === "active" ? undefined : styles.reactivate}
+                            title={u.status === "active" ? `הסרת ${u.full_name}` : `הפעלת ${u.full_name} מחדש`}
+                            description={
+                              u.status === "active"
+                                ? "המורה יוסר מהמערכת הפעילה: לא יוכל לקבל שיבוצים חדשים, ויוכל להתחבר לצפייה בהיסטוריית השיעורים שלו בלבד. הנתונים נשמרים, ואפשר להפעיל אותו מחדש בכל עת."
+                                : "המורה יוכל לקבל שיבוצים ולנהל את הזמינות שלו שוב."
+                            }
+                            confirmLabel={u.status === "active" ? "הסר מורה" : "הפעל מחדש"}
+                            confirmVariant={u.status === "active" ? "danger" : "primary"}
+                          >
+                            {u.status === "active" && <TeacherImpactNotice teacherId={teacherId} />}
+                          </ConfirmAction>
                         )}
                       </div>
                     </td>
@@ -196,7 +217,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                     </td>
                     <td>
                       {canManage && (
-                        <div className={table.actions}>
+                        <div className={`${table.actions} ${styles.actions}`}>
                           <CreateInviteButton action={regenerateAdminInvitation} fields={{ id: i.id }} label="צור קישור חדש" />
                           <ConfirmAction
                             action={revokeInvitation}

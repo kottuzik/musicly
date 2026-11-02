@@ -6,7 +6,8 @@ import { useId, useState } from "react";
 import fieldStyles from "./Field.module.css";
 import styles from "./SelectField.module.css";
 
-export type SelectOption = { value: string; label: string };
+// A disabled option is shown but cannot be chosen (e.g. a time that is already taken).
+export type SelectOption = { value: string; label: string; disabled?: boolean };
 
 type SelectFieldProps = {
   label: string;
@@ -19,6 +20,8 @@ type SelectFieldProps = {
   // Controlled use (e.g. dependent fields); otherwise the field keeps its own state.
   value?: string;
   onValueChange?: (value: string) => void;
+  // Cannot be opened (e.g. until a field it depends on is filled).
+  disabled?: boolean;
 };
 
 // Radix Select reserves "" for "no value", so options with an empty value use this stand-in.
@@ -36,6 +39,7 @@ export function SelectField({
   hideLabel,
   value: controlled,
   onValueChange,
+  disabled,
 }: SelectFieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
@@ -50,6 +54,7 @@ export function SelectField({
       <input type="hidden" name={name} value={value} />
       <Select.Root
         dir="rtl"
+        disabled={disabled}
         value={value === "" && !options.some((o) => o.value === "") ? "" : value || EMPTY}
         onValueChange={(v) => {
           const next = v === EMPTY ? "" : v;
@@ -74,7 +79,12 @@ export function SelectField({
           <Select.Content className={styles.content} position="popper" side="bottom" sideOffset={12} dir="rtl">
             <Select.Viewport className={styles.viewport}>
               {options.map((option) => (
-                <Select.Item key={option.value || EMPTY} value={option.value || EMPTY} className={styles.item}>
+                <Select.Item
+                  key={option.value || EMPTY}
+                  value={option.value || EMPTY}
+                  disabled={option.disabled}
+                  className={styles.item}
+                >
                   <Select.ItemText>{option.label}</Select.ItemText>
                   <Select.ItemIndicator className={styles.indicator}>
                     <Check size={16} aria-hidden="true" />

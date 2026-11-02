@@ -10,6 +10,7 @@ import stack from "@/components/ui/Stack.module.css";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import { decideRequest } from "@/lib/availability/actions";
+import { ImpactDecisions } from "./ImpactDecisions";
 
 type Props = {
   request: { id: string; version: number };
@@ -48,9 +49,20 @@ function DecisionForm({ request, decision, onDone }: Omit<Props, "summary"> & { 
   const [note, setNote] = useState("");
   const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await decideRequest(prev, formData);
-    if (result.ok) onDone();
+    if (result.ok && !result.success) onDone();
     return result;
   }, {});
+
+  if (state.ok && state.success) {
+    return (
+      <div className={stack.form}>
+        <Alert tone="success">{state.success}</Alert>
+        <DialogActions>
+          <Button onClick={onDone}>סגירה</Button>
+        </DialogActions>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
@@ -58,7 +70,8 @@ function DecisionForm({ request, decision, onDone }: Omit<Props, "summary"> & { 
       <input type="hidden" name="id" value={request.id} />
       <input type="hidden" name="version" value={request.version} />
       <input type="hidden" name="decision" value={decision} />
-      {approve && <p className="text-secondary">השינוי ייכנס לתוקף מיד עם האישור. שיעורים שכבר נקבעו אינם משתנים אוטומטית.</p>}
+      {approve && <p className="text-secondary">השינוי ייכנס לתוקף מיד עם האישור.</p>}
+      {approve && <ImpactDecisions requestId={request.id} failedId={state.failedId} />}
       <TextareaField
         label="הערה למורה (לא חובה)"
         name="note"

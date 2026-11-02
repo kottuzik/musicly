@@ -28,7 +28,7 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
 
   return (
     <div className={stack.page}>
-      <LiveRefresh tables={["lessons", "exception_booking_requests"]} />
+      <LiveRefresh tables={["lessons", "exception_booking_requests", "lesson_change_requests"]} />
       <PageHeader
         title="לוח שנה"
         subtitle="כל השיעורים של בית הספר. לחיצה על שיעור פותחת את פרטיו."
@@ -39,6 +39,7 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
         teachers={options.teachers.map((t) => ({ value: t.id, label: t.name }))}
         students={options.students.map((s) => ({ value: s.id, label: s.name }))}
         lessonTypes={options.lessonTypes.map((lt) => ({ value: lt.id, label: lt.name }))}
+        showAttention
       />
       <LessonCalendar
         lessons={lessons}
@@ -46,6 +47,8 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
         date={params.date}
         viewFromUrl={params.viewFromUrl}
         showTeacher
+        isAdmin
+        options={options}
         {...hours}
       />
     </div>

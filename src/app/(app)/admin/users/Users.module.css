@@ -30,3 +30,14 @@
   unicode-bidi: isolate;
   word-break: break-all;
 }
+
+/* Row actions: same width and height for every button; destructive action always last. */
+.actions button,
+.actions a {
+  min-inline-size: 120px;
+}
+
+.actions .reactivate {
+  font-weight: 700;
+  color: var(--color-primary);
+}
