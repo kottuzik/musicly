@@ -12,7 +12,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, Video } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ATTENTION_REASON_LABELS, LESSON_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
+import { ATTENDANCE_LABELS, ATTENTION_REASON_LABELS, LESSON_STATUS_LABELS, LOCATION_LABELS } from "@/lib/lessons/labels";
 import type { BookingOptions, CalendarLesson } from "@/lib/lessons/queries";
 import {
   CALENDAR_VIEWS,
@@ -137,6 +137,7 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
           eventContent={(info) => {
             const l = info.event.extendedProps.lesson as CalendarLesson;
             const status = l.status === "scheduled" ? null : LESSON_STATUS_LABELS[l.status].label;
+            const attendance = l.status === "scheduled" && l.attendance_status ? ATTENDANCE_LABELS[l.attendance_status].label : null;
             const attention = isAdmin && l.requires_attention && l.status === "scheduled";
             const attentionLabel = l.attention_reason ? ATTENTION_REASON_LABELS[l.attention_reason] : "דורש טיפול";
             return (
@@ -146,7 +147,7 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
                 style={{ borderInlineStartColor: l.color }}
                 title={`${l.lesson_type_name} — ${l.student_name}${showTeacher ? ` (${l.teacher_name})` : ""}`}
                 onClick={() => setOpenLesson(l.id)}
-                aria-label={`${info.timeText} ${l.lesson_type_name} — ${l.student_name}${showTeacher ? `, ${l.teacher_name}` : ""}${l.location === "zoom" ? `, ${LOCATION_LABELS.zoom}` : ""}${status ? `, ${status}` : ""}${attention ? `, דורש טיפול: ${attentionLabel}` : ""}`}
+                aria-label={`${info.timeText} ${l.lesson_type_name} — ${l.student_name}${showTeacher ? `, ${l.teacher_name}` : ""}${l.location === "zoom" ? `, ${LOCATION_LABELS.zoom}` : ""}${status ? `, ${status}` : ""}${attendance ? `, ${attendance}` : ""}${attention ? `, דורש טיפול: ${attentionLabel}` : ""}`}
               >
                 <span className={styles.eventTime}>{info.timeText}</span>
                 <span className={styles.eventTitle}>
@@ -159,6 +160,7 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
                   </span>
                 )}
                 {status && <span className={styles.eventMeta}>{status}</span>}
+                {attendance && <span className={styles.eventMeta}>{attendance}</span>}
                 {attention && (
                   <span className={styles.eventAttention}>
                     <AlertTriangle size={12} aria-hidden="true" /> דורש טיפול

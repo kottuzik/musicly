@@ -85,6 +85,25 @@ function addMonths(date: string, months: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+// "YYYY-MM" month picker values (history screens).
+export function isMonth(value: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+}
+
+export function shiftMonth(month: string, delta: number): string {
+  return addMonths(`${month}-01`, delta).slice(0, 7);
+}
+
+// First and last local date of a month.
+export function monthDates(month: string): { from: string; to: string } {
+  const from = `${month}-01`;
+  return { from, to: addDays(addMonths(from, 1), -1) };
+}
+
+export function monthTitle(month: string): string {
+  return new Date(`${month}-15T12:00:00Z`).toLocaleDateString("he-IL", { timeZone: "UTC", month: "long", year: "numeric" });
+}
+
 // The dates a view shows: [first, last] inclusive. The month grid always shows six whole weeks.
 export function viewRange(view: CalendarView, date: string): { from: string; to: string } {
   if (view === "day") return { from: date, to: date };

@@ -2,6 +2,8 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClearNotice } from "@/components/ClearNotice";
+import { HistoryLessons } from "@/components/attendance/HistoryLessons";
 import { AvailabilityPanel } from "@/components/availability/AvailabilityPanel";
 import { CreateInviteButton } from "@/components/invitations/CreateInviteButton";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
@@ -17,6 +19,9 @@ import table from "@/components/ui/Table.module.css";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
 import { loadTeacherAvailability } from "@/lib/availability/queries";
+import { loadHistoryLessons } from "@/lib/lessons/queries";
+import { isMonth } from "@/lib/lessons/time";
+import { schoolToday } from "@/lib/students/age";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState, formatDate } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
 import { TeacherImpactNotice } from "@/components/impact/ImpactNotices";
@@ -31,8 +36,9 @@ const LIVE_TABLES = ["teacher_availability", "availability_requests", "teacher_a
 export default async function TeacherDetailsPage({ params, searchParams }: PageProps<"/admin/teachers/[id]">) {
   await requireRole(ADMIN_ROLES);
   const { id } = await params;
-  const { notice, tab: tabParam } = await searchParams;
-  const tab = tabParam === "availability" ? "availability" : "general";
+  const { notice, tab: tabParam, month: monthParam } = await searchParams;
+  const tab = tabParam === "availability" ? "availability" : tabParam === "history" ? "history" : "general";
+  const month = typeof monthParam === "string" && isMonth(monthParam) ? monthParam : schoolToday().slice(0, 7);
 
   const supabase = await createClient();
   const [{ data: teacher }, { data: lessonTypes }, { data: invitations }] = await Promise.all([
@@ -58,9 +64,10 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
       </Link>
 
       {notice === "created" && (
-        <Alert tone="success">
-          המורה נוסף. כדי שיוכל להתחבר, צרו עבורו קישור הרשמה ושלחו אותו אליו.
-        </Alert>
+        <>
+          <ClearNotice />
+          <Alert tone="success">המורה נוסף. כדי שיוכל להתחבר, צרו עבורו קישור הרשמה ושלחו אותו אליו.</Alert>
+        </>
       )}
 
       <PageHeader
@@ -103,17 +110,31 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
         }
       />
 
-      {/* The lesson history tab is added with scheduling (M5). */}
       <Tabs
         label="פרטי מורה"
         items={[
           { key: "general", href: `/admin/teachers/${teacher.id}`, label: "פרטים כלליים" },
           { key: "availability", href: `/admin/teachers/${teacher.id}?tab=availability`, label: "זמינות" },
+          { key: "history", href: `/admin/teachers/${teacher.id}?tab=history`, label: "היסטוריית שיעורים" },
         ]}
         current={tab}
       />
 
-      {tab === "availability" ? (
+      {tab === "history" ? (
+        <>
+          <LiveRefresh tables={["lessons", "attendance"]} />
+          <HistoryLessons
+            lessons={await loadHistoryLessons(supabase, month, { teacherId: teacher.id })}
+            month={month}
+            hrefForMonth={(m) => `/admin/teachers/${teacher.id}?tab=history&month=${m}`}
+            showStudent
+            showTeacher={false}
+            canReport
+            asOf={new Date().toISOString()}
+            empty="אין שיעורים למורה בחודש הזה."
+          />
+        </>
+      ) : tab === "availability" ? (
         <>
           <LiveRefresh tables={LIVE_TABLES} />
           {!active && <Alert tone="warning">המורה אינו פעיל, ולכן אי אפשר להוסיף לו זמינות.</Alert>}

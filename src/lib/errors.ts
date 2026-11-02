@@ -55,6 +55,8 @@ const MESSAGES: Record<string, string> = {
   decision_failed: "לא ניתן לבצע את ההחלטה לאחד השיעורים. לא נשמר שום שינוי.",
   not_impacted: "ההחלטה מתייחסת לשיעור שאינו מושפע.",
   series_not_active: "אחת הסדרות כבר אינה פעילה.",
+  attendance_changed: "הנוכחות עודכנה בינתיים בידי מישהו אחר. הנתונים רועננו — בדקו ונסו שוב.",
+  held_confirmation_required: "השיעור סומן כ„התקיים”. ביטול שלו דורש אישור מפורש.",
 };
 
 export const GENERIC_ERROR = "אירעה שגיאה. נסו שוב בעוד רגע.";

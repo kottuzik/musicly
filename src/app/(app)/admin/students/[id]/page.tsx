@@ -2,6 +2,9 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClearNotice } from "@/components/ClearNotice";
+import { HistoryLessons } from "@/components/attendance/HistoryLessons";
+import { LiveRefresh } from "@/components/realtime/LiveRefresh";
 import { StudentSubjectsList } from "@/components/students/StudentSubjectsList";
 import { Alert } from "@/components/ui/Alert";
 import { Avatar } from "@/components/ui/Avatar";
@@ -14,7 +17,9 @@ import stack from "@/components/ui/Stack.module.css";
 import table from "@/components/ui/Table.module.css";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
-import { ageOn, formatDay } from "@/lib/students/age";
+import { loadHistoryLessons } from "@/lib/lessons/queries";
+import { isMonth } from "@/lib/lessons/time";
+import { ageOn, formatDay, schoolToday } from "@/lib/students/age";
 import { RETURN_MODE_LABELS, STUDENT_STATUS_LABELS } from "@/lib/students/labels";
 import { getStudent } from "@/lib/students/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -29,8 +34,9 @@ export const metadata: Metadata = { title: "פרטי תלמיד" };
 export default async function StudentDetailsPage({ params, searchParams }: PageProps<"/admin/students/[id]">) {
   await requireRole(ADMIN_ROLES);
   const { id } = await params;
-  const { tab, notice } = await searchParams;
-  const current = tab === "subjects" ? "subjects" : "general";
+  const { tab, notice, month: monthParam } = await searchParams;
+  const current = tab === "subjects" ? "subjects" : tab === "history" ? "history" : "general";
+  const month = typeof monthParam === "string" && isMonth(monthParam) ? monthParam : schoolToday().slice(0, 7);
 
   const supabase = await createClient();
   const [detail, { data: lessonTypes }, { data: teachers }] = await Promise.all([
@@ -50,6 +56,7 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
     lessonTypeIds: t.teacher_skills.map((s) => s.lesson_type_id),
   }));
   const base = `/admin/students/${student.id}`;
+  const historyLessons = current === "history" ? await loadHistoryLessons(supabase, month, { studentId: student.id }) : [];
 
   return (
     <div className={stack.page}>
@@ -58,7 +65,12 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
         חזרה לרשימת התלמידים
       </Link>
 
-      {notice === "created" && <Alert tone="success">התלמיד נוסף. עכשיו אפשר לרשום אותו לתחומי לימוד.</Alert>}
+      {notice === "created" && (
+        <>
+          <ClearNotice />
+          <Alert tone="success">התלמיד נוסף. עכשיו אפשר לרשום אותו לתחומי לימוד.</Alert>
+        </>
+      )}
 
       <PageHeader
         title={
@@ -89,17 +101,31 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
         }
       />
 
-      {/* Lesson history (M5) and attendance (M7) tabs are added in later milestones. */}
       <Tabs
         label="פרטי תלמיד"
         items={[
           { key: "general", href: base, label: "פרטים כלליים" },
           { key: "subjects", href: `${base}?tab=subjects`, label: `תחומי לימוד (${subjects.length})` },
+          { key: "history", href: `${base}?tab=history`, label: "היסטוריית שיעורים" },
         ]}
         current={current}
       />
 
-      {current === "general" ? (
+      {current === "history" ? (
+        <>
+          <LiveRefresh tables={["lessons", "attendance"]} />
+          <HistoryLessons
+            lessons={historyLessons}
+            month={month}
+            hrefForMonth={(m) => `${base}?tab=history&month=${m}`}
+            showStudent={false}
+            showTeacher
+            canReport
+            asOf={new Date().toISOString()}
+            empty="אין שיעורים לתלמיד בחודש הזה."
+          />
+        </>
+      ) : current === "general" ? (
         <div className={styles.grid}>
           <Card>
             <h2 className={`text-h3 ${stack.sectionTitle}`}>פרטים אישיים ופרטי קשר</h2>

@@ -196,3 +196,38 @@ describe("Hebrew texts for the new states", () => {
     expect(message).toContain("השעה הזו כבר תפוסה");
   });
 });
+
+describe("attendance", () => {
+  it("validates a report", async () => {
+    const { attendanceSchema } = await import("@/lib/validation/lessons");
+    const id = "6f1c1f0e-6a43-4d0c-9e0b-0a3f6a3c9a11";
+    expect(attendanceSchema.safeParse({ lessonId: id, status: "held", note: "", version: "" }).success).toBe(true);
+    expect(attendanceSchema.safeParse({ lessonId: id, status: "student_absent", note: "x", version: "3" }).success).toBe(true);
+    expect(attendanceSchema.safeParse({ lessonId: id, status: "", note: "", version: "" }).success).toBe(false);
+    expect(attendanceSchema.safeParse({ lessonId: id, status: "held", note: "א".repeat(501), version: "" }).success).toBe(false);
+    expect(attendanceSchema.safeParse({ lessonId: id, status: "held", note: "", version: "0" }).success).toBe(false);
+  });
+
+  it("describes log entries with statuses only", async () => {
+    const { auditDetail } = await import("@/lib/lessons/labels");
+    expect(auditDetail("attendance_reported", null, { status: "held", has_note: true })).toBe("התקיים");
+    expect(auditDetail("attendance_changed", { status: "held" }, { status: "student_absent" })).toBe("התקיים ← התלמיד לא הגיע");
+    expect(auditDetail("attendance_changed", { status: "held" }, { status: "held" })).toBe("התקיים (ההערה עודכנה)");
+    expect(auditDetail("held_lesson_cancelled", { attendance_status: "held" }, { lesson_status: "cancelled" })).toBe("התקיים");
+    expect(auditDetail("lesson_cancelled", null, null)).toBeNull();
+  });
+
+  it("has a message for the attendance errors", () => {
+    expect(dbErrorMessage({ message: "attendance_changed" })).not.toBe(dbErrorMessage({ message: "unknown_key" }));
+    expect(dbErrorMessage({ message: "held_confirmation_required" })).toContain("התקיים");
+  });
+
+  it("moves between months", async () => {
+    const { isMonth, shiftMonth, monthDates } = await import("@/lib/lessons/time");
+    expect(isMonth("2026-05")).toBe(true);
+    expect(isMonth("2026-13")).toBe(false);
+    expect(shiftMonth("2026-12", 1)).toBe("2027-01");
+    expect(shiftMonth("2026-01", -1)).toBe("2025-12");
+    expect(monthDates("2026-02")).toEqual({ from: "2026-02-01", to: "2026-02-28" });
+  });
+});

@@ -75,7 +75,20 @@ export const editLessonSchema = z.object({
   changeRequestId: z.union([z.literal(""), z.uuid()]).optional(),
 });
 
-export const cancelLessonSchema = z.object({ id: z.uuid(), version: versionField, reason: reasonText });
+export const cancelLessonSchema = z.object({
+  id: z.uuid(),
+  version: versionField,
+  reason: reasonText,
+  confirmHeld: confirm,
+});
+
+export const attendanceSchema = z.object({
+  lessonId: z.uuid(),
+  status: z.enum(["held", "student_absent", "teacher_absent"], { error: "יש לבחור סטטוס נוכחות" }),
+  note: z.string().trim().max(500, "ההערה ארוכה מדי (עד 500 תווים)"),
+  // Version of the existing report; empty when the lesson has none yet.
+  version: z.union([z.literal(""), z.coerce.number().int().positive()]),
+});
 
 export const restoreLessonSchema = z
   .object({

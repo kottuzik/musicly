@@ -40,6 +40,61 @@ export type Database = {
           },
         ]
       }
+      attendance: {
+        Row: {
+          created_at: string
+          lesson_id: string
+          note: string | null
+          reported_by: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          lesson_id: string
+          note?: string | null
+          reported_by?: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          lesson_id?: string
+          note?: string | null
+          reported_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: true
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string
@@ -1196,6 +1251,15 @@ export type Database = {
         }
         Returns: Json
       }
+      attendance_summary: {
+        Args: { p_from: string; p_teacher_id: string; p_to: string }
+        Returns: {
+          held: number
+          student_absent: number
+          teacher_absent: number
+          unreported: number
+        }[]
+      }
       availability_impacted_lessons: {
         Args: { p_request_id: string }
         Returns: string[]
@@ -1238,7 +1302,12 @@ export type Database = {
         Returns: undefined
       }
       cancel_lesson: {
-        Args: { p_id: string; p_reason: string; p_version: number }
+        Args: {
+          p_confirm_held?: boolean
+          p_id: string
+          p_reason: string
+          p_version: number
+        }
         Returns: undefined
       }
       cancel_lesson_change_request: {
@@ -1326,6 +1395,7 @@ export type Database = {
       decide_lesson_change_request: {
         Args: {
           p_approve: boolean
+          p_confirm_held?: boolean
           p_id: string
           p_note: string
           p_version: number
@@ -1386,6 +1456,11 @@ export type Database = {
       get_lesson: {
         Args: { p_id: string }
         Returns: {
+          attendance_note: string
+          attendance_status: Database["public"]["Enums"]["attendance_status"]
+          attendance_updated_at: string
+          attendance_updated_by_name: string
+          attendance_version: number
           attention_reason: Database["public"]["Enums"]["attention_reason"]
           cancel_reason: string
           cancel_source: Database["public"]["Enums"]["cancel_source"]
@@ -1463,6 +1538,23 @@ export type Database = {
           version: number
         }[]
       }
+      list_audit_events: {
+        Args: { p_from: string; p_kind: string; p_offset: number; p_to: string }
+        Returns: {
+          action: string
+          actor_name: string
+          created_at: string
+          entity: string
+          entity_id: string
+          id: string
+          lesson_start_at: string
+          new_values: Json
+          old_values: Json
+          student_name: string
+          teacher_name: string
+          total: number
+        }[]
+      }
       list_calendar_lessons: {
         Args: {
           p_attention_only?: boolean
@@ -1474,6 +1566,7 @@ export type Database = {
           p_to: string
         }
         Returns: {
+          attendance_status: Database["public"]["Enums"]["attendance_status"]
           attention_reason: Database["public"]["Enums"]["attention_reason"]
           color: string
           end_at: string
@@ -1509,6 +1602,31 @@ export type Database = {
           start_date: string
           start_time: string
           status: Database["public"]["Enums"]["exception_request_status"]
+          student_name: string
+          teacher_id: string
+          teacher_name: string
+          version: number
+        }[]
+      }
+      list_history_lessons: {
+        Args: {
+          p_from: string
+          p_student_id: string
+          p_teacher_id: string
+          p_to: string
+        }
+        Returns: {
+          attendance_note: string
+          attendance_status: Database["public"]["Enums"]["attendance_status"]
+          attendance_version: number
+          color: string
+          end_at: string
+          id: string
+          lesson_type_name: string
+          location: Database["public"]["Enums"]["lesson_location"]
+          start_at: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
           student_name: string
           teacher_id: string
           teacher_name: string
@@ -1592,6 +1710,19 @@ export type Database = {
         Returns: {
           full_name: string
           id: string
+        }[]
+      }
+      list_unreported_lessons: {
+        Args: { p_limit: number }
+        Returns: {
+          color: string
+          end_at: string
+          id: string
+          lesson_type_name: string
+          start_at: string
+          student_name: string
+          teacher_name: string
+          total: number
         }[]
       }
       local_ts: { Args: { p_date: string; p_time: string }; Returns: string }
@@ -1804,6 +1935,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_attendance: {
+        Args: {
+          p_lesson_id: string
+          p_note: string
+          p_status: Database["public"]["Enums"]["attendance_status"]
+          p_version?: number
+        }
+        Returns: undefined
+      }
       set_operating_hours: { Args: { p_days: Json }; Returns: number }
       set_student_status: {
         Args: {
@@ -1915,6 +2055,7 @@ export type Database = {
       }
     }
     Enums: {
+      attendance_status: "held" | "student_absent" | "teacher_absent"
       attention_reason:
         | "outside_hours"
         | "teacher_inactive"
@@ -2080,6 +2221,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      attendance_status: ["held", "student_absent", "teacher_absent"],
       attention_reason: [
         "outside_hours",
         "teacher_inactive",

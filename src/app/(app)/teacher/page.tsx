@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { UnreportedCard } from "@/components/attendance/UnreportedCard";
 import { UpcomingLessons } from "@/components/lessons/UpcomingLessons";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
 import { Alert } from "@/components/ui/Alert";
@@ -35,11 +36,11 @@ export default async function TeacherHomePage({ searchParams }: PageProps<"/teac
   }
 
   const supabase = await createClient();
-  const { upcoming, pendingRequests } = await loadTeacherDashboard(supabase);
+  const { upcoming, pendingRequests, unreported } = await loadTeacherDashboard(supabase);
 
   return (
     <div className={styles.page}>
-      <LiveRefresh tables={["lessons", "exception_booking_requests"]} />
+      <LiveRefresh tables={["lessons", "exception_booking_requests", "attendance"]} />
       <NoticeAlert notice={notice} />
       <div className={styles.heading}>
         <h1>הלוח שלי</h1>
@@ -58,6 +59,7 @@ export default async function TeacherHomePage({ searchParams }: PageProps<"/teac
         </div>
         <UpcomingLessons lessons={upcoming} showTeacher={false} showDate empty="אין שיעורים בשבוע הקרוב." />
       </Card>
+      <UnreportedCard lessons={unreported.lessons} total={unreported.total} showTeacher={false} />
     </div>
   );
 }

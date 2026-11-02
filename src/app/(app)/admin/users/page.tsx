@@ -1,3 +1,4 @@
+import { ClearNotice } from "@/components/ClearNotice";
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -75,7 +76,10 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
         }
       />
       {params.notice === "transferred" && (
-        <Alert tone="success">תפקיד המנהל הראשי הועבר. כעת יש לך הרשאות של מנהל רגיל.</Alert>
+        <>
+          <ClearNotice />
+          <Alert tone="success">תפקיד המנהל הראשי הועבר. כעת יש לך הרשאות של מנהל רגיל.</Alert>
+        </>
       )}
 
       <form className={toolbar.toolbar} role="search" aria-label="חיפוש וסינון משתמשים">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AttendanceDialog } from "@/components/attendance/AttendanceDialog";
 import { EditLessonDialog } from "@/components/lessons/EditLessonDialog";
 import { ExtendSeriesDialog } from "@/components/lessons/ExtendSeriesDialog";
 import { LessonChangeRequestDialog } from "@/components/lessons/LessonChangeRequestDialog";
@@ -16,8 +17,10 @@ import stack from "@/components/ui/Stack.module.css";
 import { TextareaField } from "@/components/ui/TextareaField";
 import { clearAttention, cancelLesson, getLessonDetails, getLessonHistory, stopSeries } from "@/lib/lessons/actions";
 import {
+  ATTENDANCE_LABELS,
   ATTENTION_REASON_LABELS,
   AUDIT_ACTION_LABELS,
+  auditDetail,
   CANCEL_SOURCE_LABELS,
   LESSON_CHANGE_KIND_LABELS,
   LESSON_STATUS_LABELS,
@@ -88,6 +91,9 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
   const inActiveSeries = Boolean(ready?.series_id) && ready?.series_status === "active";
   const canResume = Boolean(ready?.series_id) && ready?.series_status === "ended";
   const fields: Record<string, string> = ready ? { id: ready.id, version: String(ready.version) } : {};
+  const attendance = ready?.attendance_status ? ATTENDANCE_LABELS[ready.attendance_status] : null;
+  // A lesson marked "held" may be cancelled after the fact (with an explicit warning), even once it is over.
+  const heldCancel = isAdmin && scheduled && ready?.attendance_status === "held";
 
   return (
     <Dialog
@@ -148,6 +154,29 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
                 </>
               )}
             </dd>
+            {scheduled && (
+              <>
+                <dt>נוכחות</dt>
+                <dd>
+                  {attendance ? <Badge tone={attendance.tone}>{attendance.label}</Badge> : <span className="text-secondary">לא דווחה</span>}
+                  {ready.attendance_note && (
+                    <>
+                      <br />
+                      <span className="text-secondary">{ready.attendance_note}</span>
+                    </>
+                  )}
+                  {attendance && ready.attendance_updated_by_name && ready.attendance_updated_at && (
+                    <>
+                      <br />
+                      <span className="text-small text-secondary">
+                        עודכנה בידי {ready.attendance_updated_by_name}, {formatLessonDate(ready.attendance_updated_at)}{" "}
+                        <bdi dir="ltr">{schoolTime(ready.attendance_updated_at)}</bdi>
+                      </span>
+                    </>
+                  )}
+                </dd>
+              </>
+            )}
             <dt>סוג</dt>
             <dd>
               {ready.series_id && ready.series_day !== null
@@ -159,6 +188,20 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
           </dl>
 
           <div className={lessonChange.actions}>
+            {scheduled && (
+              <AttendanceDialog
+                key={`${ready.id}-${ready.attendance_version ?? 0}`}
+                lessonId={ready.id}
+                context={`${ready.student_name} — ${formatLessonDate(ready.start_at)}`}
+                current={
+                  ready.attendance_status && ready.attendance_version !== null
+                    ? { status: ready.attendance_status, note: ready.attendance_note, version: ready.attendance_version }
+                    : null
+                }
+                triggerVariant="primary"
+                onDone={reload}
+              />
+            )}
             {isAdmin && scheduled && upcoming && options && (
               <Button variant="ghost" size="small" onClick={() => setDialog("edit")}>
                 שינוי
@@ -191,14 +234,18 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
                 שחזור השיעור
               </Button>
             )}
-            {isAdmin && scheduled && upcoming && options && (
+            {isAdmin && scheduled && (upcoming || heldCancel) && options && (
               <ConfirmAction
                 action={cancelLesson}
-                fields={fields}
+                fields={heldCancel ? { ...fields, confirmHeld: "true" } : fields}
                 trigger="ביטול שיעור"
                 triggerVariant="danger"
                 title="ביטול שיעור"
-                description={`השיעור של ${ready.student_name} יבוטל וישמר ברשימת השיעורים המבוטלים. אפשר לשחזר אותו בהמשך.`}
+                description={
+                  heldCancel
+                    ? `השיעור של ${ready.student_name} סומן כ„התקיים”. אם תבטלו אותו, הוא לא ייספר כשיעור שהתקיים ודיווח הנוכחות יוסר. הדיווח הקודם יישמר בהיסטוריית השינויים. אפשר לשחזר את השיעור בהמשך, ואז ידווחו נוכחות מחדש.`
+                    : `השיעור של ${ready.student_name} יבוטל וישמר ברשימת השיעורים המבוטלים. אפשר לשחזר אותו בהמשך.`
+                }
                 confirmLabel="בטל שיעור"
                 confirmVariant="danger"
                 onDone={reload}
@@ -238,6 +285,7 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
                 {history.map((h) => (
                   <li key={h.id}>
                     {AUDIT_ACTION_LABELS[h.action] ?? h.action}
+                    {auditDetail(h.action, h.old_values, h.new_values) && `: ${auditDetail(h.action, h.old_values, h.new_values)}`}
                     {h.actor_name && ` — ${h.actor_name}`}{" "}
                     <span className="text-secondary">
                       ({formatLessonDate(h.created_at)} {schoolTime(h.created_at)})

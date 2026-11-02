@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fieldErrors } from "@/lib/validation/auth";
 import { requestVersionSchema } from "@/lib/validation/availability";
 import {
+  attendanceSchema,
   attentionSchema,
   bookLessonSchema,
   cancelLessonSchema,
@@ -68,6 +69,10 @@ function revalidateLessons() {
   revalidatePath("/teacher");
   revalidatePath("/teacher/calendar");
   revalidatePath("/teacher/requests");
+  revalidatePath("/admin/activity");
+  revalidatePath("/admin/students", "layout");
+  revalidatePath("/admin/teachers", "layout");
+  revalidatePath("/teacher/students", "layout");
 }
 
 export async function bookLesson(input: Record<string, unknown>): Promise<BookingState> {
@@ -309,7 +314,12 @@ export async function updateLesson(input: Record<string, unknown>): Promise<Chan
 
 export async function cancelLesson(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole(ADMIN_ROLES);
-  const parsed = cancelLessonSchema.safeParse({ id: text(formData, "id"), version: text(formData, "version"), reason: text(formData, "reason") });
+  const parsed = cancelLessonSchema.safeParse({
+    id: text(formData, "id"),
+    version: text(formData, "version"),
+    reason: text(formData, "reason"),
+    confirmHeld: text(formData, "confirmHeld"),
+  });
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
 
   const supabase = await createClient();
@@ -317,6 +327,7 @@ export async function cancelLesson(_prev: ActionState, formData: FormData): Prom
     p_id: parsed.data.id,
     p_version: parsed.data.version,
     p_reason: parsed.data.reason,
+    p_confirm_held: parsed.data.confirmHeld,
   });
   revalidateLessons();
   if (error) return { error: dbErrorMessage(error) };
@@ -521,7 +532,13 @@ export async function decideLessonChangeRequest(_prev: ActionState, formData: Fo
     p_note: parsed.data.note,
   });
   revalidateLessons();
-  if (error) return { error: dbErrorMessage(error) };
+  if (error) {
+    // The request is for a lesson already marked "held": the warning and confirmation live on the lesson itself.
+    if (error.message === "held_confirmation_required") {
+      return { error: "השיעור כבר סומן כ„התקיים”. כדי לבטל אותו יש לבטל אותו ישירות מכרטיס השיעור בלוח השנה, שם יוצג חלון אישור." };
+    }
+    return { error: dbErrorMessage(error) };
+  }
   return { ok: true };
 }
 
@@ -538,6 +555,30 @@ export async function cancelLessonChangeRequest(_prev: ActionState, formData: Fo
   revalidateLessons();
   if (error) return { error: dbErrorMessage(error) };
   return { ok: true };
+}
+
+// Report or correct attendance (an admin on any scheduled lesson, an active teacher on their own;
+// the database enforces it). "version" is the version of the report the form was opened on.
+export async function setAttendance(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireProfile();
+  const parsed = attendanceSchema.safeParse({
+    lessonId: text(formData, "lessonId"),
+    status: text(formData, "status"),
+    note: text(formData, "note"),
+    version: text(formData, "version"),
+  });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_attendance", {
+    p_lesson_id: parsed.data.lessonId,
+    p_status: parsed.data.status,
+    p_note: parsed.data.note,
+    p_version: (parsed.data.version === "" ? null : parsed.data.version) as number,
+  });
+  revalidateLessons();
+  if (error) return { error: dbErrorMessage(error) };
+  return { ok: true, success: "הנוכחות נשמרה." };
 }
 
 // Everything that happened to a lesson (admins only; names are looked up when read).

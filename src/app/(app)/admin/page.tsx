@@ -1,13 +1,14 @@
-import { AlertTriangle, CalendarDays, CalendarRange, ClipboardCheck, GraduationCap, Music } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CalendarDays, CalendarRange, ClipboardCheck, GraduationCap, Music } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { UnreportedCard } from "@/components/attendance/UnreportedCard";
 import { BookLessonDialog } from "@/components/lessons/BookLessonDialog";
 import { UpcomingLessons } from "@/components/lessons/UpcomingLessons";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
 import { Card } from "@/components/ui/Card";
 import { requireRole } from "@/lib/auth/session";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
-import { ATTENTION_REASON_LABELS, AUDIT_ACTION_LABELS } from "@/lib/lessons/labels";
+import { ATTENTION_REASON_LABELS, AUDIT_ACTION_LABELS, auditDetail } from "@/lib/lessons/labels";
 import { loadAdminDashboard, loadBookingOptions } from "@/lib/lessons/queries";
 import { formatLessonDate, schoolDate, schoolTime } from "@/lib/lessons/time";
 import { createClient } from "@/lib/supabase/server";
@@ -27,6 +28,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
     { label: "מורים פעילים", value: stats.teachers, icon: Music, href: "/admin/teachers" },
     { label: "שיעורי היום", value: stats.todayCount, icon: CalendarDays, href: "/admin/calendar?view=day" },
     { label: "שיעורי השבוע", value: stats.weekCount, icon: CalendarRange, href: "/admin/calendar?view=week" },
+    { label: "התקיימו החודש", value: stats.heldThisMonth, icon: CalendarCheck, href: "/admin/activity?kind=attendance" },
     { label: "בקשות ממתינות", value: stats.pendingRequests, icon: ClipboardCheck, href: "/admin/requests" },
     { label: "דורשים טיפול", value: stats.attention.length, icon: AlertTriangle, href: "/admin/calendar?attention=1" },
   ];
@@ -34,7 +36,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
   return (
     <div className={styles.page}>
       <LiveRefresh
-        tables={["lessons", "availability_requests", "exception_booking_requests", "lesson_change_requests", "audit_events", "students", "teachers"]}
+        tables={["lessons", "availability_requests", "exception_booking_requests", "lesson_change_requests", "audit_events", "attendance", "students", "teachers"]}
       />
       <NoticeAlert notice={notice} />
       <div className={styles.headingRow}>
@@ -85,9 +87,11 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
           </ul>
         )}
       </Card>
+      <UnreportedCard lessons={stats.unreported.lessons} total={stats.unreported.total} showTeacher />
       <Card>
         <div className={styles.cardHeader}>
           <h2 className="text-h3">שינויים וביטולים אחרונים</h2>
+          <Link href="/admin/activity">לכל הפעילות</Link>
         </div>
         {stats.recent.length === 0 ? (
           <p className="text-secondary">עוד לא בוצעו שינויים או ביטולים.</p>
@@ -97,6 +101,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
               <li key={e.id}>
                 <span>
                   {AUDIT_ACTION_LABELS[e.action] ?? e.action}
+                  {auditDetail(e.action, e.old_values, e.new_values) && ` (${auditDetail(e.action, e.old_values, e.new_values)})`}
                   {e.student_name && ` — ${e.student_name}`}
                 </span>
                 <span className="text-small text-secondary">

@@ -34,6 +34,13 @@ function nextWeekday(day: number, minDaysAhead = 7) {
   return d.toISOString().slice(0, 10);
 }
 
+// The day after a "YYYY-MM-DD" date.
+function addDay(date: string) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // Sunday 10:00–18:00, Tuesday 12:00–20:00, everything else closed.
 const TEST_HOURS = [
   { day: 0, open: "10:00", close: "18:00" },
@@ -284,7 +291,7 @@ describe.skipIf(!users)("RLS and RPCs for availability and closures (Development
       expect(absence).toEqual({ start_date: nextWeekday(0, 14), start_time: r.start_time });
 
       const { data: rejectId } = await teacher.rpc("report_absence", {
-        p_teacher_id: teacherIds.teacher, p_start_date: nextWeekday(0, 21), p_end_date: nextWeekday(1, 21),
+        p_teacher_id: teacherIds.teacher, p_start_date: nextWeekday(0, 21), p_end_date: addDay(nextWeekday(0, 21)),
         p_start_time: null as unknown as string, p_end_time: null as unknown as string, p_reason: "",
       });
       const r2 = await requestOf(rejectId!);

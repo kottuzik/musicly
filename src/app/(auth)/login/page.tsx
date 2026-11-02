@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClearNotice } from "@/components/ClearNotice";
 import { AuthHeader } from "../AuthHeader";
 import { LoginForm } from "./LoginForm";
 
@@ -16,6 +17,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <>
+      {notice && <ClearNotice />}
       <AuthHeader title="ברוכים הבאים" subtitle="למערכת ניהול בית הספר למוזיקה" />
       <LoginForm next={next} notice={notice} />
     </>

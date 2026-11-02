@@ -7,6 +7,7 @@ export type ExceptionStatus = Database["public"]["Enums"]["exception_request_sta
 export type ExceptionKind = Database["public"]["Enums"]["exception_request_kind"];
 export type AttentionReason = Database["public"]["Enums"]["attention_reason"];
 export type CancelSource = Database["public"]["Enums"]["cancel_source"];
+export type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 export type LessonChangeKind = Database["public"]["Enums"]["lesson_change_kind"];
 
 export const LOCATION_LABELS: Record<LessonLocation, string> = {
@@ -88,4 +89,35 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   student_deactivated: "תלמיד הושבת",
   teacher_deactivated: "מורה הושבת",
   regular_teacher_changed: "המורה הקבוע הוחלף",
+  attendance_reported: "דווחה נוכחות",
+  attendance_changed: "הנוכחות תוקנה",
+  attendance_cleared: "דיווח הנוכחות הוסר כי השיעור אינו מתקיים",
+  held_lesson_cancelled: "שיעור שסומן ”התקיים” בוטל בדיעבד",
 };
+
+export const ATTENDANCE_LABELS: Record<AttendanceStatus, { label: string; tone: BadgeTone }> = {
+  held: { label: "התקיים", tone: "success" },
+  student_absent: { label: "התלמיד לא הגיע", tone: "warning" },
+  teacher_absent: { label: "המורה לא הגיע", tone: "error" },
+};
+
+export const ATTENDANCE_STATUSES = Object.keys(ATTENDANCE_LABELS) as AttendanceStatus[];
+
+const isAttendanceStatus = (v: unknown): v is AttendanceStatus => typeof v === "string" && v in ATTENDANCE_LABELS;
+
+// What an attendance entry of the log changed, e.g. "התקיים ← התלמיד לא הגיע". Statuses only: the
+// log never holds the note text. Null for other actions.
+export function auditDetail(action: string, oldValues: unknown, newValues: unknown): string | null {
+  const o = (oldValues ?? {}) as Record<string, unknown>;
+  const n = (newValues ?? {}) as Record<string, unknown>;
+  const label = (v: unknown) => (isAttendanceStatus(v) ? ATTENDANCE_LABELS[v].label : null);
+  if (action === "attendance_reported") return label(n.status);
+  if (action === "attendance_changed") {
+    const from = label(o.status);
+    const to = label(n.status);
+    if (!from || !to) return null;
+    return from === to ? `${to} (ההערה עודכנה)` : `${from} ← ${to}`;
+  }
+  if (action === "attendance_cleared" || action === "held_lesson_cancelled") return label(o.attendance_status);
+  return null;
+}

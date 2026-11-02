@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { schoolToday } from "@/lib/students/age";
 import { addDays } from "@/lib/time/weekdays";
 import type { Database } from "@/types/database";
-import { utcBounds, weekStart } from "./time";
+import { monthDates, utcBounds, weekStart } from "./time";
 
 type Client = SupabaseClient<Database>;
 
@@ -14,6 +14,10 @@ export type LessonChangeRequest = Database["public"]["Functions"]["list_lesson_c
 export type AttentionLesson = Database["public"]["Functions"]["list_attention_lessons"]["Returns"][number];
 export type RecentChange = Database["public"]["Functions"]["list_recent_changes"]["Returns"][number];
 export type LessonHistoryEntry = Database["public"]["Functions"]["list_lesson_history"]["Returns"][number];
+
+export type HistoryLesson = Database["public"]["Functions"]["list_history_lessons"]["Returns"][number];
+export type UnreportedLesson = Database["public"]["Functions"]["list_unreported_lessons"]["Returns"][number];
+export type AuditEvent = Database["public"]["Functions"]["list_audit_events"]["Returns"][number];
 
 export type CalendarFilters = {
   teacherId?: string;
@@ -136,6 +140,43 @@ export async function loadLessonHistory(supabase: Client, lessonId: string) {
   return data ?? [];
 }
 
+// One student's or one teacher's lessons in a month ("YYYY-MM"), with attendance. A teacher is
+// limited to their own lessons by the database.
+export async function loadHistoryLessons(supabase: Client, month: string, who: { studentId?: string; teacherId?: string }) {
+  const { from, to } = monthDates(month);
+  const bounds = utcBounds(from, to);
+  const { data } = await supabase.rpc("list_history_lessons", {
+    p_student_id: (who.studentId || null) as unknown as string,
+    p_teacher_id: (who.teacherId || null) as unknown as string,
+    p_from: bounds.from,
+    p_to: bounds.to,
+  });
+  return data ?? [];
+}
+
+// Lessons that ended in the last 30 days without an attendance report (all for admins, own for a teacher).
+export async function loadUnreportedLessons(supabase: Client, limit = 8) {
+  const { data } = await supabase.rpc("list_unreported_lessons", { p_limit: limit });
+  const rows = data ?? [];
+  return { lessons: rows, total: Number(rows[0]?.total ?? 0) };
+}
+
+// Admin activity log: a page of 50 entries in a date range (local dates, inclusive).
+export async function loadAuditEvents(
+  supabase: Client,
+  opts: { from: string; to: string; kind: string; page: number },
+) {
+  const bounds = utcBounds(opts.from, opts.to);
+  const { data } = await supabase.rpc("list_audit_events", {
+    p_from: bounds.from,
+    p_to: bounds.to,
+    p_kind: opts.kind,
+    p_offset: (opts.page - 1) * 50,
+  });
+  const rows = data ?? [];
+  return { events: rows, total: Number(rows[0]?.total ?? 0) };
+}
+
 // Admin home: counts and today's upcoming lessons.
 export async function loadAdminDashboard(supabase: Client) {
   const today = schoolToday();
@@ -145,8 +186,10 @@ export async function loadAdminDashboard(supabase: Client) {
   await supabase.rpc("expire_exception_requests");
   await supabase.rpc("expire_lesson_change_requests");
 
+  const monthFrom = `${today.slice(0, 7)}-01`;
+  const monthBounds = utcBounds(monthFrom, monthDates(today.slice(0, 7)).to);
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
-  const [students, teachers, todayCount, weekCount, availabilityRequests, exceptionRequests, changeRequests, attention, recent, todayLessons] = await Promise.all([
+  const [students, teachers, todayCount, weekCount, availabilityRequests, exceptionRequests, changeRequests, attention, recent, todayLessons, unreported, summary] = await Promise.all([
     count(supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active")),
     count(supabase.from("teachers").select("id", { count: "exact", head: true }).eq("status", "active")),
     count(
@@ -171,10 +214,18 @@ export async function loadAdminDashboard(supabase: Client) {
     loadAttentionLessons(supabase),
     loadRecentChanges(supabase, 8),
     loadCalendarLessons(supabase, today, today),
+    loadUnreportedLessons(supabase),
+    supabase.rpc("attendance_summary", {
+      p_from: monthBounds.from,
+      p_to: monthBounds.to,
+      p_teacher_id: null as unknown as string,
+    }),
   ]);
 
   const now = new Date().toISOString();
   return {
+    heldThisMonth: Number(summary.data?.[0]?.held ?? 0),
+    unreported,
     students,
     teachers,
     todayCount,
@@ -189,13 +240,15 @@ export async function loadAdminDashboard(supabase: Client) {
 // Teacher home: their lessons from now through the next 7 days, and requests awaiting them.
 export async function loadTeacherDashboard(supabase: Client) {
   const today = schoolToday();
-  const [lessons, requests] = await Promise.all([
+  const [lessons, requests, unreported] = await Promise.all([
     loadCalendarLessons(supabase, today, addDays(today, 7)),
     loadExceptionRequests(supabase, true),
+    loadUnreportedLessons(supabase),
   ]);
   const now = new Date().toISOString();
   return {
     upcoming: lessons.filter((l) => l.status === "scheduled" && l.end_at > now),
     pendingRequests: requests.length,
+    unreported,
   };
 }
