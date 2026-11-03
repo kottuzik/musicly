@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarCheck, CalendarDays, CalendarRange, ClipboardCheck, GraduationCap, Music } from "lucide-react";
+import { AlertTriangle, Bell, CalendarCheck, CalendarDays, CalendarRange, ClipboardCheck, GraduationCap, Music } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { UnreportedCard } from "@/components/attendance/UnreportedCard";
@@ -10,6 +10,7 @@ import { requireRole } from "@/lib/auth/session";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { ATTENTION_REASON_LABELS, AUDIT_ACTION_LABELS, auditDetail } from "@/lib/lessons/labels";
 import { loadAdminDashboard, loadBookingOptions } from "@/lib/lessons/queries";
+import { unreadNotificationCount } from "@/lib/notifications/queries";
 import { formatLessonDate, schoolDate, schoolTime } from "@/lib/lessons/time";
 import { createClient } from "@/lib/supabase/server";
 import { NoticeAlert } from "../NoticeAlert";
@@ -21,7 +22,11 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
   const profile = await requireRole(ADMIN_ROLES);
   const { notice } = await searchParams;
   const supabase = await createClient();
-  const [stats, options] = await Promise.all([loadAdminDashboard(supabase), loadBookingOptions(supabase)]);
+  const [stats, options, unread] = await Promise.all([
+    loadAdminDashboard(supabase),
+    loadBookingOptions(supabase),
+    unreadNotificationCount(supabase),
+  ]);
 
   const cards = [
     { label: "תלמידים פעילים", value: stats.students, icon: GraduationCap, href: "/admin/students" },
@@ -31,12 +36,13 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
     { label: "התקיימו החודש", value: stats.heldThisMonth, icon: CalendarCheck, href: "/admin/activity?kind=attendance" },
     { label: "בקשות ממתינות", value: stats.pendingRequests, icon: ClipboardCheck, href: "/admin/requests" },
     { label: "דורשים טיפול", value: stats.attention.length, icon: AlertTriangle, href: "/admin/calendar?attention=1" },
+    { label: "התראות שלא נקראו", value: unread, icon: Bell, href: "/notifications" },
   ];
 
   return (
     <div className={styles.page}>
       <LiveRefresh
-        tables={["lessons", "availability_requests", "exception_booking_requests", "lesson_change_requests", "audit_events", "attendance", "students", "teachers"]}
+        tables={["lessons", "availability_requests", "exception_booking_requests", "lesson_change_requests", "audit_events", "attendance", "students", "teachers", "notifications"]}
       />
       <NoticeAlert notice={notice} />
       <div className={styles.headingRow}>

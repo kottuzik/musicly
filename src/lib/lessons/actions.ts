@@ -521,6 +521,8 @@ export async function decideLessonChangeRequest(_prev: ActionState, formData: Fo
     version: text(formData, "version"),
     decision: text(formData, "decision"),
     note: text(formData, "note"),
+    counterDate: text(formData, "counterDate"),
+    counterStart: text(formData, "counterStart"),
   });
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
 
@@ -530,6 +532,8 @@ export async function decideLessonChangeRequest(_prev: ActionState, formData: Fo
     p_version: parsed.data.version,
     p_approve: parsed.data.decision === "approve",
     p_note: parsed.data.note,
+    p_counter_date: orNull(parsed.data.counterDate),
+    p_counter_start: orNull(parsed.data.counterStart),
   });
   revalidateLessons();
   if (error) {

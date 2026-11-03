@@ -1,0 +1,146 @@
+.bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.bell:hover {
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+}
+
+.bellCount {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-start: 4px;
+  min-inline-size: 18px;
+  block-size: 18px;
+  padding-inline: 5px;
+  border-radius: 9px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 4px;
+  border-block-end: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-block-end: 0;
+}
+
+.dot {
+  flex-shrink: 0;
+  inline-size: 10px;
+  block-size: 10px;
+  margin-block-start: 7px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.unread .dot {
+  background: var(--color-primary);
+}
+
+.body {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.unread .title {
+  font-weight: 700;
+}
+
+a.title:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 599px) {
+  .item {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    inline-size: 100%;
+    padding-inline-start: 22px;
+  }
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-start: 16px;
+}
+
+.reminderBox {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-block-start: 8px;
+}
+
+.customRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.checkboxLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-block-size: 44px;
+}
+
+.sectionTitle {
+  margin-block: 8px 0;
+}

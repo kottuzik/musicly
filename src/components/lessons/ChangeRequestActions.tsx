@@ -7,6 +7,7 @@ import { TextareaField } from "@/components/ui/TextareaField";
 import { decideLessonChangeRequest, getLessonDetails } from "@/lib/lessons/actions";
 import type { BookingOptions, LessonChangeRequest, LessonDetails } from "@/lib/lessons/queries";
 import { EditLessonDialog } from "./EditLessonDialog";
+import { RejectChangeRequestDialog } from "./RejectChangeRequestDialog";
 
 // An admin's answer to a teacher's request. Cancelling is approved here; a change is approved by
 // choosing the new time in the lesson-change dialog, which then closes the request.
@@ -40,21 +41,10 @@ export function ChangeRequestActions({ request, options }: { request: LessonChan
         </ConfirmAction>
       ) : (
         <Button size="small" onClick={() => void chooseTime()}>
-          קביעת מועד חדש
+          אשר
         </Button>
       )}
-      <ConfirmAction
-        action={decideLessonChangeRequest}
-        fields={{ ...fields, decision: "reject" }}
-        trigger="דחייה"
-        triggerVariant="danger"
-        title="דחיית הבקשה"
-        description={`${summary}. השיעור יישאר כפי שהוא.`}
-        confirmLabel="דחה בקשה"
-        confirmVariant="danger"
-      >
-        {note}
-      </ConfirmAction>
+      <RejectChangeRequestDialog request={{ id: request.id, version: request.version }} summary={summary} />
       {lesson && (
         <EditLessonDialog
           lesson={lesson}

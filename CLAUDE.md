@@ -58,4 +58,5 @@
 ## פקודות הרצה
 > Claude ממלא זאת ברגע שהאפליקציה יכולה לרוץ (בדרך כלל בסיום Milestone 1), ומעדכן אם משהו משתנה.
 - **הרצה (dev):** `npm run dev` (http://localhost:3000)
+- **שליחת אימיילים ממתינים (dev):** `npm run dispatch-emails` (אימיילים נשלחים רק לכתובות ב-`EMAIL_TEST_RECIPIENTS`)
 - **בדיקות (test):** `npm run lint && npm run typecheck && npm test && npm run test:rls && npm run test:e2e` (בדיקות RLS ו-E2E רצות מול Supabase Development; לפני הפעם הראשונה: `npm run seed-test-users`)

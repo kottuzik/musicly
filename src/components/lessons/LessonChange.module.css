@@ -88,3 +88,15 @@
   margin-block: 20px 8px;
   font-weight: 600;
 }
+
+.lessonSummary {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-lighter);
+}
+
+.lessonSummary dl {
+  margin: 4px 0 0;
+  gap: 4px 16px;
+}

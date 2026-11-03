@@ -131,12 +131,27 @@ export const lessonChangeRequestSchema = z
   })
   .refine((v) => (v.date === "") === (v.start === ""), { path: ["start"], message: "יש לבחור תאריך ושעה יחד" });
 
-export const decideChangeRequestSchema = z.object({
-  id: z.uuid(),
-  version: versionField,
-  decision: z.enum(["approve", "reject"]),
-  note: reasonText,
-});
+export const decideChangeRequestSchema = z
+  .object({
+    id: z.uuid(),
+    version: versionField,
+    decision: z.enum(["approve", "reject"]),
+    note: reasonText,
+    // Turning a request down with another time suggested instead (both or none).
+    counterDate: z.union([z.literal(""), z.string().regex(DATE, "יש לבחור תאריך")]).default(""),
+    counterStart: z.union([z.literal(""), time]).default(""),
+  })
+  .superRefine((v, ctx) => {
+    if (v.decision !== "reject" && (v.counterDate || v.counterStart)) {
+      ctx.addIssue({ code: "custom", path: ["counterDate"], message: "ניתן להציע מועד רק בדחיית בקשה" });
+    }
+    if (Boolean(v.counterDate) !== Boolean(v.counterStart)) {
+      ctx.addIssue({ code: "custom", path: [v.counterDate ? "counterStart" : "counterDate"], message: "יש לבחור תאריך ושעה" });
+    }
+    if (v.counterDate && v.counterDate < schoolToday()) {
+      ctx.addIssue({ code: "custom", path: ["counterDate"], message: "התאריך כבר עבר" });
+    }
+  });
 
 // What the admin decides for each lesson a teacher's absence or removed availability touches.
 export const lessonDecisionsSchema = z.array(

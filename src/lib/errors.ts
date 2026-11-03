@@ -57,6 +57,9 @@ const MESSAGES: Record<string, string> = {
   series_not_active: "אחת הסדרות כבר אינה פעילה.",
   attendance_changed: "הנוכחות עודכנה בינתיים בידי מישהו אחר. הנתונים רועננו — בדקו ונסו שוב.",
   held_confirmation_required: "השיעור סומן כ„התקיים”. ביטול שלו דורש אישור מפורש.",
+  invalid_reminder_offsets: "מועד התזכורת צריך להיות בין 5 דקות ל־7 ימים, ועד 5 מועדים.",
+  reminder_offsets_required: "יש לבחור לפחות מועד תזכורת אחד.",
+  lesson_not_upcoming: "אפשר להגדיר תזכורת רק לשיעור עתידי שמתקיים.",
 };
 
 export const GENERIC_ERROR = "אירעה שגיאה. נסו שוב בעוד רגע.";

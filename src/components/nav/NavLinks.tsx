@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, CalendarDays, ClipboardCheck, GraduationCap, House, Music, Settings, UserRound, Users } from "lucide-react";
+import { Bell, CalendarClock, CalendarDays, ClipboardCheck, GraduationCap, House, Music, Settings, UserRound, Users } from "lucide-react";
 import type { NavIcon, NavItem } from "@/lib/nav/items";
 import styles from "./AppShell.module.css";
 
@@ -16,6 +16,7 @@ const ICONS: Record<NavIcon, typeof House> = {
   users: Users,
   settings: Settings,
   profile: UserRound,
+  notifications: Bell,
 };
 
 // Home links ("/admin", "/teacher") are active only on exact match, since other items live under them.

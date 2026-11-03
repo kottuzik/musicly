@@ -228,6 +228,75 @@ export type Database = {
           },
         ]
       }
+      email_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string
+          notification_id: string | null
+          payload: Json
+          provider_id: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["email_status"]
+          to_email: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string
+          notification_id?: string | null
+          payload?: Json
+          provider_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_status"]
+          to_email: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string
+          notification_id?: string | null
+          payload?: Json
+          provider_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_status"]
+          to_email?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_outbox_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_outbox_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exception_booking_requests: {
         Row: {
           apply_from: string | null
@@ -436,8 +505,37 @@ export type Database = {
           },
         ]
       }
+      job_runs: {
+        Row: {
+          finished_at: string
+          id: number
+          job: string
+          ok: boolean
+          started_at: string
+          summary: Json
+        }
+        Insert: {
+          finished_at?: string
+          id?: never
+          job: string
+          ok: boolean
+          started_at?: string
+          summary?: Json
+        }
+        Update: {
+          finished_at?: string
+          id?: never
+          job?: string
+          ok?: boolean
+          started_at?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
       lesson_change_requests: {
         Row: {
+          counter_date: string | null
+          counter_start_time: string | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -455,6 +553,8 @@ export type Database = {
           version: number
         }
         Insert: {
+          counter_date?: string | null
+          counter_start_time?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -472,6 +572,8 @@ export type Database = {
           version?: number
         }
         Update: {
+          counter_date?: string | null
+          counter_start_time?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -512,6 +614,45 @@ export type Database = {
           },
           {
             foreignKeyName: "lesson_change_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_reminder_overrides: {
+        Row: {
+          lesson_id: string
+          mode: Database["public"]["Enums"]["reminder_mode"]
+          offsets_minutes: number[]
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          lesson_id: string
+          mode: Database["public"]["Enums"]["reminder_mode"]
+          offsets_minutes?: number[]
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          lesson_id?: string
+          mode?: Database["public"]["Enums"]["reminder_mode"]
+          offsets_minutes?: number[]
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_reminder_overrides_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_reminder_overrides_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teachers"
@@ -773,6 +914,82 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          archived_at: string | null
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at: string
+          dedupe_key: string | null
+          entity: string | null
+          entity_id: string | null
+          id: string
+          payload: Json
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at?: string
+          dedupe_key?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          category?: Database["public"]["Enums"]["notification_category"]
+          created_at?: string
+          dedupe_key?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operating_hours: {
         Row: {
           close_time: string
@@ -837,6 +1054,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reminder_jobs: {
+        Row: {
+          created_at: string
+          due_at: string
+          id: string
+          lesson_id: string
+          offset_minutes: number
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_at: string
+          id?: string
+          lesson_id: string
+          offset_minutes: number
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          due_at?: string
+          id?: string
+          lesson_id?: string
+          offset_minutes?: number
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_jobs_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminder_jobs_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminder_preferences: {
+        Row: {
+          enabled: boolean
+          offsets_minutes: number[]
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          offsets_minutes?: number[]
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          offsets_minutes?: number[]
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_preferences_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: true
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       school_closures: {
         Row: {
@@ -999,6 +1287,7 @@ export type Database = {
           full_name: string
           id: string
           return_mode: Database["public"]["Enums"]["student_return_mode"] | null
+          return_notified_at: string | null
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
         }
@@ -1011,6 +1300,7 @@ export type Database = {
           return_mode?:
             | Database["public"]["Enums"]["student_return_mode"]
             | null
+          return_notified_at?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
@@ -1023,6 +1313,7 @@ export type Database = {
           return_mode?:
             | Database["public"]["Enums"]["student_return_mode"]
             | null
+          return_notified_at?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
@@ -1210,6 +1501,7 @@ export type Database = {
         Args: { p_token_hash: string; p_user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      activate_or_notify_students: { Args: never; Returns: number }
       add_availability: {
         Args: {
           p_day: number
@@ -1251,6 +1543,7 @@ export type Database = {
         }
         Returns: Json
       }
+      archive_notifications: { Args: { p_ids: string[] }; Returns: number }
       attendance_summary: {
         Args: { p_from: string; p_teacher_id: string; p_to: string }
         Returns: {
@@ -1338,6 +1631,32 @@ export type Database = {
         }
         Returns: undefined
       }
+      claim_email_outbox: {
+        Args: { p_limit: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string
+          notification_id: string | null
+          payload: Json
+          provider_id: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["email_status"]
+          to_email: string
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       clear_lesson_attention: {
         Args: { p_id: string; p_version: number }
         Returns: undefined
@@ -1355,6 +1674,15 @@ export type Database = {
         }[]
       }
       closure_on: { Args: { p_date: string }; Returns: boolean }
+      complete_email_outbox: {
+        Args: {
+          p_error: string
+          p_id: string
+          p_provider_id: string
+          p_result: string
+        }
+        Returns: undefined
+      }
       create_invitation: {
         Args: {
           p_email: string
@@ -1396,6 +1724,8 @@ export type Database = {
         Args: {
           p_approve: boolean
           p_confirm_held?: boolean
+          p_counter_date?: string
+          p_counter_start?: string
           p_id: string
           p_note: string
           p_version: number
@@ -1406,6 +1736,11 @@ export type Database = {
         Args: { p_id: string; p_remove_from_teachers: boolean }
         Returns: undefined
       }
+      discard_pending_requests: {
+        Args: { p_lesson_id: string; p_series_id: string }
+        Returns: number
+      }
+      dispatch_due_reminders: { Args: never; Returns: number }
       do_cancel_lesson: {
         Args: {
           p_lesson_id: string
@@ -1441,6 +1776,8 @@ export type Database = {
       }
       expire_exception_requests: { Args: never; Returns: number }
       expire_lesson_change_requests: { Args: never; Returns: number }
+      expire_pending_requests: { Args: never; Returns: number }
+      extend_recurring_lessons: { Args: never; Returns: number }
       extend_series: {
         Args: { p_end_date: string; p_resume_from: string; p_series_id: string }
         Returns: Json
@@ -1495,6 +1832,10 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_my_student: { Args: { p_student_id: string }; Returns: boolean }
       is_quarter_hour: { Args: { p_time: string }; Returns: boolean }
+      job_finish: {
+        Args: { p_job: string; p_ok: boolean; p_summary: Json }
+        Returns: undefined
+      }
       lesson_conflict: {
         Args: {
           p_end: string
@@ -1513,6 +1854,10 @@ export type Database = {
           p_teacher: string
         }
         Returns: string
+      }
+      lesson_notice: {
+        Args: { p_lesson: Database["public"]["Tables"]["lessons"]["Row"] }
+        Returns: Json
       }
       lesson_snapshot: {
         Args: { p_lesson: Database["public"]["Tables"]["lessons"]["Row"] }
@@ -1670,6 +2015,22 @@ export type Database = {
           old_values: Json
         }[]
       }
+      list_notifications: {
+        Args: { p_offset: number; p_tab: string }
+        Returns: {
+          archived_at: string
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at: string
+          entity: string
+          entity_id: string
+          id: string
+          payload: Json
+          read_at: string
+          subject_name: string
+          total: number
+          type: string
+        }[]
+      }
       list_open_invitations: {
         Args: never
         Returns: {
@@ -1736,8 +2097,38 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_all_notifications_read: { Args: never; Returns: number }
+      mark_notifications_read: { Args: { p_ids: string[] }; Returns: number }
+      notify: {
+        Args: {
+          p_category: Database["public"]["Enums"]["notification_category"]
+          p_coalesce?: boolean
+          p_dedupe?: string
+          p_entity: string
+          p_entity_id: string
+          p_payload: Json
+          p_type: string
+          p_user: string
+        }
+        Returns: string
+      }
+      notify_admins: {
+        Args: {
+          p_category: Database["public"]["Enums"]["notification_category"]
+          p_coalesce?: boolean
+          p_dedupe?: string
+          p_entity: string
+          p_entity_id: string
+          p_exclude?: string
+          p_payload: Json
+          p_type: string
+        }
+        Returns: number
+      }
+      notify_unreported_attendance: { Args: never; Returns: number }
       overlap_error: { Args: { p_constraint: string }; Returns: string }
       pick_lesson_type_color: { Args: { p_palette: string[] }; Returns: string }
+      ping_email_dispatcher: { Args: never; Returns: boolean }
       preview_lesson_change: {
         Args: {
           p_date: string
@@ -1842,6 +2233,10 @@ export type Database = {
         }
         Returns: string
       }
+      save_reminder_preferences: {
+        Args: { p_enabled: boolean; p_offsets: number[] }
+        Returns: undefined
+      }
       save_student: {
         Args: {
           p_birth_date: string
@@ -1944,6 +2339,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_lesson_reminder: {
+        Args: { p_lesson: string; p_mode: string; p_offsets: number[] }
+        Returns: undefined
+      }
+      set_notification_channel: {
+        Args: { p_channel: Database["public"]["Enums"]["notification_channel"] }
+        Returns: undefined
+      }
       set_operating_hours: { Args: { p_days: Json }; Returns: number }
       set_student_status: {
         Args: {
@@ -2018,11 +2421,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      teacher_profile_id: { Args: { p_teacher: string }; Returns: string }
       teacher_status_impact: { Args: { p_id: string }; Returns: Json }
       transfer_super_admin: {
         Args: { p_target_profile_id: string }
         Returns: undefined
       }
+      unarchive_notifications: { Args: { p_ids: string[] }; Returns: number }
       update_lesson: {
         Args: {
           p_change_request_id: string
@@ -2049,6 +2454,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      valid_reminder_offsets: { Args: { p: number[] }; Returns: boolean }
       within_operating_hours: {
         Args: { p_day: number; p_end: string; p_start: string }
         Returns: boolean
@@ -2071,6 +2477,12 @@ export type Database = {
         | "closure_removed"
       closure_source: "holiday" | "custom"
       closure_status: "active" | "cancelled"
+      email_status:
+        | "pending"
+        | "sending"
+        | "sent"
+        | "failed"
+        | "skipped_test_mode"
       exception_request_kind:
         | "single"
         | "series"
@@ -2088,6 +2500,9 @@ export type Database = {
       lesson_change_kind: "cancel" | "change"
       lesson_location: "school" | "zoom"
       lesson_status: "scheduled" | "cancelled" | "closed_day"
+      notification_category: "activity" | "system"
+      notification_channel: "in_app" | "in_app_email"
+      reminder_mode: "off" | "custom"
       request_status: "pending" | "approved" | "rejected" | "cancelled"
       series_status: "active" | "ended"
       student_level: "beginner" | "intermediate" | "advanced"
@@ -2239,6 +2654,13 @@ export const Constants = {
       ],
       closure_source: ["holiday", "custom"],
       closure_status: ["active", "cancelled"],
+      email_status: [
+        "pending",
+        "sending",
+        "sent",
+        "failed",
+        "skipped_test_mode",
+      ],
       exception_request_kind: [
         "single",
         "series",
@@ -2258,6 +2680,9 @@ export const Constants = {
       lesson_change_kind: ["cancel", "change"],
       lesson_location: ["school", "zoom"],
       lesson_status: ["scheduled", "cancelled", "closed_day"],
+      notification_category: ["activity", "system"],
+      notification_channel: ["in_app", "in_app_email"],
+      reminder_mode: ["off", "custom"],
       request_status: ["pending", "approved", "rejected", "cancelled"],
       series_status: ["active", "ended"],
       student_level: ["beginner", "intermediate", "advanced"],

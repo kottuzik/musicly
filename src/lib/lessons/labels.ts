@@ -88,6 +88,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   change_request_rejected: "בקשת מורה נדחתה",
   duration_changed: "משך תחום שונה",
   student_deactivated: "תלמיד הושבת",
+  student_auto_activated: "תלמיד הופעל אוטומטית בתאריך החזרה",
   teacher_deactivated: "מורה הושבת",
   regular_teacher_changed: "המורה הקבוע הוחלף",
   attendance_reported: "דווחה נוכחות",

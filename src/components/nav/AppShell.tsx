@@ -4,12 +4,13 @@ import type { ReactNode } from "react";
 import { ROLE_LABELS, type Profile } from "@/lib/auth/roles";
 import { navItemsForRole } from "@/lib/nav/items";
 import { PageBackground } from "@/components/PageBackground";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Brand } from "./Brand";
 import { MobileNav } from "./MobileNav";
 import { NavLinks } from "./NavLinks";
 import styles from "./AppShell.module.css";
 
-export function AppShell({ profile, children }: { profile: Profile; children: ReactNode }) {
+export function AppShell({ profile, unread, children }: { profile: Profile; unread: number; children: ReactNode }) {
   const items = navItemsForRole(profile.role, profile.status);
   return (
     <>
@@ -27,6 +28,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
               <MobileNav items={items} />
             </div>
             <div className={styles.user}>
+              <NotificationBell unread={unread} />
               <Link href="/profile" className={styles.profileLink} aria-label={`הפרופיל שלי: ${profile.full_name}`}>
                 <span className={styles.userText}>
                   <span className={styles.userName}>{profile.full_name}</span>

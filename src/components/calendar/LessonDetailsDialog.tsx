@@ -7,6 +7,7 @@ import { ExtendSeriesDialog } from "@/components/lessons/ExtendSeriesDialog";
 import { LessonChangeRequestDialog } from "@/components/lessons/LessonChangeRequestDialog";
 import { RestoreLessonDialog } from "@/components/lessons/RestoreLessonDialog";
 import lessonChange from "@/components/lessons/LessonChange.module.css";
+import { LessonReminderDialog } from "@/components/notifications/LessonReminderDialog";
 import { Alert } from "@/components/ui/Alert";
 import { Badge, ColorChip } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -268,6 +269,7 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
                 <Field label="הפסקה מתאריך (כולל)" name="fromDate" type="date" min={schoolToday()} defaultValue={ready.occurrence_date} />
               </ConfirmAction>
             )}
+            {!isAdmin && scheduled && upcoming && <LessonReminderDialog lessonId={ready.id} />}
             {!isAdmin && scheduled && upcoming && !ready.pending_change_request_id && !sameDay && (
               <Button variant="ghost" size="small" onClick={() => setDialog("request")}>
                 בקשת שינוי או ביטול

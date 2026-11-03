@@ -14,7 +14,8 @@
     "db:push": "supabase db push --linked",
     "db:types": "supabase gen types typescript --linked --schema public > src/types/database.ts",
     "create-super-admin": "tsx scripts/create-super-admin.ts",
-    "seed-test-users": "tsx scripts/seed-test-users.ts"
+    "seed-test-users": "tsx scripts/seed-test-users.ts",
+    "dispatch-emails": "tsx scripts/dispatch-emails.ts"
   },
   "dependencies": {
     "@fullcalendar/react": "^7.1.3",

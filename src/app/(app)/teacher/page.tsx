@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { requireRole } from "@/lib/auth/session";
 import { TEACHER_ROLES } from "@/lib/auth/roles";
 import { loadTeacherDashboard } from "@/lib/lessons/queries";
+import { unreadNotificationCount } from "@/lib/notifications/queries";
 import { createClient } from "@/lib/supabase/server";
 import { NoticeAlert } from "../NoticeAlert";
 import styles from "../Home.module.css";
@@ -36,16 +37,25 @@ export default async function TeacherHomePage({ searchParams }: PageProps<"/teac
   }
 
   const supabase = await createClient();
-  const { upcoming, pendingRequests, unreported } = await loadTeacherDashboard(supabase);
+  const [{ upcoming, pendingRequests, unreported }, unread] = await Promise.all([
+    loadTeacherDashboard(supabase),
+    unreadNotificationCount(supabase),
+  ]);
 
   return (
     <div className={styles.page}>
-      <LiveRefresh tables={["lessons", "exception_booking_requests", "attendance"]} />
+      <LiveRefresh tables={["lessons", "exception_booking_requests", "attendance", "notifications"]} />
       <NoticeAlert notice={notice} />
       <div className={styles.heading}>
         <h1>הלוח שלי</h1>
         <p className="text-body-lg text-secondary">שלום, {profile.full_name}</p>
       </div>
+      {unread > 0 && (
+        <Alert tone="info">
+          {unread === 1 ? "יש לך התראה אחת שלא נקראה" : `יש לך ${unread} התראות שלא נקראו`}.{" "}
+          <Link href="/notifications">מעבר להתראות</Link>
+        </Alert>
+      )}
       {pendingRequests > 0 && (
         <Alert tone="info">
           {pendingRequests === 1 ? "בקשת שיבוץ אחת ממתינה" : `${pendingRequests} בקשות שיבוץ ממתינות`} לתשובתך.{" "}

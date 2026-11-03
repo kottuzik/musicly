@@ -12,6 +12,7 @@ import { TextareaField } from "@/components/ui/TextareaField";
 import type { ActionState } from "@/lib/actions";
 import { requestLessonChange } from "@/lib/lessons/actions";
 import type { LessonDetails } from "@/lib/lessons/queries";
+import { formatLessonDate, lessonTimeRange } from "@/lib/lessons/time";
 import { schoolToday } from "@/lib/students/age";
 import { addDays, TIME_OPTIONS } from "@/lib/time/weekdays";
 import booking from "./BookLesson.module.css";
@@ -66,6 +67,20 @@ function RequestForm({ lesson, onOpenChange, onDone }: Props) {
       <input type="hidden" name="lessonId" value={lesson.id} />
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="start" value={start} />
+
+      <div className={styles.lessonSummary}>
+        <p className="text-small text-secondary">השיעור שעליו הבקשה</p>
+        <dl className={stack.details}>
+          <dt>תלמיד</dt>
+          <dd>{lesson.student_name}</dd>
+          <dt>תחום</dt>
+          <dd>{lesson.lesson_type_name}</dd>
+          <dt>מועד</dt>
+          <dd>
+            {formatLessonDate(lesson.start_at)} · <bdi dir="ltr">{lessonTimeRange(lesson.start_at, lesson.end_at)}</bdi>
+          </dd>
+        </dl>
+      </div>
 
       <fieldset className={styles.scope}>
         <legend>מה לבקש?</legend>
