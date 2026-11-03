@@ -153,6 +153,8 @@ export function describeNotification(n: NotificationRow, base: "/admin" | "/teac
       return { title: "תלמיד הופעל אוטומטית (ללא שיבוצים)", detail: student ?? "", href: n.entity_id ? `/admin/students/${n.entity_id}` : "/admin/students" };
     case "series_extension_conflicts":
       return { title: `בהארכת סדרה נמצאו ${num(p.count)} שבועות מתנגשים`, detail: "הם לא נוצרו. אפשר לשבץ אותם ידנית.", href: "/admin/calendar" };
+    case "availability_needed":
+      return { title: "נא להגדיר זמינות חדשה", detail: "הוחזרתם לפעילות. הגדירו את הזמינות השבועית כדי שאפשר יהיה לשבץ שיעורים.", href: "/teacher/availability" };
     case "email_failed":
       return { title: "שליחת אימייל נכשלה", detail: "ההתראה הגיעה במערכת, אך האימייל לא נשלח.", href: null };
     default:

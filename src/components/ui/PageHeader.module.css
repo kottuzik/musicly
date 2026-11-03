@@ -18,3 +18,13 @@
   flex-wrap: wrap;
   gap: 12px;
 }
+
+/* Buttons in the header's action row share one size, whatever size each was created with. */
+.actions > button,
+.actions > a {
+  min-block-size: 36px;
+  padding-block: 6px;
+  padding-inline: 12px;
+  font-size: 14px;
+  line-height: 20px;
+}

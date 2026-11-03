@@ -5,6 +5,7 @@ import type { ActionState } from "@/lib/actions";
 import { Alert } from "./Alert";
 import { Button, type ButtonVariant } from "./Button";
 import { Dialog, DialogActions } from "./Dialog";
+import styles from "./ConfirmAction.module.css";
 import { SubmitButton } from "./SubmitButton";
 
 type ConfirmActionProps = {
@@ -53,7 +54,7 @@ export function ConfirmAction({
         {trigger}
       </Button>
       <Dialog open={open} onOpenChange={setOpen} title={title} description={description}>
-        <form action={formAction}>
+        <form action={formAction} className={styles.form}>
           {Object.entries(fields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
           ))}

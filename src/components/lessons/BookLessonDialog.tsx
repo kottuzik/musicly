@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
+import { Button, type ButtonVariant } from "@/components/ui/Button";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Field } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
@@ -29,12 +29,20 @@ import { useTimeOptions } from "./useBusyTimes";
 type Mode = "single" | "series";
 type Meeting = { day: string; start: string };
 
-export function BookLessonDialog({ options }: { options: BookingOptions }) {
+type DialogProps = {
+  options: BookingOptions;
+  // Opened from a student's page: the student is already chosen and cannot be changed.
+  studentId?: string;
+  variant?: ButtonVariant;
+};
+
+export function BookLessonDialog({ options, studentId, variant }: DialogProps) {
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   return (
     <>
       <Button
+        variant={variant}
         onClick={() => {
           setFormKey((k) => k + 1);
           setOpen(true);
@@ -47,7 +55,7 @@ export function BookLessonDialog({ options }: { options: BookingOptions }) {
         {options.students.length === 0 ? (
           <Alert tone="warning">אין עדיין תלמידים פעילים הרשומים לתחום. הוסיפו תלמיד ותחום לימוד בדף התלמידים.</Alert>
         ) : (
-          <BookLessonForm key={formKey} options={options} onClose={() => setOpen(false)} />
+          <BookLessonForm key={formKey} options={options} fixedStudentId={studentId} onClose={() => setOpen(false)} />
         )}
       </Dialog>
     </>
@@ -57,14 +65,29 @@ export function BookLessonDialog({ options }: { options: BookingOptions }) {
 const timeOptions = TIME_OPTIONS.map((t) => ({ value: t, label: t }));
 const dayOptions = WEEKDAY_LABELS.map((label, i) => ({ value: String(i), label }));
 
-function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose: () => void }) {
+function BookLessonForm({
+  options,
+  fixedStudentId,
+  onClose,
+}: {
+  options: BookingOptions;
+  fixedStudentId?: string;
+  onClose: () => void;
+}) {
+  // With a fixed student, a single subject is preselected together with its regular teacher and duration.
+  const fixedStudent = options.students.find((s) => s.id === fixedStudentId);
+  const onlySubject = fixedStudent?.subjects.length === 1 ? fixedStudent.subjects[0] : undefined;
   const [mode, setMode] = useState<Mode>("single");
-  const [studentId, setStudentId] = useState("");
-  const [lessonTypeId, setLessonTypeId] = useState("");
-  const [teacherId, setTeacherId] = useState("");
+  const [studentId, setStudentId] = useState(fixedStudent?.id ?? "");
+  const [lessonTypeId, setLessonTypeId] = useState(onlySubject?.lessonTypeId ?? "");
+  const [teacherId, setTeacherId] = useState(
+    onlySubject && options.teachers.some((t) => t.id === onlySubject.regularTeacherId) ? onlySubject.regularTeacherId : "",
+  );
   const [date, setDate] = useState("");
   const [start, setStart] = useState("");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState(
+    String(options.lessonTypes.find((lt) => lt.id === onlySubject?.lessonTypeId)?.duration ?? ""),
+  );
   const [location, setLocation] = useState<LessonLocation>("school");
   const [startDate, setStartDate] = useState(schoolToday());
   const [endDate, setEndDate] = useState("");
@@ -265,6 +288,7 @@ function BookLessonForm({ options, onClose }: { options: BookingOptions; onClose
         placeholder="בחרו תלמיד"
         options={options.students.map((s) => ({ value: s.id, label: s.name }))}
         onValueChange={chooseStudent}
+        disabled={Boolean(fixedStudent)}
         error={errors.studentId}
       />
       <SelectField

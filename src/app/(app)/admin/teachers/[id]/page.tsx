@@ -19,12 +19,15 @@ import table from "@/components/ui/Table.module.css";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
 import { loadTeacherAvailability } from "@/lib/availability/queries";
+import { STUDENT_STATUS_LABELS } from "@/lib/students/labels";
 import { loadHistoryLessons } from "@/lib/lessons/queries";
 import { isMonth } from "@/lib/lessons/time";
 import { schoolToday } from "@/lib/students/age";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState, formatDate } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
 import { TeacherImpactNotice } from "@/components/impact/ImpactNotices";
+import { AvailabilityModeField } from "@/components/deletion/RestoreFields";
+import { DeleteTeacherButton } from "@/components/deletion/DeleteButtons";
 import { createTeacherInvitation, revokeInvitation, setTeacherStatus } from "../actions";
 import { TeacherDialog } from "../TeacherDialog";
 import styles from "./TeacherDetails.module.css";
@@ -44,13 +47,18 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
   const [{ data: teacher }, { data: lessonTypes }, { data: invitations }] = await Promise.all([
     supabase
       .from("teachers")
-      .select("id, full_name, email, phone, status, profile_id, teacher_skills(lesson_types(id, name, color))")
+      .select("id, full_name, email, phone, status, profile_id, deleted_at, teacher_skills(lesson_types(id, name, color))")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("lesson_types").select("id, name, color").order("name"),
     supabase.rpc("list_open_invitations"),
   ]);
-  if (!teacher) notFound();
+  // A deleted teacher is only reachable from the "recently deleted" list.
+  if (!teacher || teacher.deleted_at || !teacher.email) notFound();
+  const email = teacher.email;
+
+  // The students this teacher is the regular teacher of, with the subject of each enrollment.
+  const students = tab === "general" ? await loadTeacherStudents(supabase, teacher.id) : [];
 
   const skills = teacher.teacher_skills.flatMap((s) => (s.lesson_types ? [s.lesson_types] : []));
   const account = accountState(Boolean(teacher.profile_id), invitations?.find((i) => i.teacher_id === teacher.id));
@@ -85,7 +93,7 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
               teacher={{
                 id: teacher.id,
                 full_name: teacher.full_name,
-                email: teacher.email,
+                email,
                 phone: teacher.phone,
                 lessonTypeIds: skills.map((s) => s.id),
                 registered: Boolean(teacher.profile_id),
@@ -104,8 +112,9 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
               }
               confirmLabel={active ? "הפוך ללא פעיל" : "הפוך לפעיל"}
             >
-              {active && <TeacherImpactNotice teacherId={teacher.id} />}
+              {active ? <TeacherImpactNotice teacherId={teacher.id} /> : <AvailabilityModeField />}
             </ConfirmAction>
+            <DeleteTeacherButton id={teacher.id} name={teacher.full_name} trigger="מחיקת מורה" />
           </>
         }
       />
@@ -148,7 +157,7 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
               <dt>טלפון</dt>
               <dd className={table.ltr}>{teacher.phone || "—"}</dd>
               <dt>אימייל</dt>
-              <dd className={table.ltr}>{teacher.email}</dd>
+              <dd className={table.ltr}>{email}</dd>
               <dt>תחומי הוראה</dt>
               <dd>
                 <div className={table.chips}>
@@ -160,6 +169,31 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
                 </div>
               </dd>
             </dl>
+          </Card>
+
+          <Card className={styles.studentsCard}>
+            <h2 className={`text-h3 ${stack.sectionTitle}`}>תלמידים משויכים ({students.length})</h2>
+            {students.length ? (
+              <ul className={styles.students}>
+                {students.map((st) => (
+                  <li key={st.id}>
+                    <Link href={`/admin/students/${st.id}`}>{st.name}</Link>
+                    {st.status === "inactive" && (
+                      <Badge tone={STUDENT_STATUS_LABELS.inactive.tone}>{STUDENT_STATUS_LABELS.inactive.label}</Badge>
+                    )}
+                    <span className={table.chips}>
+                      {st.subjects.map((sub) => (
+                        <ColorChip key={sub.id} color={sub.color}>
+                          {sub.name}
+                        </ColorChip>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-secondary">אין תלמידים משויכים למורה.</p>
+            )}
           </Card>
 
           <Card>
@@ -199,4 +233,28 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
       )}
     </div>
   );
+}
+
+type Client = Awaited<ReturnType<typeof createClient>>;
+
+async function loadTeacherStudents(supabase: Client, teacherId: string) {
+  const { data } = await supabase
+    .from("student_subjects")
+    .select("id, students!inner(id, full_name, status, deleted_at), lesson_types(id, name, color)")
+    .eq("regular_teacher_id", teacherId)
+    .is("students.deleted_at", null);
+
+  const byStudent = new Map<string, { id: string; name: string; status: "active" | "inactive"; subjects: { id: string; name: string; color: string }[] }>();
+  for (const row of data ?? []) {
+    if (!row.students || !row.lesson_types) continue;
+    const entry = byStudent.get(row.students.id) ?? {
+      id: row.students.id,
+      name: row.students.full_name,
+      status: row.students.status,
+      subjects: [],
+    };
+    entry.subjects.push({ id: row.id, name: row.lesson_types.name, color: row.lesson_types.color });
+    byStudent.set(row.students.id, entry);
+  }
+  return [...byStudent.values()].sort((a, b) => a.name.localeCompare(b.name, "he"));
 }

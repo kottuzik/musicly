@@ -9,6 +9,8 @@ export type Profile = {
   email: string;
   role: Role;
   status: UserStatus;
+  // Set while the account is soft-deleted: it cannot be used at all.
+  deleted_at?: string | null;
 };
 
 export const ADMIN_ROLES: readonly Role[] = ["super_admin", "admin"];
@@ -33,7 +35,8 @@ export function homePathForRole(role: Role): string {
 }
 
 // Inactive teachers may still sign in (read-only history, per PRD); inactive admins may not.
-export function hasAppAccess(profile: Pick<Profile, "role" | "status">): boolean {
+export function hasAppAccess(profile: Pick<Profile, "role" | "status" | "deleted_at">): boolean {
+  if (profile.deleted_at) return false;
   return profile.status === "active" || profile.role === "teacher";
 }
 

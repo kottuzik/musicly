@@ -14,7 +14,7 @@ export const getCurrentProfile = cache(async (): Promise<{ userId: string | null
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, status")
+    .select("id, full_name, email, role, status, deleted_at")
     .eq("id", userId)
     .maybeSingle();
 

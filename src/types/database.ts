@@ -1025,6 +1025,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deleted_at: string | null
           email: string
           full_name: string
           id: string
@@ -1035,6 +1036,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           email: string
           full_name: string
           id: string
@@ -1045,6 +1047,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           email?: string
           full_name?: string
           id?: string
@@ -1281,22 +1284,30 @@ export type Database = {
       }
       students: {
         Row: {
-          birth_date: string
+          anonymized_at: string | null
+          birth_date: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           expected_return_date: string | null
           full_name: string
           id: string
+          purge_after: string | null
           return_mode: Database["public"]["Enums"]["student_return_mode"] | null
           return_notified_at: string | null
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
         }
         Insert: {
-          birth_date: string
+          anonymized_at?: string | null
+          birth_date?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           expected_return_date?: string | null
           full_name: string
           id?: string
+          purge_after?: string | null
           return_mode?:
             | Database["public"]["Enums"]["student_return_mode"]
             | null
@@ -1305,11 +1316,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          birth_date?: string
+          anonymized_at?: string | null
+          birth_date?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           expected_return_date?: string | null
           full_name?: string
           id?: string
+          purge_after?: string | null
           return_mode?:
             | Database["public"]["Enums"]["student_return_mode"]
             | null
@@ -1317,7 +1332,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_absences: {
         Row: {
@@ -1453,36 +1476,55 @@ export type Database = {
       }
       teachers: {
         Row: {
+          anonymized_at: string | null
           created_at: string
-          email: string
+          deleted_at: string | null
+          deleted_by: string | null
+          email: string | null
           full_name: string
           id: string
           phone: string | null
           profile_id: string | null
+          purge_after: string | null
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
         }
         Insert: {
+          anonymized_at?: string | null
           created_at?: string
-          email: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          email?: string | null
           full_name: string
           id?: string
           phone?: string | null
           profile_id?: string | null
+          purge_after?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
         Update: {
+          anonymized_at?: string | null
           created_at?: string
-          email?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          email?: string | null
           full_name?: string
           id?: string
           phone?: string | null
           profile_id?: string | null
+          purge_after?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "teachers_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "teachers_profile_id_fkey"
             columns: ["profile_id"]
@@ -1582,6 +1624,7 @@ export type Database = {
         }
         Returns: Json
       }
+      can_delete_student_history: { Args: never; Returns: boolean }
       cancel_availability_request: {
         Args: { p_id: string; p_version: number }
         Returns: undefined
@@ -1736,6 +1779,10 @@ export type Database = {
         Args: { p_id: string; p_remove_from_teachers: boolean }
         Returns: undefined
       }
+      delete_student: { Args: { p_id: string }; Returns: undefined }
+      delete_student_history: { Args: { p_id: string }; Returns: number }
+      delete_teacher: { Args: { p_id: string }; Returns: undefined }
+      delete_teacher_history: { Args: { p_id: string }; Returns: number }
       discard_pending_requests: {
         Args: { p_lesson_id: string; p_series_id: string }
         Returns: number
@@ -1829,6 +1876,7 @@ export type Database = {
           version: number
         }[]
       }
+      inactive_teacher_id: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_my_student: { Args: { p_student_id: string }; Returns: boolean }
       is_quarter_hour: { Args: { p_time: string }; Returns: boolean }
@@ -1927,6 +1975,18 @@ export type Database = {
           student_name: string
           teacher_id: string
           teacher_name: string
+        }[]
+      }
+      list_deleted_people: {
+        Args: { p_kind: string }
+        Returns: {
+          days_left: number
+          deleted_at: string
+          full_name: string
+          id: string
+          lessons: number
+          purge_after: string
+          purged: boolean
         }[]
       }
       list_exception_requests: {
@@ -2127,6 +2187,7 @@ export type Database = {
       }
       notify_unreported_attendance: { Args: never; Returns: number }
       overlap_error: { Args: { p_constraint: string }; Returns: string }
+      person_maintenance_on: { Args: never; Returns: undefined }
       pick_lesson_type_color: { Args: { p_palette: string[] }; Returns: string }
       ping_email_dispatcher: { Args: never; Returns: boolean }
       preview_lesson_change: {
@@ -2165,6 +2226,9 @@ export type Database = {
         Args: { p_end_date: string; p_resume_from: string; p_series_id: string }
         Returns: Json
       }
+      purge_soft_deleted_records: { Args: never; Returns: number }
+      purge_student: { Args: { p_id: string }; Returns: undefined }
+      purge_teacher: { Args: { p_id: string }; Returns: undefined }
       remove_availability: {
         Args: {
           p_availability_id: string
@@ -2219,6 +2283,21 @@ export type Database = {
           p_version: number
         }
         Returns: Json
+      }
+      restore_student: {
+        Args: {
+          p_id: string
+          p_status: Database["public"]["Enums"]["user_status"]
+        }
+        Returns: undefined
+      }
+      restore_teacher: {
+        Args: {
+          p_availability_mode: string
+          p_id: string
+          p_status: Database["public"]["Enums"]["user_status"]
+        }
+        Returns: undefined
       }
       revoke_invitation: {
         Args: { p_invitation_id: string }
@@ -2359,6 +2438,7 @@ export type Database = {
       }
       set_teacher_status: {
         Args: {
+          p_availability_mode?: string
           p_status: Database["public"]["Enums"]["user_status"]
           p_teacher_id: string
         }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HistoryLessons } from "@/components/attendance/HistoryLessons";
 import { UnreportedCard } from "@/components/attendance/UnreportedCard";
 import { UpcomingLessons } from "@/components/lessons/UpcomingLessons";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
@@ -7,7 +8,9 @@ import { Alert } from "@/components/ui/Alert";
 import { Card } from "@/components/ui/Card";
 import { requireRole } from "@/lib/auth/session";
 import { TEACHER_ROLES } from "@/lib/auth/roles";
-import { loadTeacherDashboard } from "@/lib/lessons/queries";
+import { loadHistoryLessons, loadTeacherDashboard } from "@/lib/lessons/queries";
+import { isMonth } from "@/lib/lessons/time";
+import { schoolToday } from "@/lib/students/age";
 import { unreadNotificationCount } from "@/lib/notifications/queries";
 import { createClient } from "@/lib/supabase/server";
 import { NoticeAlert } from "../NoticeAlert";
@@ -17,9 +20,10 @@ export const metadata: Metadata = { title: "הלוח שלי" };
 
 export default async function TeacherHomePage({ searchParams }: PageProps<"/teacher">) {
   const profile = await requireRole(TEACHER_ROLES);
-  const { notice } = await searchParams;
+  const { notice, month: monthParam } = await searchParams;
 
   if (profile.status === "inactive") {
+    const month = typeof monthParam === "string" && isMonth(monthParam) ? monthParam : schoolToday().slice(0, 7);
     return (
       <div className={styles.page}>
         <NoticeAlert notice={notice} />
@@ -28,10 +32,16 @@ export default async function TeacherHomePage({ searchParams }: PageProps<"/teac
           <p className="text-body-lg text-secondary">שלום, {profile.full_name}</p>
         </div>
         <Alert tone="warning">החשבון שלך אינו פעיל. ניתן לצפות בהיסטוריית השיעורים בלבד.</Alert>
-        <Card className={styles.welcome}>
-          <h2 className="text-h3">היסטוריית השיעורים שלך</h2>
-          <p className="text-body-lg text-secondary">היסטוריית השיעורים שלך תוצג כאן.</p>
-        </Card>
+        <HistoryLessons
+          lessons={await loadHistoryLessons(await createClient(), month, {})}
+          month={month}
+          hrefForMonth={(m) => `/teacher?month=${m}`}
+          showStudent
+          showTeacher={false}
+          canReport={false}
+          asOf={new Date().toISOString()}
+          empty="אין שיעורים בחודש הזה."
+        />
       </div>
     );
   }

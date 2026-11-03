@@ -17,12 +17,14 @@ import stack from "@/components/ui/Stack.module.css";
 import table from "@/components/ui/Table.module.css";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
-import { loadHistoryLessons } from "@/lib/lessons/queries";
+import { BookLessonDialog } from "@/components/lessons/BookLessonDialog";
+import { loadBookingOptions, loadHistoryLessons } from "@/lib/lessons/queries";
 import { isMonth } from "@/lib/lessons/time";
 import { ageOn, formatDay, schoolToday } from "@/lib/students/age";
 import { RETURN_MODE_LABELS, STUDENT_STATUS_LABELS } from "@/lib/students/labels";
 import { getStudent } from "@/lib/students/queries";
 import { createClient } from "@/lib/supabase/server";
+import { DeleteStudentButton } from "@/components/deletion/DeleteButtons";
 import { removeStudentSubject, setStudentStatus } from "../actions";
 import { StudentDialog } from "../StudentDialog";
 import { StudentStatusDialog } from "../StudentStatusDialog";
@@ -42,7 +44,7 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
   const [detail, { data: lessonTypes }, { data: teachers }] = await Promise.all([
     getStudent(supabase, id, { withContacts: true }),
     supabase.from("lesson_types").select("id, name").order("name"),
-    supabase.from("teachers").select("id, full_name, status, teacher_skills(lesson_type_id)").order("full_name"),
+    supabase.from("teachers").select("id, full_name, status, teacher_skills(lesson_type_id)").is("deleted_at", null).order("full_name"),
   ]);
   if (!detail) notFound();
   const { student, contacts, subjects } = detail;
@@ -56,6 +58,8 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
     lessonTypeIds: t.teacher_skills.map((s) => s.lesson_type_id),
   }));
   const base = `/admin/students/${student.id}`;
+  // Booking is offered for active students only; the dialog needs the school's hours and availability.
+  const bookingOptions = active ? await loadBookingOptions(supabase) : null;
   const historyLessons = current === "history" ? await loadHistoryLessons(supabase, month, { studentId: student.id }) : [];
 
   return (
@@ -86,6 +90,9 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
           </span>
         }
         actions={
+          <>
+          {bookingOptions && <BookLessonDialog options={bookingOptions} studentId={student.id} variant="secondary" />}
+          <DeleteStudentButton id={student.id} name={student.full_name} trigger="מחיקת תלמיד" />
           <StudentDialog
             student={{
               id: student.id,
@@ -98,6 +105,7 @@ export default async function StudentDetailsPage({ params, searchParams }: PageP
               parent_email: contacts?.parent_email ?? null,
             }}
           />
+          </>
         }
       />
 

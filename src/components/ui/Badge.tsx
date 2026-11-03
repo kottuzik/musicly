@@ -4,7 +4,7 @@ import styles from "./Badge.module.css";
 export type BadgeTone = "neutral" | "success" | "warning" | "error" | "info" | "primary";
 
 export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; children: ReactNode }) {
-  return <span className={`${styles.badge} ${styles[tone]}`}>{children}</span>;
+  return <span data-pill="" className={`${styles.badge} ${styles[tone]}`}>{children}</span>;
 }
 
 // Lesson type label with its calendar color as a dot (color is never the only cue: the name is shown).

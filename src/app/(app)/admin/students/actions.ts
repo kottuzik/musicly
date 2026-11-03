@@ -136,3 +136,36 @@ export async function getStudentStatusImpact(id: string): Promise<StudentStatusI
   const { data, error } = await supabase.rpc("student_status_impact", { p_id: id });
   return error ? null : (data as StudentStatusImpact);
 }
+
+// Soft delete: the student is hidden for 30 days and can be restored (PRD §4.3).
+export async function deleteStudent(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const id = text(formData, "id");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_student", { p_id: id });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateStudents(id);
+  redirect("/admin/students?notice=deleted");
+}
+
+export async function restoreStudent(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const id = text(formData, "id");
+  const status = text(formData, "status");
+  if (status !== "active" && status !== "inactive") return { error: "יש לבחור את הסטטוס אחרי השחזור." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("restore_student", { p_id: id, p_status: status });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateStudents(id);
+  return { ok: true };
+}
+
+// Final, irreversible: re-checked in the database (Super Admin, or an Admin with the permission).
+export async function deleteStudentHistory(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_student_history", { p_id: text(formData, "id") });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateStudents();
+  return { ok: true };
+}

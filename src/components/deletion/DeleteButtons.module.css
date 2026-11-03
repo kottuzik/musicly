@@ -1,0 +1,10 @@
+/* The delete button inside a table row: red text only, starting where the column header starts. */
+button.rowDelete,
+button.rowDelete:hover:not(:disabled) {
+  padding-inline: 0;
+  background: transparent;
+}
+
+button.rowDelete:hover:not(:disabled) {
+  text-decoration: underline;
+}

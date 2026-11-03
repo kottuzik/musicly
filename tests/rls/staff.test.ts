@@ -205,7 +205,7 @@ describe.skipIf(!users)("RLS and RPCs for staff management (Development)", () =>
       expect(error).toBeNull();
       const { data } = await admin.from("teachers").select("status").eq("id", teacherId).single();
       expect(data!.status).toBe("inactive");
-      await admin.rpc("set_teacher_status", { p_teacher_id: teacherId, p_status: "active" });
+      await admin.rpc("set_teacher_status", { p_teacher_id: teacherId, p_status: "active", p_availability_mode: "restore" });
     });
   });
 

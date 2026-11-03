@@ -81,7 +81,7 @@ export async function listStudents(supabase: Client, filters: StudentFilters, { 
     .filter(Boolean)
     .join(", ");
 
-  let query = supabase.from("students").select(columns).order("full_name");
+  let query = supabase.from("students").select(columns).is("deleted_at", null).order("full_name");
   if (filters.q) query = query.ilike("full_name", `%${escapeLike(filters.q)}%`);
   if (filters.status === "active" || filters.status === "inactive") query = query.eq("status", filters.status);
   if (filters.subject) query = query.eq("match.lesson_type_id", filters.subject);
@@ -91,7 +91,7 @@ export async function listStudents(supabase: Client, filters: StudentFilters, { 
   const [{ data, error }, lookup, { count }] = await Promise.all([
     query,
     teacherLookup(supabase),
-    supabase.from("students").select("id", { count: "exact", head: true }),
+    supabase.from("students").select("id", { count: "exact", head: true }).is("deleted_at", null),
   ]);
   if (error) throw error;
 
@@ -117,7 +117,7 @@ export async function listStudents(supabase: Client, filters: StudentFilters, { 
 
 export async function getStudent(supabase: Client, id: string, { withContacts }: { withContacts: boolean }) {
   const [{ data: student }, { data: subjects }, contacts, lookup] = await Promise.all([
-    supabase.from("students").select("id, full_name, birth_date, status, expected_return_date, return_mode").eq("id", id).maybeSingle(),
+    supabase.from("students").select("id, full_name, birth_date, status, expected_return_date, return_mode, deleted_at").eq("id", id).maybeSingle(),
     supabase.from("student_subjects").select(SUBJECT_COLUMNS).eq("student_id", id),
     withContacts
       ? supabase
@@ -128,9 +128,10 @@ export async function getStudent(supabase: Client, id: string, { withContacts }:
       : Promise.resolve({ data: null }),
     teacherLookup(supabase),
   ]);
-  if (!student) return null;
+  // A deleted student is only reachable from the "recently deleted" list.
+  if (!student || student.deleted_at || !student.birth_date) return null;
   return {
-    student,
+    student: { ...student, birth_date: student.birth_date },
     contacts: contacts.data,
     subjects: toSubjectViews((subjects ?? []) as SubjectRow[], lookup),
   };

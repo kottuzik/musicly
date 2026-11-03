@@ -363,7 +363,7 @@ describe.skipIf(!users)("Effects on existing lessons (Development)", () => {
     const attention = await admin.rpc("list_attention_lessons");
     expect(attention.data?.find((l) => l.id === lesson)?.attention_reason).toBe("teacher_inactive");
     expect((await teacher.rpc("list_attention_lessons")).error?.message).toBe("not_allowed");
-    await admin.rpc("set_teacher_status", { p_teacher_id: extraTeacherId, p_status: "active" });
+    await admin.rpc("set_teacher_status", { p_teacher_id: extraTeacherId, p_status: "active", p_availability_mode: "restore" });
   });
 
   it("the reads for the new screens: calendar filter, details, history and recent changes", async () => {

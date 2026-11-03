@@ -18,6 +18,7 @@ import { requireRole } from "@/lib/auth/session";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState, formatDate } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
 import { TeacherImpactNotice } from "@/components/impact/ImpactNotices";
+import { AvailabilityModeField } from "@/components/deletion/RestoreFields";
 import { revokeInvitation, setTeacherStatus } from "../teachers/actions";
 import { regenerateAdminInvitation, setAdminStatus } from "./actions";
 import { InviteAdminDialog } from "./InviteAdminDialog";
@@ -42,7 +43,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
 
   const supabase = await createClient();
   const [{ data: profiles }, { data: teachers }, { data: permissions }, { data: invitations }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email, role, status"),
+    supabase.from("profiles").select("id, full_name, email, role, status").is("deleted_at", null),
     supabase.from("teachers").select("id, profile_id"),
     supabase.from("admin_permissions").select("profile_id, delete_student_history"),
     supabase.rpc("list_open_invitations"),
@@ -188,7 +189,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                             confirmLabel={u.status === "active" ? "הסר מורה" : "הפעל מחדש"}
                             confirmVariant={u.status === "active" ? "danger" : "primary"}
                           >
-                            {u.status === "active" && <TeacherImpactNotice teacherId={teacherId} />}
+                            {u.status === "active" ? <TeacherImpactNotice teacherId={teacherId} /> : <AvailabilityModeField />}
                           </ConfirmAction>
                         )}
                       </div>

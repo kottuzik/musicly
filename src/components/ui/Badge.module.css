@@ -1,4 +1,5 @@
 .badge {
+  --pill-inset: 10px;
   display: inline-flex;
   align-items: center;
   min-block-size: 24px;

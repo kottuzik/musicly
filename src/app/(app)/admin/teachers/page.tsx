@@ -1,6 +1,10 @@
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NoticeAlert } from "../../NoticeAlert";
+import { DeleteTeacherButton } from "@/components/deletion/DeleteButtons";
+import { DeletedPeopleTable } from "@/components/deletion/DeletedPeopleTable";
+import { Tabs } from "@/components/ui/Tabs";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge, ColorChip } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +17,7 @@ import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
 import { ACCOUNT_LABELS, STATUS_LABELS, accountState } from "@/lib/teachers/account";
 import { createClient } from "@/lib/supabase/server";
+import { deleteTeacherHistory, restoreTeacher } from "./actions";
 import { TeacherDialog } from "./TeacherDialog";
 
 export const metadata: Metadata = { title: "מורים" };
@@ -36,10 +41,31 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
   const status = param(params.status);
 
   const supabase = await createClient();
+  if (params.view === "deleted") {
+    const { data: deleted } = await supabase.rpc("list_deleted_people", { p_kind: "teacher" });
+    return (
+      <div className={stack.page}>
+        <PageHeader title="מורים" />
+        <TeacherTabs current="deleted" />
+        <p className="text-secondary">
+          מורה שנמחק מוסתר ולא יכול להתחבר במשך 30 יום, ואפשר לשחזר אותו. אחר כך החשבון ופרטי הקשר נמחקים, ושמו נשמר בהיסטוריית השיעורים.
+        </p>
+        <DeletedPeopleTable
+          kind="teacher"
+          rows={deleted ?? []}
+          restore={restoreTeacher}
+          deleteHistory={deleteTeacherHistory}
+          canDeleteHistory
+        />
+      </div>
+    );
+  }
+
   const [{ data: teachers }, { data: lessonTypes }, { data: invitations }] = await Promise.all([
     supabase
       .from("teachers")
       .select("id, full_name, email, phone, status, profile_id, teacher_skills(lesson_types(id, name, color))")
+      .is("deleted_at", null)
       .order("full_name"),
     supabase.from("lesson_types").select("id, name, color").order("name"),
     supabase.rpc("list_open_invitations"),
@@ -63,7 +89,9 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
 
   return (
     <div className={stack.page}>
+      <NoticeAlert notice={params.notice} />
       <PageHeader title="מורים" actions={<TeacherDialog lessonTypes={lessonTypes ?? []} />} />
+      <TeacherTabs current="active" />
 
       <form className={toolbar.toolbar} role="search" aria-label="חיפוש וסינון מורים">
         <div className={toolbar.search}>
@@ -101,6 +129,7 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
                 <th scope="col">טלפון</th>
                 <th scope="col">סטטוס</th>
                 <th scope="col">חשבון</th>
+                <th scope="col">פעולות</th>
               </tr>
             </thead>
             <tbody>
@@ -130,6 +159,11 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
                   <td data-label="חשבון">
                     <Badge tone={ACCOUNT_LABELS[t.account.kind].tone}>{ACCOUNT_LABELS[t.account.kind].label}</Badge>
                   </td>
+                  <td data-label="פעולות">
+                    <div className={table.actions}>
+                      <DeleteTeacherButton id={t.id} name={t.full_name} inRow />
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -141,5 +175,18 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
         )}
       </div>
     </div>
+  );
+}
+
+function TeacherTabs({ current }: { current: "active" | "deleted" }) {
+  return (
+    <Tabs
+      label="תצוגת מורים"
+      items={[
+        { key: "active", href: "/admin/teachers", label: "מורים" },
+        { key: "deleted", href: "/admin/teachers?view=deleted", label: "נמחקו לאחרונה" },
+      ]}
+      current={current}
+    />
   );
 }

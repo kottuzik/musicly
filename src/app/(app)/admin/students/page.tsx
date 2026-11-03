@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NoticeAlert } from "../../NoticeAlert";
+import { DeleteStudentButton } from "@/components/deletion/DeleteButtons";
+import { DeletedPeopleTable } from "@/components/deletion/DeletedPeopleTable";
+import { Tabs } from "@/components/ui/Tabs";
 import { StudentFiltersForm } from "@/components/students/StudentFiltersForm";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge, ColorChip } from "@/components/ui/Badge";
@@ -13,6 +17,7 @@ import { ageOn } from "@/lib/students/age";
 import { STUDENT_STATUS_LABELS } from "@/lib/students/labels";
 import { listStudents, readFilters } from "@/lib/students/queries";
 import { createClient } from "@/lib/supabase/server";
+import { deleteStudentHistory, restoreStudent } from "./actions";
 import { StudentDialog } from "./StudentDialog";
 import styles from "./Students.module.css";
 
@@ -20,19 +25,45 @@ export const metadata: Metadata = { title: "תלמידים" };
 
 export default async function StudentsPage({ searchParams }: PageProps<"/admin/students">) {
   await requireRole(ADMIN_ROLES);
-  const filters = readFilters(await searchParams);
+  const params = await searchParams;
+  const deletedView = params.view === "deleted";
+  const filters = readFilters(params);
 
   const supabase = await createClient();
+  if (deletedView) {
+    const [{ data: deleted }, { data: canDelete }] = await Promise.all([
+      supabase.rpc("list_deleted_people", { p_kind: "student" }),
+      supabase.rpc("can_delete_student_history"),
+    ]);
+    return (
+      <div className={stack.page}>
+        <PageHeader title="תלמידים" />
+        <StudentTabs current="deleted" />
+        <p className="text-secondary">
+          תלמיד שנמחק מוסתר ל־30 יום ואפשר לשחזר אותו. אחר כך הפרופיל ופרטי הקשר נמחקים, ונשארת היסטוריית שיעורים מינימלית.
+        </p>
+        <DeletedPeopleTable
+          kind="student"
+          rows={deleted ?? []}
+          restore={restoreStudent}
+          deleteHistory={deleteStudentHistory}
+          canDeleteHistory={Boolean(canDelete)}
+        />
+      </div>
+    );
+  }
   const [{ rows, total }, { data: lessonTypes }, { data: teachers }] = await Promise.all([
     listStudents(supabase, filters, { withContacts: true }),
     supabase.from("lesson_types").select("id, name").order("name"),
-    supabase.from("teachers").select("id, full_name").order("full_name"),
+    supabase.from("teachers").select("id, full_name").is("deleted_at", null).order("full_name"),
   ]);
   const hasFilters = Object.values(filters).some(Boolean);
 
   return (
     <div className={stack.page}>
+      <NoticeAlert notice={params.notice} />
       <PageHeader title="תלמידים" actions={<StudentDialog />} />
+      <StudentTabs current="active" />
 
       <StudentFiltersForm
         filters={filters}
@@ -55,6 +86,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
                 <th scope="col">תחומי לימוד</th>
                 <th scope="col">טלפון</th>
                 <th scope="col">סטטוס</th>
+                <th scope="col">פעולות</th>
               </tr>
             </thead>
             <tbody>
@@ -95,6 +127,11 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
                   <td data-label="סטטוס">
                     <Badge tone={STUDENT_STATUS_LABELS[s.status].tone}>{STUDENT_STATUS_LABELS[s.status].label}</Badge>
                   </td>
+                  <td data-label="פעולות">
+                    <div className={table.actions}>
+                      <DeleteStudentButton id={s.id} name={s.fullName} inRow />
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -106,5 +143,18 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
         )}
       </div>
     </div>
+  );
+}
+
+function StudentTabs({ current }: { current: "active" | "deleted" }) {
+  return (
+    <Tabs
+      label="תצוגת תלמידים"
+      items={[
+        { key: "active", href: "/admin/students", label: "תלמידים" },
+        { key: "deleted", href: "/admin/students?view=deleted", label: "נמחקו לאחרונה" },
+      ]}
+      current={current}
+    />
   );
 }

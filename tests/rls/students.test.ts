@@ -216,7 +216,7 @@ describe.skipIf(!users)("RLS and RPCs for students (Development)", () => {
       const { error } = await admin.rpc("save_teacher", {
         p_id: teacherIds.teacher,
         p_full_name: t!.full_name,
-        p_email: t!.email,
+        p_email: t!.email!,
         p_phone: t!.phone ?? "",
         p_lesson_type_ids: [lessonTypes.c],
       });

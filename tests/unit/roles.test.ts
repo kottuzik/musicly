@@ -41,6 +41,12 @@ describe("hasAppAccess", () => {
     expect(hasAppAccess({ role: "admin", status: "inactive" })).toBe(false);
     expect(hasAppAccess({ role: "super_admin", status: "inactive" })).toBe(false);
   });
+
+  it("never allows a deleted account, even an inactive teacher's", () => {
+    expect(hasAppAccess({ role: "teacher", status: "inactive", deleted_at: "2026-11-06T00:00:00Z" })).toBe(false);
+    expect(hasAppAccess({ role: "admin", status: "active", deleted_at: "2026-11-06T00:00:00Z" })).toBe(false);
+    expect(hasAppAccess({ role: "teacher", status: "inactive", deleted_at: null })).toBe(true);
+  });
 });
 
 describe("public and guest-only paths", () => {

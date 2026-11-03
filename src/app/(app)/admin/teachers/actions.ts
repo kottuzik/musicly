@@ -53,10 +53,53 @@ export async function setTeacherStatus(_prev: ActionState, formData: FormData): 
   await requireRole(ADMIN_ROLES);
   const id = String(formData.get("id") ?? "");
   const status = formData.get("status") === "inactive" ? "inactive" : "active";
+  // Coming back to activity needs a choice about the weekly availability (PRD §4.4).
+  const mode = String(formData.get("availabilityMode") ?? "");
   const supabase = await createClient();
-  const { error } = await supabase.rpc("set_teacher_status", { p_teacher_id: id, p_status: status });
+  const { error } = await supabase.rpc("set_teacher_status", {
+    p_teacher_id: id,
+    p_status: status,
+    p_availability_mode: (status === "active" && mode ? mode : null) as unknown as string,
+  });
   if (error) return { error: dbErrorMessage(error) };
   revalidateTeachers(id);
+  return { ok: true };
+}
+
+// Soft delete: the teacher is hidden and locked out for 30 days and can be restored (PRD §4.4).
+export async function deleteTeacher(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const id = String(formData.get("id") ?? "");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_teacher", { p_id: id });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateTeachers(id);
+  redirect("/admin/teachers?notice=deleted");
+}
+
+export async function restoreTeacher(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (status !== "active" && status !== "inactive") return { error: "יש לבחור את הסטטוס אחרי השחזור." };
+  const mode = String(formData.get("availabilityMode") ?? "");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("restore_teacher", {
+    p_id: id,
+    p_status: status,
+    p_availability_mode: (status === "active" && mode ? mode : null) as unknown as string,
+  });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateTeachers(id);
+  return { ok: true };
+}
+
+export async function deleteTeacherHistory(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_teacher_history", { p_id: String(formData.get("id") ?? "") });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateTeachers();
   return { ok: true };
 }
 
@@ -65,7 +108,7 @@ export async function createTeacherInvitation(_prev: InviteState, formData: Form
   const id = String(formData.get("id") ?? "");
   const supabase = await createClient();
   const { data: teacher } = await supabase.from("teachers").select("full_name, email").eq("id", id).maybeSingle();
-  if (!teacher) return { error: dbErrorMessage({ message: "not_found" }) };
+  if (!teacher?.email) return { error: dbErrorMessage({ message: "not_found" }) };
 
   const result = await createInvitation({ role: "teacher", teacherId: id, fullName: teacher.full_name, email: teacher.email });
   if (result.ok) revalidateTeachers(id);

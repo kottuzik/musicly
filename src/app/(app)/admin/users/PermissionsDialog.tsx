@@ -51,8 +51,8 @@ function PermissionsForm({ profileId, defaultChecked, onDone }: { profileId: str
         <span>
           <strong>מחיקת היסטוריית תלמידים לצמיתות</strong>
           <span className="text-secondary">
-            מאפשרת למנהל למחוק לצמיתות היסטוריית שיעורים של תלמיד שנמחק. ההרשאה תיכנס לשימוש כשיתווסף מנגנון
-            המחיקה.
+            מאפשרת למנהל למחוק לצמיתות את היסטוריית השיעורים שנשארה של תלמיד שנמחק. בלי ההרשאה רק המנהל הראשי
+            יכול לעשות זאת.
           </span>
         </span>
       </label>
