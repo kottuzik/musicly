@@ -264,8 +264,30 @@ describe.skipIf(!users)("Notifications, reminders, e-mail outbox and scheduled j
   // Reading, archiving, preferences
   // -------------------------------------------------------------------------
 
+  it("archive-all archives one tab of your own notifications only", async () => {
+    const mine = [
+      { user_id: users!.teacher2.id, type: `${PREFIX}-all`, category: "activity" as const },
+      { user_id: users!.teacher2.id, type: `${PREFIX}-all`, category: "system" as const },
+    ];
+    const others = { user_id: users!.teacher.id, type: `${PREFIX}-all`, category: "activity" as const };
+    const { data: rows, error } = await service.from("notifications").insert([...mine, others]).select("id, user_id, category");
+    expect(error).toBeNull();
+    const ids = (rows ?? []).map((r) => r.id);
+    const archivedAt = async (id: string) => (await service.from("notifications").select("archived_at").eq("id", id).single()).data?.archived_at;
+    const find = (user: string, category: string) => rows!.find((r) => r.user_id === user && r.category === category)!.id;
+
+    expect((await teacher2.rpc("archive_all_notifications", { p_tab: "archive" })).error).not.toBeNull();
+    expect((await teacher2.rpc("archive_all_notifications", { p_tab: "activity" })).error).toBeNull();
+    expect(await archivedAt(find(users!.teacher2.id, "activity"))).not.toBeNull();
+    expect(await archivedAt(find(users!.teacher2.id, "system"))).toBeNull();
+    expect(await archivedAt(find(users!.teacher.id, "activity"))).toBeNull();
+
+    await service.from("notifications").delete().in("id", ids);
+  });
+
   it("read-marking and archiving touch only your own notifications, and nothing can be deleted", async () => {
-    const [first] = await notifsFor(users!.teacher.id, "lesson_new");
+    // Only notifications from this run: older ones on Development may already be read.
+    const [first] = (await notifsFor(users!.teacher.id, "lesson_new")).filter((n) => n.created_at >= startedAt);
     expect(first).toBeTruthy();
 
     expect((await teacher2.rpc("mark_notifications_read", { p_ids: [first.id] })).data).toBe(0);

@@ -27,6 +27,17 @@ describe("secret key isolation", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("keeps the AI key on the server: only the assistant provider reads it, and never in a client component", () => {
+    const readers = sourceFiles().filter((f) => /OPENAI_API_KEY/.test(readFileSync(f, "utf8")));
+    expect(readers.sort()).toEqual([join("src", "lib", "assistant", "provider.ts")]);
+    expect(readFileSync(readers[0], "utf8")).toContain('import "server-only"');
+    const clients = sourceFiles().filter((f) => {
+      const source = readFileSync(f, "utf8");
+      return source.includes('"use client"') && /@\/lib\/assistant\/(provider|tools|run)/.test(source);
+    });
+    expect(clients).toEqual([]);
+  });
+
   it("keeps NEXT_PUBLIC variables limited to URL, publishable key and site URL", () => {
     const allowed = new Set(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SITE_URL"]);
     const used = new Set<string>();

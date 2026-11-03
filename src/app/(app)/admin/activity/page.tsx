@@ -111,7 +111,7 @@ export default async function ActivityPage({ searchParams }: PageProps<"/admin/a
       )}
 
       {pages > 1 && (
-        <nav aria-label="עמודים" className={toolbar.toolbar}>
+        <nav aria-label="עמודים" className={toolbar.pager}>
           {page > 1 && <Link href={link(page - 1)}>העמוד הקודם</Link>}
           <span aria-current="page">
             עמוד {page} מתוך {pages}

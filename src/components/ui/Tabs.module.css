@@ -13,6 +13,7 @@
 .tab {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   min-block-size: 40px;
   padding-inline: 16px;
   border-radius: 6px;
@@ -29,4 +30,13 @@
 .tab[aria-current="page"] {
   background: var(--color-primary);
   color: #fff;
+}
+
+/* Red dot: something unread in this tab. */
+.dot {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+  background: #dc2626;
+  flex-shrink: 0;
 }

@@ -40,6 +40,41 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          created_at: string
+          id: string
+          outcome: string
+          tokens_in: number
+          tokens_out: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          outcome?: string
+          tokens_in?: number
+          tokens_out?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          outcome?: string
+          tokens_in?: number
+          tokens_out?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           created_at: string
@@ -1553,6 +1588,60 @@ export type Database = {
         }
         Returns: string
       }
+      ai_find_available_teachers: {
+        Args: {
+          p_date: string
+          p_from: string
+          p_lesson_type_id: string
+          p_to: string
+        }
+        Returns: {
+          free_from: string
+          free_to: string
+          teacher_id: string
+          teacher_name: string
+        }[]
+      }
+      ai_find_people: {
+        Args: { p_kind: string; p_lesson_type: string; p_query: string }
+        Returns: {
+          id: string
+          name: string
+          status: string
+          subjects: string
+        }[]
+      }
+      ai_record_usage: {
+        Args: {
+          p_id: string
+          p_outcome: string
+          p_tokens_in: number
+          p_tokens_out: number
+        }
+        Returns: undefined
+      }
+      ai_reserve_request: {
+        Args: { p_daily: number; p_hourly: number }
+        Returns: string
+      }
+      ai_suggest_slots: {
+        Args: {
+          p_duration: number
+          p_from: string
+          p_lesson_type_id: string
+          p_limit: number
+          p_student_id: string
+          p_teacher_id: string
+          p_to: string
+        }
+        Returns: {
+          end_time: string
+          slot_date: string
+          start_time: string
+          teacher_id: string
+          teacher_name: string
+        }[]
+      }
       apply_availability_request: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -1585,6 +1674,7 @@ export type Database = {
         }
         Returns: Json
       }
+      archive_all_notifications: { Args: { p_tab: string }; Returns: number }
       archive_notifications: { Args: { p_ids: string[] }; Returns: number }
       attendance_summary: {
         Args: { p_from: string; p_teacher_id: string; p_to: string }
@@ -2157,6 +2247,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_export: {
+        Args: { p_kind: string; p_rows: number }
+        Returns: undefined
+      }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_notifications_read: { Args: { p_ids: string[] }; Returns: number }
       notify: {
@@ -2249,6 +2343,26 @@ export type Database = {
           p_teacher_id: string
         }
         Returns: string
+      }
+      report_lessons_summary: {
+        Args: {
+          p_from: string
+          p_group: string
+          p_teacher_id: string
+          p_to: string
+        }
+        Returns: {
+          cancelled: number
+          closed_day: number
+          group_id: string
+          group_name: string
+          held: number
+          scheduled_total: number
+          student_absent: number
+          teacher_absent: number
+          unreported: number
+          upcoming: number
+        }[]
       }
       request_lesson_change: {
         Args: {

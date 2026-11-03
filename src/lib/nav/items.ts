@@ -10,7 +10,8 @@ export type NavIcon =
   | "users"
   | "settings"
   | "profile"
-  | "notifications";
+  | "notifications"
+  | "reports";
 
 export type NavItem = { href: string; label: string; icon: NavIcon };
 
@@ -25,6 +26,7 @@ export function navItemsForRole(role: Role, status: UserStatus = "active"): NavI
       { href: "/admin/students", label: "תלמידים", icon: "students" },
       { href: "/admin/teachers", label: "מורים", icon: "teachers" },
       { href: "/admin/requests", label: "בקשות", icon: "requests" },
+      { href: "/admin/reports", label: "דוחות", icon: "reports" },
       notifications,
       { href: "/admin/users", label: "משתמשים", icon: "users" },
       { href: "/admin/settings", label: "הגדרות", icon: "settings" },

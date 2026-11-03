@@ -11,9 +11,8 @@ import { isAdminRole } from "@/lib/auth/roles";
 import { requireProfile } from "@/lib/auth/session";
 import { isNotificationTab, NOTIFICATION_TABS } from "@/lib/notifications/labels";
 import { loadBookingOptions, loadLessonChangeRequests } from "@/lib/lessons/queries";
-import { loadNotifications, loadPendingRequests, PAGE_SIZE } from "@/lib/notifications/queries";
+import { loadNotifications, loadPendingRequests, PAGE_SIZE, unreadTabs } from "@/lib/notifications/queries";
 import { createClient } from "@/lib/supabase/server";
-import styles from "@/components/notifications/Notifications.module.css";
 
 export const metadata: Metadata = { title: "התראות" };
 
@@ -35,7 +34,7 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
   const base = isAdminRole(profile.role) ? "/admin" : "/teacher";
 
   const supabase = await createClient();
-  const { rows, total } = await loadNotifications(supabase, tab, page);
+  const [{ rows, total }, unread] = await Promise.all([loadNotifications(supabase, tab, page), unreadTabs(supabase)]);
   const pending = await loadPendingRequests(supabase, rows);
   // Admins answer teachers' change requests right here, so they need the request and the booking options.
   const hasChangeRequests = isAdminRole(profile.role) && rows.some((r) => r.type === "change_request_new");
@@ -49,10 +48,15 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
   return (
     <div className={stack.page}>
       <LiveRefresh tables={["notifications", "lesson_change_requests", "availability_requests", "exception_booking_requests"]} />
-      <PageHeader title="התראות" subtitle="עדכונים, בקשות ותזכורות. אפשר לסמן כנקרא ולהעביר לארכיון." />
+      <PageHeader title="התראות" subtitle="עדכונים, בקשות ותזכורות. אפשר לסמן כנקרא, לבחור כמה התראות ולהעביר לארכיון." />
       <Tabs
         label="סוגי התראות"
-        items={NOTIFICATION_TABS.map((t) => ({ key: t.key, label: t.label, href: `/notifications?tab=${t.key}` }))}
+        items={NOTIFICATION_TABS.map((t) => ({
+          key: t.key,
+          label: t.label,
+          href: `/notifications?tab=${t.key}`,
+          dot: t.key !== "archive" && unread[t.key],
+        }))}
         current={tab}
       />
       <Card>
@@ -61,11 +65,11 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
             {EMPTY[tab]}
           </p>
         ) : (
-          <NotificationList rows={rows} tab={tab} base={base} pending={pending} changeRequests={changeRequests} options={options} />
+          <NotificationList rows={rows} tab={tab} base={base} pending={pending} changeRequests={changeRequests} options={options} total={total} />
         )}
       </Card>
       {pages > 1 && (
-        <nav aria-label="עמודים" className={`${toolbar.toolbar} ${styles.pager}`}>
+        <nav aria-label="עמודים" className={toolbar.pager}>
           {page > 1 && <Link href={link(page - 1)}>העמוד הקודם</Link>}
           <span aria-current="page">
             עמוד {page} מתוך {pages}

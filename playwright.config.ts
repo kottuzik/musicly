@@ -26,5 +26,7 @@ export default defineConfig({
     url: `http://localhost:${PORT}/login`,
     timeout: 240_000,
     reuseExistingServer: false,
+    // The assistant talks to a local fake, never to the real AI service.
+    env: { OPENAI_API_KEY: "e2e-key", OPENAI_BASE_URL: "http://127.0.0.1:4010/v1", OPENAI_MODEL: "fake" },
   },
 });

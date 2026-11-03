@@ -38,3 +38,13 @@
 .count {
   color: var(--color-text-secondary);
 }
+
+/* Page links under a list, centered so the floating assistant button in the corner never covers them. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-block-start: 16px;
+}

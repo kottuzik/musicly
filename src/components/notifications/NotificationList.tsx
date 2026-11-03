@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { DecisionDialog } from "@/components/availability/DecisionDialog";
 import { ExceptionDecisionDialog } from "@/components/lessons/ExceptionDecisionDialog";
 import { Alert } from "@/components/ui/Alert";
@@ -11,6 +11,7 @@ import { ChangeRequestActions } from "@/components/lessons/ChangeRequestActions"
 import type { BookingOptions, LessonChangeRequest } from "@/lib/lessons/queries";
 import { formatLessonDate, schoolTime } from "@/lib/lessons/time";
 import {
+  archiveAllNotifications,
   archiveNotifications,
   markAllNotificationsRead,
   markNotificationsRead,
@@ -29,6 +30,8 @@ type Props = {
   // Admins: the pending change requests with their lesson, and what the new-time dialog needs.
   changeRequests?: Record<string, LessonChangeRequest>;
   options?: BookingOptions;
+  // All notifications of this tab (all pages), for the "archive all" button.
+  total: number;
 };
 
 // The answer buttons of a notification about a request, using the same dialogs as the requests screens.
@@ -57,40 +60,118 @@ function RequestActions({ n, view, request }: { n: NotificationRow; view: Notifi
 
 // The notification center list. Rows can be marked read and archived (or brought back from the
 // archive); there is no way to delete one.
-export function NotificationList({ rows, tab, base, pending: pendingRequests, changeRequests, options }: Props) {
+export function NotificationList({ rows, tab, base, pending: pendingRequests, changeRequests, options, total }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   function run(action: () => Promise<{ error?: string }>) {
     setError(null);
     startTransition(async () => {
       const result = await action();
       if (result.error) setError(result.error);
-      else router.refresh();
+      else {
+        setSelected(new Set());
+        router.refresh();
+      }
     });
   }
 
+  const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+  const chosen = rows.filter((r) => selected.has(r.id)).map((r) => r.id);
+
   const hasUnread = rows.some((r) => !r.read_at);
+
+  // When a request that was waiting gets an answer (here or elsewhere), offer to archive its notification.
+  const pendingKey = Object.keys(pendingRequests).sort().join(",");
+  const previouslyPending = useRef<Set<string>>(new Set(Object.keys(pendingRequests)));
+  const [offer, setOffer] = useState<string[]>([]);
+  useEffect(() => {
+    const now = new Set(pendingKey ? pendingKey.split(",") : []);
+    const answered = tab === "archive" ? [] : rows.filter((r) => r.entity_id && previouslyPending.current.has(r.entity_id) && !now.has(r.entity_id)).map((r) => r.id);
+    previouslyPending.current = now;
+    if (answered.length) setOffer((prev) => [...new Set([...prev, ...answered])]);
+  }, [pendingKey, rows, tab]);
+  const offered = rows.filter((r) => offer.includes(r.id) && !r.archived_at).map((r) => r.id);
 
   return (
     <div>
       {error && <Alert tone="error">{error}</Alert>}
-      {tab !== "archive" && hasUnread && (
-        <div className={styles.toolbar}>
-          <Button variant="outline" size="small" disabled={pending} onClick={() => run(() => markAllNotificationsRead())}>
-            סימון הכול כנקרא
-          </Button>
-        </div>
+      {offered.length > 0 && (
+        <Alert tone="info">
+          <div className={styles.toolbar}>
+            <span>{offered.length === 1 ? "הבקשה טופלה. להעביר את ההתראה שלה לארכיון?" : `${offered.length} בקשות טופלו. להעביר את ההתראות שלהן לארכיון?`}</span>
+            <span className={styles.toolbarActions}>
+              <Button size="small" disabled={pending} onClick={() => run(async () => { const r = await archiveNotifications(offered); if (!r.error) setOffer([]); return r; })}>
+                העברה לארכיון
+              </Button>
+              <Button variant="outline" size="small" disabled={pending} onClick={() => setOffer([])}>
+                לא עכשיו
+              </Button>
+            </span>
+          </div>
+        </Alert>
       )}
+      <div className={styles.toolbar}>
+        <label className={styles.selectAll}>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))}
+          />
+          בחירת כל ההתראות בעמוד
+        </label>
+        <div className={styles.toolbarActions}>
+          {chosen.length > 0 &&
+            (tab === "archive" ? (
+              <Button size="small" disabled={pending} onClick={() => run(() => unarchiveNotifications(chosen))}>
+                החזרה מהארכיון ({chosen.length})
+              </Button>
+            ) : (
+              <Button size="small" disabled={pending} onClick={() => run(() => archiveNotifications(chosen))}>
+                העברת הנבחרות לארכיון ({chosen.length})
+              </Button>
+            ))}
+          {tab !== "archive" && hasUnread && (
+            <Button variant="outline" size="small" disabled={pending} onClick={() => run(() => markAllNotificationsRead())}>
+              סימון הכול כנקרא
+            </Button>
+          )}
+          {tab !== "archive" && (
+            <Button variant="outline" size="small" disabled={pending} onClick={() => run(() => archiveAllNotifications(tab))}>
+              העברת הכול לארכיון ({total})
+            </Button>
+          )}
+        </div>
+      </div>
       <ul className={styles.list}>
         {rows.map((n) => {
           const view = describeNotification(n, base);
           const unread = !n.read_at;
           return (
             <li key={n.id} className={`${styles.item} ${unread ? styles.unread : ""}`}>
+              <input
+                type="checkbox"
+                className={styles.check}
+                checked={selected.has(n.id)}
+                onChange={() => toggle(n.id)}
+                aria-label={`בחירה: ${view.title}`}
+              />
               <span className={styles.dot} aria-hidden="true" />
               <div className={styles.body}>
+                {unread && (
+                  <span className={styles.badge} aria-hidden="true">
+                    חדשה
+                  </span>
+                )}
                 {view.href ? (
                   <Link
                     href={view.href}

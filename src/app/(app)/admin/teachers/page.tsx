@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExportLink } from "@/components/export/ExportLink";
 import { NoticeAlert } from "../../NoticeAlert";
 import { DeleteTeacherButton } from "@/components/deletion/DeleteButtons";
 import { DeletedPeopleTable } from "@/components/deletion/DeletedPeopleTable";
@@ -90,7 +91,15 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
   return (
     <div className={stack.page}>
       <NoticeAlert notice={params.notice} />
-      <PageHeader title="מורים" actions={<TeacherDialog lessonTypes={lessonTypes ?? []} />} />
+      <PageHeader
+        title="מורים"
+        actions={
+          <>
+            <ExportLink kind="teachers" params={{ q, subject, status }} />
+            <TeacherDialog lessonTypes={lessonTypes ?? []} />
+          </>
+        }
+      />
       <TeacherTabs current="active" />
 
       <form className={toolbar.toolbar} role="search" aria-label="חיפוש וסינון מורים">

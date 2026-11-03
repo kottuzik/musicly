@@ -116,7 +116,7 @@ describe("database error messages", () => {
 describe("navigation and access for Milestone 2", () => {
   it("shows management screens to admins only", () => {
     const admin = navItemsForRole("admin").map((i) => i.href);
-    expect(admin).toEqual(["/admin", "/admin/calendar", "/admin/students", "/admin/teachers", "/admin/requests", "/notifications", "/admin/users", "/admin/settings", "/profile"]);
+    expect(admin).toEqual(["/admin", "/admin/calendar", "/admin/students", "/admin/teachers", "/admin/requests", "/admin/reports", "/notifications", "/admin/users", "/admin/settings", "/profile"]);
     expect(navItemsForRole("teacher").map((i) => i.href)).toEqual([
       "/teacher",
       "/teacher/calendar",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ExportLink } from "@/components/export/ExportLink";
 import { CalendarFilters } from "@/components/calendar/CalendarFilters";
 import { LessonCalendar } from "@/components/calendar/LessonCalendar";
 import { BookLessonDialog } from "@/components/lessons/BookLessonDialog";
@@ -32,7 +33,23 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
       <PageHeader
         title="לוח שנה"
         subtitle="כל השיעורים של בית הספר. לחיצה על שיעור פותחת את פרטיו."
-        actions={<BookLessonDialog options={options} />}
+        actions={
+          <>
+            <ExportLink
+              kind="schedule"
+              label="ייצוא מערכת שעות"
+              params={{
+                from,
+                to,
+                teacher: params.teacherId,
+                student: params.studentId,
+                type: params.lessonTypeId,
+                cancelled: params.includeCancelled ? "1" : "0",
+              }}
+            />
+            <BookLessonDialog options={options} />
+          </>
+        }
       />
       <CalendarFilters
         params={params}

@@ -1,4 +1,7 @@
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { AppShell } from "@/components/nav/AppShell";
+import { assistantConfigured } from "@/lib/assistant/provider";
+import { isAdminRole } from "@/lib/auth/roles";
 import { requireProfile } from "@/lib/auth/session";
 import { unreadNotificationCount } from "@/lib/notifications/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <AppShell profile={profile} unread={unread}>
       {children}
+      {isAdminRole(profile.role) && assistantConfigured() && <AssistantWidget />}
     </AppShell>
   );
 }

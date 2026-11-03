@@ -69,6 +69,7 @@ export const CANCEL_SOURCE_LABELS: Record<CancelSource, string> = {
 
 // Entries of the change log, as shown on the admin home and in a lesson's history.
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  export_created: "ייצוא נתונים",
   lesson_cancelled: "שיעור בוטל",
   lesson_restored: "שיעור שוחזר",
   lesson_updated: "שיעור שונה",

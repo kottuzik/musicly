@@ -49,6 +49,17 @@ export async function archiveNotifications(ids: string[]): Promise<ActionState> 
   return { ok: true };
 }
 
+// Archives every waiting notification of one tab, on all pages (not only the one on screen).
+export async function archiveAllNotifications(tab: "activity" | "system"): Promise<ActionState> {
+  await requireProfile();
+  if (tab !== "activity" && tab !== "system") return { error: dbErrorMessage(null) };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("archive_all_notifications", { p_tab: tab });
+  if (error) return { error: dbErrorMessage(error) };
+  revalidateNotifications();
+  return { ok: true };
+}
+
 export async function unarchiveNotifications(ids: string[]): Promise<ActionState> {
   await requireProfile();
   const parsed = notificationIdsSchema.safeParse({ ids });

@@ -175,6 +175,12 @@ test.describe("notifications", () => {
     // Answered: the buttons are gone from the notification.
     await expect(item.getByRole("button", { name: "דחייה" })).toHaveCount(0, { timeout: 20_000 });
     await expect(item.getByRole("button", { name: "אישור הביטול" })).toHaveCount(0);
+
+    // The admin is offered to archive the notification of the request that was just answered.
+    await expect(page.getByText("הבקשה טופלה. להעביר את ההתראה שלה לארכיון?")).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("button", { name: "העברה לארכיון" }).first().click();
+    await expect(page.getByText("הבקשה טופלה. להעביר את ההתראה שלה לארכיון?")).toHaveCount(0, { timeout: 20_000 });
+    await expect(page.getByRole("listitem").filter({ hasText: name }).filter({ hasText: "מורה ביקש" })).toHaveCount(0);
   });
 
   test("turning a request down from its notification can suggest another time", async ({ page }, testInfo) => {

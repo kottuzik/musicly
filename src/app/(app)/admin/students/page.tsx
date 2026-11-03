@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExportLink } from "@/components/export/ExportLink";
 import { NoticeAlert } from "../../NoticeAlert";
 import { DeleteStudentButton } from "@/components/deletion/DeleteButtons";
 import { DeletedPeopleTable } from "@/components/deletion/DeletedPeopleTable";
@@ -62,7 +63,15 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
   return (
     <div className={stack.page}>
       <NoticeAlert notice={params.notice} />
-      <PageHeader title="תלמידים" actions={<StudentDialog />} />
+      <PageHeader
+        title="תלמידים"
+        actions={
+          <>
+            <ExportLink kind="students" params={{ ...filters }} />
+            <StudentDialog />
+          </>
+        }
+      />
       <StudentTabs current="active" />
 
       <StudentFiltersForm

@@ -22,6 +22,13 @@ export async function unreadNotificationCount(supabase: Client): Promise<number>
   return count ?? 0;
 }
 
+// Which tabs hold something unread (not read, not archived). RLS limits it to the signed-in user.
+export async function unreadTabs(supabase: Client): Promise<{ activity: boolean; system: boolean }> {
+  const { data } = await supabase.from("notifications").select("category").is("read_at", null).is("archived_at", null);
+  const rows = data ?? [];
+  return { activity: rows.some((r) => r.category === "activity"), system: rows.some((r) => r.category === "system") };
+}
+
 export type ReminderSettings = { enabled: boolean; offsets: number[] };
 
 export async function loadReminderSettings(supabase: Client): Promise<ReminderSettings> {

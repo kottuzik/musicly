@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ExportLink } from "@/components/export/ExportLink";
 import { CalendarFilters } from "@/components/calendar/CalendarFilters";
 import { LessonCalendar } from "@/components/calendar/LessonCalendar";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
@@ -32,7 +33,17 @@ export default async function TeacherCalendarPage({ searchParams }: PageProps<"/
   return (
     <div className={stack.page}>
       <LiveRefresh tables={["lessons", "lesson_change_requests"]} />
-      <PageHeader title="הלוח שלי" subtitle="השיעורים שלך. לחיצה על שיעור פותחת את פרטיו." />
+      <PageHeader
+        title="הלוח שלי"
+        subtitle="השיעורים שלך. לחיצה על שיעור פותחת את פרטיו."
+        actions={
+          <ExportLink
+            kind="schedule"
+            label="ייצוא מערכת שעות"
+            params={{ from, to, cancelled: params.includeCancelled ? "1" : "0" }}
+          />
+        }
+      />
       <CalendarFilters params={params} />
       <LessonCalendar
         lessons={lessons}
