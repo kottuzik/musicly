@@ -26,6 +26,8 @@ test("an admin asks the assistant a question and gets an answer", async ({ page 
   const panel = page.getByRole("dialog", { name: "עוזר AI" });
   await expect(panel).toBeVisible();
   await expect(page.getByText("השיחה אינה נשמרת")).toBeVisible();
+  // Keyboard users land in the question box.
+  await expect(page.getByLabel("שאל שאלה...")).toBeFocused();
 
   await page.getByLabel("שאל שאלה...").fill("אילו מורים יש בבית הספר?");
   await page.getByRole("button", { name: "שליחה" }).click();
@@ -56,6 +58,8 @@ test("an admin asks the assistant a question and gets an answer", async ({ page 
   }
   await page.keyboard.press("Escape");
   await expect(panel).toHaveCount(0);
+  // Closing returns focus to the button that opened it.
+  await expect(page.getByRole("button", { name: "פתיחת עוזר AI" })).toBeFocused();
 });
 
 test("when the AI service fails the assistant says so and the rest of the system keeps working", async ({ page }, testInfo) => {

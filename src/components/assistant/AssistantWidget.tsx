@@ -1,7 +1,7 @@
 "use client";
 
 import { Maximize2, Minimize2, Sparkles, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AssistantChat } from "./AssistantChat";
 import styles from "./AssistantWidget.module.css";
 
@@ -11,13 +11,42 @@ import styles from "./AssistantWidget.module.css";
 export function AssistantWidget() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+
+  // Focus moves into the panel when it opens and back to the button when it closes.
+  useEffect(() => {
+    if (open) panelRef.current?.querySelector<HTMLElement>("textarea")?.focus();
+    else if (wasOpen.current) launcherRef.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
+  const wasOpen = useRef(false);
 
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "Escape") return;
-      if (expanded) setExpanded(false);
-      else setOpen(false);
+      if (e.key === "Escape") {
+        if (expanded) setExpanded(false);
+        else setOpen(false);
+        return;
+      }
+      // Full screen is modal: Tab stays inside the panel.
+      if (e.key === "Tab" && expanded && panelRef.current) {
+        const items = [...panelRef.current.querySelectorAll<HTMLElement>("button, a[href], textarea, input, [tabindex]:not([tabindex='-1'])")].filter(
+          (el) => !el.hasAttribute("disabled"),
+        );
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -32,6 +61,7 @@ export function AssistantWidget() {
     <>
       {open && (
         <section
+          ref={panelRef}
           id="assistant-panel"
           role="dialog"
           aria-modal={expanded}
@@ -64,6 +94,7 @@ export function AssistantWidget() {
       )}
       {!(open && expanded) && (
         <button
+          ref={launcherRef}
           type="button"
           className={styles.launcher}
           onClick={() => setOpen((v) => !v)}

@@ -286,3 +286,21 @@
     transform: rotate(360deg);
   }
 }
+
+/* Keyboard users can jump past the menu; visible only while focused. */
+.skipLink {
+  position: fixed;
+  z-index: 100;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: none;
+}

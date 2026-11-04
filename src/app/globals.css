@@ -41,7 +41,8 @@
   --shadow-md: 0 4px 16px rgb(107 70 193 / 0.08);
   --shadow-lg: 0 12px 40px rgb(107 70 193 / 0.12);
 
-  --focus-ring: 0 0 0 3px rgb(107 70 193 / 0.35);
+  /* White gap + solid primary ring: 6.4:1 against white (the old translucent ring was about 2:1). */
+  --focus-ring: 0 0 0 2px #fff, 0 0 0 4px var(--color-primary);
 
   --sidebar-width: 240px;
 }

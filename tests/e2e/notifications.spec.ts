@@ -97,7 +97,8 @@ test.describe("notifications", () => {
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { name: "התראות", level: 1 })).toBeVisible();
     for (const tab of ["פעילות", "הודעות מערכת", "ארכיון"]) {
-      await expect(page.getByRole("link", { name: tab, exact: true })).toBeVisible();
+      // A tab with something unread also says so in its name.
+      await expect(page.getByRole("link", { name: new RegExp(`^${tab}( \\(יש הודעות שלא נקראו\\))?$`) })).toBeVisible();
     }
     await page.getByRole("link", { name: "ארכיון", exact: true }).click();
     await expect(page).toHaveURL(/tab=archive/);

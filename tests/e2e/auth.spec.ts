@@ -141,6 +141,44 @@ test("pages are not indexable", async ({ page, request }) => {
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
 });
 
+test("pages carry security headers and the browser blocks nothing the app needs", async ({ page }) => {
+  const violations: string[] = [];
+  page.on("console", (message) => {
+    if (message.text().includes("Content Security Policy")) violations.push(message.text());
+  });
+  const response = await page.goto("/login");
+  const headers = response!.headers();
+  expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(headers["content-security-policy"]).toContain("object-src 'none'");
+  expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(headers["strict-transport-security"]).toContain("max-age=");
+
+  // Signed in, including the live-update connection of the notification screen.
+  await page.getByLabel("אימייל").fill(users!.admin.email);
+  await page.getByLabel("סיסמה", { exact: true }).fill(users!.admin.password);
+  await page.getByRole("button", { name: "התחברות" }).click();
+  await expect(page).toHaveURL(/\/admin/);
+  await page.goto("/notifications");
+  await expect(page.getByRole("heading", { level: 1, name: "התראות" })).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(violations).toEqual([]);
+});
+
+test("a keyboard user can skip the menu", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "one viewport is enough");
+  await login(page, users!.admin);
+  await expect(page).toHaveURL(/\/admin/);
+  await page.goto("/admin");
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "דלג לתוכן הראשי" });
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeInViewport();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/#main$/);
+});
+
 test("keyboard users can sign in", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("אימייל").focus();

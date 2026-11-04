@@ -14,6 +14,9 @@ export function AppShell({ profile, unread, children }: { profile: Profile; unre
   const items = navItemsForRole(profile.role, profile.status);
   return (
     <>
+      <a href="#main" className={styles.skipLink}>
+        דלג לתוכן הראשי
+      </a>
       <PageBackground />
       <div className={styles.shell}>
         <aside className={styles.sidebar}>
