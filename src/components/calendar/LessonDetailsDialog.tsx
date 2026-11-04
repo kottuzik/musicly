@@ -7,6 +7,7 @@ import { ExtendSeriesDialog } from "@/components/lessons/ExtendSeriesDialog";
 import { LessonChangeRequestDialog } from "@/components/lessons/LessonChangeRequestDialog";
 import { RestoreLessonDialog } from "@/components/lessons/RestoreLessonDialog";
 import lessonChange from "@/components/lessons/LessonChange.module.css";
+import { AddToCalendarLink } from "@/components/export/AddToCalendarLink";
 import { LessonReminderDialog } from "@/components/notifications/LessonReminderDialog";
 import { Alert } from "@/components/ui/Alert";
 import { Badge, ColorChip } from "@/components/ui/Badge";
@@ -269,6 +270,7 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
                 <Field label="הפסקה מתאריך (כולל)" name="fromDate" type="date" min={schoolToday()} defaultValue={ready.occurrence_date} />
               </ConfirmAction>
             )}
+            {scheduled && upcoming && <AddToCalendarLink lessonId={ready.id} />}
             {!isAdmin && scheduled && upcoming && <LessonReminderDialog lessonId={ready.id} />}
             {!isAdmin && scheduled && upcoming && !ready.pending_change_request_id && !sameDay && (
               <Button variant="ghost" size="small" onClick={() => setDialog("request")}>
@@ -276,6 +278,11 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
               </Button>
             )}
           </div>
+          {scheduled && upcoming && (
+            <p className="text-small text-secondary">
+              ”הוספה ללוח השנה” מוסיפה את השיעור ללוח של המכשיר. הקובץ לא יתעדכן אם השיעור ישתנה או יבוטל.
+            </p>
+          )}
           {!isAdmin && scheduled && upcoming && sameDay && (
             <p className="text-secondary">השיעור מתקיים היום, ולכן שינוי או ביטול מתואמים ישירות עם המנהל.</p>
           )}
