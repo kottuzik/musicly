@@ -85,7 +85,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/admin/r
           סינון
         </Button>
       </form>
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         <RequestsTable
           rows={rows}
           mode="admin"
@@ -133,7 +133,7 @@ async function BookingRequests({ handled }: { handled: boolean }) {
           { key: "handled", href: "/admin/requests?section=booking&tab=handled", label: "הסתיימו" },
         ]}
       />
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         <ExceptionRequestsTable
           rows={rows}
           mode="admin"
@@ -168,7 +168,7 @@ async function ChangeRequests({ handled }: { handled: boolean }) {
           { key: "handled", href: "/admin/requests?section=changes&tab=handled", label: "טופלו" },
         ]}
       />
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         <LessonChangeRequestsTable
           rows={rows}
           mode="admin"

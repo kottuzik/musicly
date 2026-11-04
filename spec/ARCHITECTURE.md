@@ -493,3 +493,15 @@ Supabase Development / Production (פרויקטים נפרדים)
 **הקשר:** אבן דרך 10א. מורים ומנהלים רוצים שיעור בודד גם בלוח השנה של הטלפון. נשקלו קישור מנוי מתעדכן וכפתור הורדה; המשתמשת בחרה בכפתור.
 **החלטה:** `GET /export/lesson/[id]` מחזיר קובץ iCalendar לשיעור אחד, פעיל (`scheduled`), עם הלקוח של המשתמש ו־`get_lesson` הקיים, כך שמורה מקבל רק שיעור שלו ומנהל כל שיעור. שיעור שלא נמצא או שאינו מורשה — 404 זהה; שיעור מבוטל — 409; ללא התחברות הפרוקסי מפנה להתחברות. הקובץ נבנה ב־`src/lib/export/ics.ts` (זמנים ב־UTC, `UID` יציב, `SEQUENCE` לפי גרסת השיעור, בריחה וקיפול שורות, הסרת תווי בקרה משמות). הוא כולל שם תלמיד, תחום, מורה ומיקום בלבד. אין טבלה, טוקן, Migration או רישום ב־Audit.
 **השלכות:** הקובץ אינו מתעדכן כששיעור משתנה או מבוטל, והממשק אומר זאת. שם התלמיד יוצא למכשיר של המשתמשת, כפי שכבר מוצג לה במסך. קישור מנוי מתעדכן אינו נבנה; אם יידרש, יצריך טוקן סודי לכל משתמש וטבלה ל־Migration.
+
+### ADR-20: תהליך שחרור ל־Production
+**הקשר:** אבן דרך 11. Production (Supabase `culqeemdrhuvzweessra`) ריק, ו־`main` מפרסם אוטומטית ב־Vercel. נדרש סדר שחרור שבו שינויי מסד הנתונים מגיעים ל־Production לפני הקוד שתלוי בהם.
+**החלטה:**
+- **ענף `release/m11`** (ולא `main`) נושא את השינויים. `.github/workflows/ci.yml` רץ על כל Pull Request וענף: `lint`, `typecheck`, בדיקות יחידה ו־`build` (עם ערכי מקום שמור, בלי סודות). בדיקות RLS ו־E2E מורצות ידנית מול Development.
+- **`.github/workflows/migrate-production.yml`** מופעל ידנית בלבד, בתוך Environment בשם `production` עם Required reviewers. הוא בודק שה־project ref הוא של Production, מריץ `supabase db push --dry-run`, ואז `supabase db push`. `concurrency` מונע שתי הרצות במקביל. הסודות (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF`) נשמרים רק ב־GitHub Environment.
+- **סדר:** Migrations ל־Production ← הצלחה ← Merge ל־`main` ← Vercel Production. אם ה־Migration נכשל, אין Merge.
+- **הגדרות שאינן ב־Migrations** (Auth URLs, SMTP, Vault: `app_base_url` ו־`cron_secret`, משתני Vercel) נקבעות ידנית לפי הרשימה בתוכנית אבן דרך 11, ונבדקות אחרי הפריסה.
+- **Super Admin ראשון** נוצר דרך לוח הבקרה של Supabase (Add user + SQL), כדי שמפתח Secret של Production לא יגיע למחשב.
+- **הגנה:** סקריפטי הפיתוח (`seed-test-users`, `create-super-admin`, `dispatch-emails`) והבדיקות מסרבים לרוץ כש־`.env` מצביע על Production.
+- **תקלה ב־Production** מתוקנת בקוד/Migration חדש ובדיקה ב־Development, לא ישירות בלוח הבקרה.
+**השלכות:** Rollback של Vercel אינו מחזיר Migration. כל עוד ב־Production אין נתונים אמיתיים אפשר להתחיל מחדש בפרויקט ריק; אחריהם נדרש גיבוי ושחזור. גיבוי ותוכנית בתשלום אינם נכללים ונותרו להחלטת המשתמשת לפני נתונים אמיתיים.

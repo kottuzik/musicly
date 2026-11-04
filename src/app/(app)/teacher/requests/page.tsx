@@ -37,7 +37,7 @@ export default async function TeacherRequestsPage() {
         <h2 id="pending-title" className="text-h3">
           ממתינות לתשובתך ({pending.length})
         </h2>
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           <ExceptionRequestsTable rows={pending} mode="teacher" empty="אין בקשות שממתינות לתשובתך." />
         </div>
       </section>
@@ -45,7 +45,7 @@ export default async function TeacherRequestsPage() {
         <h2 id="mine-title" className="text-h3">
           הבקשות שלי לשינוי או ביטול שיעור
         </h2>
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           <LessonChangeRequestsTable
             rows={changeRequests}
             mode="teacher"
@@ -57,7 +57,7 @@ export default async function TeacherRequestsPage() {
         <h2 id="handled-title" className="text-h3">
           היסטוריה
         </h2>
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           <ExceptionRequestsTable rows={handled} mode="teacher" empty="אין עדיין בקשות שהסתיימו." />
         </div>
       </section>

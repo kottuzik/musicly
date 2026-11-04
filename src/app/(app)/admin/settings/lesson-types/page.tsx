@@ -31,7 +31,7 @@ export default async function LessonTypesPage() {
         subtitle="התחומים שבית הספר מלמד, משך השיעור הרגיל והצבע בלוח השנה."
         actions={<LessonTypeDialog />}
       />
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         {lessonTypes?.length ? (
           <table className={table.table}>
             <thead>

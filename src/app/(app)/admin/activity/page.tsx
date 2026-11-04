@@ -61,7 +61,7 @@ export default async function ActivityPage({ searchParams }: PageProps<"/admin/a
       </p>
 
       {events.length > 0 && (
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           <table className={table.table}>
             <thead>
               <tr>

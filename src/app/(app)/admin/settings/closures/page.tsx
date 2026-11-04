@@ -56,7 +56,7 @@ export default async function ClosuresPage({ searchParams }: PageProps<"/admin/s
         <Link href={showCancelled ? "/admin/settings/closures" : "/admin/settings/closures?show=cancelled"}>
           {showCancelled ? "הסתרת ימי סגירה שבוטלו" : "הצגת ימי סגירה שבוטלו"}
         </Link>
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           {closures?.length ? (
             <table className={table.table}>
               <thead>
@@ -102,7 +102,7 @@ export default async function ClosuresPage({ searchParams }: PageProps<"/admin/s
           title={<span id="holidays-title">חגים בשנה הקרובה</span>}
           subtitle="הצעות בלבד: אף יום אינו נסגר אוטומטית. בחרו אילו מהם יהיו ימי סגירה."
         />
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           <table className={table.table}>
             <thead>
               <tr>

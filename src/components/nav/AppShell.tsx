@@ -32,7 +32,7 @@ export function AppShell({ profile, unread, children }: { profile: Profile; unre
             </div>
             <div className={styles.user}>
               <NotificationBell unread={unread} />
-              <Link href="/profile" className={styles.profileLink} aria-label={`הפרופיל שלי: ${profile.full_name}`}>
+              <Link href="/profile" className={styles.profileLink} title="הפרופיל שלי">
                 <span className={styles.userText}>
                   <span className={styles.userName}>{profile.full_name}</span>
                   <span className="text-small text-secondary">{ROLE_LABELS[profile.role]}</span>

@@ -85,7 +85,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
         {hasFilters && <Link href="/admin/students">ניקוי סינון</Link>}
       </p>
 
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         {rows.length ? (
           <table className={table.table}>
             <thead>

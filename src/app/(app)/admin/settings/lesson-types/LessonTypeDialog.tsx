@@ -34,7 +34,7 @@ export function LessonTypeDialog({ lessonType }: { lessonType?: LessonType }) {
   return (
     <>
       {editing ? (
-        <Button variant="ghost" size="small" onClick={openDialog} aria-label={`עריכת ${lessonType!.name}`}>
+        <Button variant="ghost" size="small" onClick={openDialog} aria-label={`עריכה: ${lessonType!.name}`}>
           <Pencil size={16} aria-hidden="true" />
           עריכה
         </Button>

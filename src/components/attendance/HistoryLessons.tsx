@@ -57,7 +57,7 @@ export function HistoryLessons({ lessons, month, hrefForMonth, showStudent, show
       {lessons.length === 0 ? (
         <p className={table.empty}>{empty}</p>
       ) : (
-        <div className={table.wrapper}>
+        <div className={table.wrapper} tabIndex={0}>
           <table className={table.table}>
             <thead>
               <tr>
