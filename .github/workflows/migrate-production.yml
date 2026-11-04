@@ -1,10 +1,16 @@
 # Applies the database migrations to the PRODUCTION Supabase project.
 # Started by hand only. Approval is required in the "production" environment (GitHub ▸ Settings ▸ Environments).
+# First run with "apply" unchecked (dry run), read the result, then run again with "apply" checked.
 # Only after this succeeds may the code be merged into main (Vercel then publishes it automatically).
 name: Migrate Production
 
 on:
   workflow_dispatch:
+    inputs:
+      apply:
+        description: "Apply the migrations for real. Leave unchecked for a dry run that only shows what would change."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -39,6 +45,8 @@ jobs:
       - name: Show what would change (dry run)
         run: supabase db push --dry-run
       - name: Apply migrations
+        if: ${{ inputs.apply }}
         run: supabase db push
       - name: Show migration status
+        if: ${{ inputs.apply }}
         run: supabase migration list
