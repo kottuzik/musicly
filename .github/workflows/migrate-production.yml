@@ -46,7 +46,7 @@ jobs:
         run: supabase db push --linked --dry-run
       - name: Apply migrations
         if: ${{ inputs.apply }}
-        run: supabase db push --linked
+        run: supabase db push --linked --yes
       - name: Show migration status
         if: ${{ inputs.apply }}
         run: supabase migration list --linked
