@@ -181,8 +181,9 @@ test.describe("students", () => {
     await expectNoHorizontalScroll(teacherPage);
 
     // 6. Not their student → not found; the admin area is forbidden.
-    const response = await teacherPage.goto(`/teacher/students/${foreignStudentId}`);
-    expect(response?.status()).toBe(404);
+    // The page streams, so the HTTP status can already be 200; what matters is that the not-found screen shows.
+    await teacherPage.goto(`/teacher/students/${foreignStudentId}`);
+    await expect(teacherPage.getByRole("heading", { name: "הדף שחיפשת לא נמצא" })).toBeVisible();
     await teacherPage.goto("/admin/students");
     await expect(teacherPage).toHaveURL(/\/forbidden/);
     await context.close();

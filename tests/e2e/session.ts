@@ -10,7 +10,8 @@ async function uiLogin(page: Page, user: TestUser) {
   await page.getByLabel("אימייל").fill(user.email);
   await page.getByLabel("סיסמה", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "התחברות" }).click();
-  await expect(page).not.toHaveURL(/\/login/);
+  // Development is reached over the internet and can stall for several seconds, so allow time.
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 }
 
 export async function login(page: Page, user: TestUser) {

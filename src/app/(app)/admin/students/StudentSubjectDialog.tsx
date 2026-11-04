@@ -47,7 +47,7 @@ export function StudentSubjectDialog(props: Props) {
         <Button
           variant="ghost"
           size="small"
-          aria-label={`עריכת תחום ${subject.lessonTypeName}`}
+          aria-label={`עריכה: תחום ${subject.lessonTypeName}`}
           onClick={() => {
             setFormKey((k) => k + 1);
             setOpen(true);

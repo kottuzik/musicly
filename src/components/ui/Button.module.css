@@ -68,7 +68,8 @@
 
 .ghost {
   background: transparent;
-  color: var(--color-text-secondary);
+  /* Darker than the secondary text colour so small ghost buttons keep 4.5:1 contrast on tinted rows. */
+  color: #4b5563;
 }
 
 .ghost:hover:not(:disabled) {

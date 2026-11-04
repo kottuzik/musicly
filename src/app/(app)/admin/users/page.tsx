@@ -106,7 +106,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
         </Button>
       </form>
 
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         {users.length || pendingAdmins.length ? (
           <table className={table.table}>
             <thead>

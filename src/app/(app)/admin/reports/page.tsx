@@ -46,7 +46,7 @@ function LinesTable({ title, firstHeader, lines, total, exportKind, exportParams
         <PageHeader level={2} title={title} />
         <ExportLink kind={exportKind} params={exportParams} />
       </div>
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         {lines.length ? (
           <table className={table.table}>
             <thead>

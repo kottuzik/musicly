@@ -39,14 +39,14 @@ export function DeletedPeopleTable({
   const noun = kind === "student" ? "התלמיד" : "המורה";
   if (!rows.length) {
     return (
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         <p className={table.empty}>{kind === "student" ? "אין תלמידים שנמחקו לאחרונה." : "אין מורים שנמחקו לאחרונה."}</p>
       </div>
     );
   }
 
   return (
-    <div className={table.wrapper}>
+    <div className={table.wrapper} tabIndex={0}>
       <table className={table.table}>
         <thead>
           <tr>

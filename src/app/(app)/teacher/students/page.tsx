@@ -36,7 +36,7 @@ export default async function MyStudentsPage({ searchParams }: PageProps<"/teach
         {hasFilters && <Link href="/teacher/students">ניקוי סינון</Link>}
       </p>
 
-      <div className={table.wrapper}>
+      <div className={table.wrapper} tabIndex={0}>
         {rows.length ? (
           <table className={table.table}>
             <thead>
