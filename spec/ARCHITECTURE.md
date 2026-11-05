@@ -312,6 +312,7 @@ Supabase Development / Production (פרויקטים נפרדים)
 - API Keys, Secrets, Credentials, Vercel Environment Variables ו־GitHub Actions Secrets.
 - Domain/DNS ואימות שולח ב־Resend, מפתחות OpenAI ותקרות שימוש.
 - הגדרות Project ברמת Supabase Dashboard: אזור, Compute/Plan, גיבויים, התראות תפעוליות.
+- Data API: `pgrst.db_schemas` על התפקיד `authenticator` — לוודא בכל פרויקט Supabase חדש שהוא כולל את `public` (פירוט ותיקון ב־ADR-20).
 - Supabase Storage Buckets ו־Policies — **לא נדרשים כעת**; אם יידרשו בעתיד, יש לנהל בנפרד לפי תמיכת כלי הפריסה בפועל.
 - Realtime publication/channel configuration, Cron Secrets והרשאות גישה — יש להבחין בין הגדרות המנוהלות ב־SQL Migrations לבין הגדרות Dashboard; לבדוק בכל סביבה לאחר פריסה.
 - נתוני משתמשים אמיתיים, נתוני דמה וחשבונות התחלתיים אינם חלק מ־Schema Migration.
