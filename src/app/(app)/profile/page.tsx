@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Tabs } from "@/components/ui/Tabs";
 import stack from "@/components/ui/Stack.module.css";
-import { ROLE_LABELS } from "@/lib/auth/roles";
-import { requireProfile } from "@/lib/auth/session";
+import { TeachingCard } from "@/components/teaching/TeachingCard";
+import { ROLE_LABELS, isAdminRole } from "@/lib/auth/roles";
+import { getTeachingId, requireProfile } from "@/lib/auth/session";
 import { loadChannel, loadReminderSettings } from "@/lib/notifications/queries";
 import { createClient } from "@/lib/supabase/server";
 import { DetailsForm, PasswordForm } from "./ProfileForms";
@@ -26,7 +27,16 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   const supabase = await createClient();
   const { data } = await supabase.from("profiles").select("phone").eq("id", profile.id).maybeSingle();
 
-  const isTeacher = profile.role === "teacher";
+  const isAdmin = isAdminRole(profile.role);
+  const teaches = isAdmin && Boolean(await getTeachingId());
+  const isTeacher = profile.role === "teacher" || teaches;
+  const [{ data: lessonTypes }, { data: teachingRow }] =
+    isAdmin && current === "details"
+      ? await Promise.all([
+          supabase.from("lesson_types").select("id, name, color").order("name"),
+          supabase.from("teachers").select("id, teacher_skills(lesson_type_id)").eq("profile_id", profile.id).maybeSingle(),
+        ])
+      : [{ data: null }, { data: null }];
   const [channel, reminders] =
     current === "preferences"
       ? await Promise.all([loadChannel(supabase, profile.id), isTeacher ? loadReminderSettings(supabase) : null])
@@ -65,6 +75,15 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             <PasswordForm email={profile.email} />
           )}
         </Card>
+      )}
+      {isAdmin && current === "details" && (
+        <TeachingCard
+          profileId={profile.id}
+          teaching={teaches}
+          teacherId={teachingRow?.id ?? null}
+          lessonTypes={lessonTypes ?? []}
+          selected={(teachingRow?.teacher_skills ?? []).map((s) => s.lesson_type_id)}
+        />
       )}
     </div>
   );

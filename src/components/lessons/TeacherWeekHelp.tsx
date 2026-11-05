@@ -11,7 +11,7 @@ import styles from "./BookLesson.module.css";
 type Props = {
   teacherId: string;
   teacherName: string;
-  options: Pick<BookingOptions, "slots" | "hours">;
+  options: Pick<BookingOptions, "slots" | "hours" | "myTeacherId">;
   // A date: shows that week with dates and the availability valid then. No date: the coming week.
   date?: string;
   // Weekdays being chosen, highlighted in the table.
@@ -63,8 +63,14 @@ export function TeacherWeekHelp({ teacherId, teacherName, options, date, chosenD
       <p className={styles.helpTitle}>זמינות {teacherName} ושעות הפעילות</p>
       {!view.anyAvailability && (
         <p>
-          <strong>למורה לא הוגדרה זמינות שבועית.</strong> כל מועד שתבחרו יישלח למורה לאישור. אפשר להגדיר לו זמינות בדף המורה,
-          בלשונית „זמינות”.
+          {teacherId === options.myTeacherId ? (
+            <strong>עדיין לא הגדרת זמינות שבועית. אפשר להגדיר אותה במסך „ההוראה שלי”.</strong>
+          ) : (
+            <>
+              <strong>למורה לא הוגדרה זמינות שבועית.</strong> כל מועד שתבחרו יישלח למורה לאישור. אפשר להגדיר לו זמינות בדף המורה,
+              בלשונית „זמינות”.
+            </>
+          )}
         </p>
       )}
       <table className={styles.weekTable}>
@@ -92,7 +98,11 @@ export function TeacherWeekHelp({ teacherId, teacherName, options, date, chosenD
           ))}
         </tbody>
       </table>
-      <p className="text-secondary">מועד מחוץ לזמינות יישלח למורה לאישור, והשעה לא תישמר עד שיאשר.</p>
+      <p className="text-secondary">
+        {teacherId === options.myTeacherId
+          ? "זה שיבוץ שלך: מועד מחוץ לזמינות שלך ייקבע מיד."
+          : "מועד מחוץ לזמינות יישלח למורה לאישור, והשעה לא תישמר עד שיאשר."}
+      </p>
     </div>
   );
 }

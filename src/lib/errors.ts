@@ -3,6 +3,7 @@ const MESSAGES: Record<string, string> = {
   not_allowed: "אין לך הרשאה לבצע פעולה זו.",
   not_found: "הפריט לא נמצא. ייתכן שהוא שונה בינתיים — רעננו את הדף.",
   email_taken: "כתובת האימייל כבר רשומה במערכת.",
+  admin_teacher_not_deletable: "זה מנהל שגם מלמד, ולכן אי אפשר למחוק אותו כמורה. אפשר להפסיק את ההוראה שלו.",
   email_locked: "לא ניתן לשנות אימייל של מורה שכבר נרשם למערכת.",
   skills_required: "יש לבחור לפחות תחום הוראה אחד.",
   already_registered: "המורה כבר נרשם למערכת.",
@@ -19,6 +20,9 @@ const MESSAGES: Record<string, string> = {
   availability_overlap: "הטווח חופף לזמינות קיימת.",
   invalid_time_step: "יש לבחור שעות ברבע שעה עגול, ושעת הסיום צריכה להיות אחרי שעת ההתחלה.",
   removal_pending: "כבר קיימת בקשה להסרה הזו.",
+  availability_ending: "הטווח הזה כבר מסתיים, ולכן אי אפשר לערוך אותו.",
+  availability_narrowing_needs_request:
+    "הרחבת זמינות נכנסת לתוקף מיד, אבל קיצור או הזזה דורשים אישור מנהל. לשינוי כזה לחצו „הסרה” ושלחו בקשה, ואחרי האישור הוסיפו טווח חדש.",
   date_not_matching_day: "התאריך שנבחר אינו חל ביום השבוע של הטווח.",
   slot_not_valid_on_date: "הטווח אינו בתוקף בתאריך שנבחר.",
   date_past: "התאריך כבר עבר.",

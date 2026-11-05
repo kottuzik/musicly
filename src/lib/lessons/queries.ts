@@ -70,7 +70,7 @@ export type BookingSlot = {
 // active teachers with what they teach, school hours and current teacher availability.
 export async function loadBookingOptions(supabase: Client) {
   const today = schoolToday();
-  const [students, lessonTypes, teachers, hours, slots] = await Promise.all([
+  const [students, lessonTypes, teachers, hours, slots, me] = await Promise.all([
     supabase
       .from("students")
       .select("id, full_name, student_subjects(lesson_type_id, regular_teacher_id)")
@@ -84,9 +84,12 @@ export async function loadBookingOptions(supabase: Client) {
       .select("teacher_id, day_of_week, start_time, end_time, valid_from, valid_to")
       .or(`valid_to.is.null,valid_to.gte.${today}`)
       .order("start_time"),
+    supabase.rpc("current_teacher_id"),
   ]);
 
   return {
+    // The viewer's own teachers row, when they teach: their own bookings need nobody's approval.
+    myTeacherId: (me.data as string | null) ?? null,
     students: (students.data ?? []).map<BookingStudent>((s) => ({
       id: s.id,
       name: s.full_name,

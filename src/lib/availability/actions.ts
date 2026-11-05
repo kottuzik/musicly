@@ -7,10 +7,12 @@ import { isAdminRole } from "@/lib/auth/roles";
 import { requireProfile, requireRole } from "@/lib/auth/session";
 import { dbErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
+import { WEEKDAY_LABELS } from "@/lib/time/weekdays";
 import { fieldErrors } from "@/lib/validation/auth";
 import { lessonDecisionsSchema } from "@/lib/validation/lessons";
 import {
   absenceSchema,
+  availabilityEditSchema,
   availabilitySlotSchema,
   decisionSchema,
   removalSchema,
@@ -36,12 +38,74 @@ const INACTIVE = { teacher_inactive: "המורה אינו פעיל, ולא ני�
 
 function revalidateAvailability() {
   revalidatePath("/teacher/availability");
+  revalidatePath("/admin/my-teaching");
   revalidatePath("/admin/requests");
   revalidatePath("/admin/teachers/[id]", "page");
 }
 
+// Adds the hours on each given day, as one or two ranges. A day the hours do not fit,
+// or that already has overlapping availability, is skipped and reported; the others are still added.
+async function addAvailabilityRanges(formData: FormData, days: number[], ranges: { start: string; end: string }[]): Promise<ActionState> {
+  const supabase = await createClient();
+  const added: string[] = [];
+  const skipped: string[] = [];
+
+  for (const day of days) {
+    let failure: string | null = null;
+    let addedAny = false;
+    for (const range of ranges) {
+      const parsed = availabilitySlotSchema.safeParse({ teacherId: text(formData, "teacherId"), day: String(day), ...range });
+      if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+
+      const { error } = await supabase.rpc("add_availability", {
+        p_teacher_id: parsed.data.teacherId,
+        p_day: parsed.data.day,
+        p_start: parsed.data.start,
+        p_end: parsed.data.end,
+      });
+      if (!error) addedAny = true;
+      else if (error.message === "outside_operating_hours") failure = "מחוץ לשעות הפעילות";
+      else if (error.message === "availability_overlap") failure = "חופף לזמינות קיימת";
+      else return { error: dbErrorMessage(error, INACTIVE) };
+    }
+    if (addedAny) added.push(WEEKDAY_LABELS[day]);
+    if (failure) skipped.push(`${WEEKDAY_LABELS[day]}${addedAny ? " — חלק מהשעות" : ""} (${failure})`);
+  }
+
+  revalidateAvailability();
+  if (!added.length) return { error: `לא נוספה זמינות. ${skipped.join(", ")}.` };
+  if (!skipped.length) return { ok: true };
+  return { ok: true, success: `נוסף לימים: ${added.join(", ")}. לא נוסף לימים: ${skipped.join(", ")}.` };
+}
+
+// The form's hours: one range, or two on the same day (for example 10:00-13:00 and 16:00-21:00).
+function rangesFrom(formData: FormData): { ranges: { start: string; end: string }[] } | { errors: Record<string, string> } {
+  const start = text(formData, "start");
+  const end = text(formData, "end");
+  if (formData.get("withSecond") !== "on") return { ranges: [{ start, end }] };
+  const secondStart = text(formData, "secondStart");
+  const secondEnd = text(formData, "secondEnd");
+  if (!start) return { errors: { start: "יש לבחור שעת התחלה" } };
+  if (!end) return { errors: { end: "יש לבחור שעת סיום" } };
+  if (!secondStart) return { errors: { secondStart: "יש לבחור שעת התחלה לטווח השני" } };
+  if (!secondEnd) return { errors: { secondEnd: "יש לבחור שעת סיום לטווח השני" } };
+  if (secondStart < end) return { errors: { secondStart: "הטווח השני צריך להתחיל אחרי סיום הטווח הראשון" } };
+  if (secondEnd <= secondStart) return { errors: { secondEnd: "שעת הסיום צריכה להיות אחרי שעת ההתחלה" } };
+  return { ranges: [{ start, end }, { start: secondStart, end: secondEnd }] };
+}
+
 export async function addAvailability(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireProfile();
+  const allWeek = formData.get("allWeek") === "on";
+  if (allWeek || formData.get("withSecond") === "on") {
+    const parsedRanges = rangesFrom(formData);
+    if ("errors" in parsedRanges) return { fieldErrors: parsedRanges.errors };
+    if (!allWeek && !text(formData, "day")) return { fieldErrors: { day: "יש לבחור יום" } };
+    const supabase = await createClient();
+    const { data: hours } = await supabase.from("operating_hours").select("day_of_week").order("day_of_week");
+    const days = allWeek ? (hours ?? []).map((h) => h.day_of_week) : [Number(text(formData, "day"))];
+    return addAvailabilityRanges(formData, days, parsedRanges.ranges);
+  }
   const parsed = availabilitySlotSchema.safeParse({
     teacherId: text(formData, "teacherId"),
     day: text(formData, "day"),
@@ -61,6 +125,78 @@ export async function addAvailability(_prev: ActionState, formData: FormData): P
 
   revalidateAvailability();
   return { ok: true };
+}
+
+const flaggedNote = (count: number) =>
+  count === 1 ? "שיעור עתידי אחד סומן ”דורש טיפול” בלוח השנה." : `${count} שיעורים עתידיים סומנו ”דורש טיפול” בלוח השנה.`;
+
+// Changes one slot's hours or, on request, every slot of this teacher with the same hours. A day that
+// cannot change is skipped and reported; the others are still changed.
+export async function updateAvailability(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireProfile();
+  const parsed = availabilityEditSchema.safeParse({
+    availabilityId: text(formData, "availabilityId"),
+    start: text(formData, "start"),
+    end: text(formData, "end"),
+  });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const { availabilityId, start, end } = parsed.data;
+  const parsedRanges = rangesFrom(formData);
+  if ("errors" in parsedRanges) return { fieldErrors: parsedRanges.errors };
+  const second = parsedRanges.ranges[1];
+
+  const supabase = await createClient();
+  const { data: slot } = await supabase
+    .from("teacher_availability")
+    .select("teacher_id, day_of_week, start_time, end_time")
+    .eq("id", availabilityId)
+    .maybeSingle();
+  if (!slot) return { error: dbErrorMessage({ message: "not_found" }) };
+
+  const targets =
+    formData.get("sameHours") === "on"
+      ? ((
+          await supabase
+            .from("teacher_availability")
+            .select("id, day_of_week")
+            .eq("teacher_id", slot.teacher_id)
+            .eq("start_time", slot.start_time)
+            .eq("end_time", slot.end_time)
+            .is("valid_to", null)
+            .order("day_of_week")
+        ).data ?? [])
+      : [{ id: availabilityId, day_of_week: slot.day_of_week }];
+
+  let flagged = 0;
+  let changed = 0;
+  const skipped: string[] = [];
+  for (const target of targets) {
+    const { data, error } = await supabase.rpc("update_availability", {
+      p_availability_id: target.id,
+      p_start: start,
+      p_end: end,
+      // Null means "one range" (the generated types do not mark SQL arguments as nullable).
+      p_second_start: (second?.start ?? null) as unknown as string,
+      p_second_end: (second?.end ?? null) as unknown as string,
+    });
+    if (!error) {
+      changed += 1;
+      flagged += data ?? 0;
+    } else if (targets.length === 1 || error.message === "availability_narrowing_needs_request" || error.message === "not_allowed") {
+      // The same answer for every day, so there is nothing to report day by day.
+      if (changed) revalidateAvailability();
+      return { error: dbErrorMessage(error, INACTIVE) };
+    } else {
+      skipped.push(`${WEEKDAY_LABELS[target.day_of_week]} (${dbErrorMessage(error, INACTIVE)})`);
+    }
+  }
+
+  revalidateAvailability();
+  revalidatePath("/admin/calendar");
+  revalidatePath("/admin");
+  if (!changed) return { error: `השעות לא עודכנו. ${skipped.join(", ")}` };
+  const notes = [skipped.length ? `לא עודכן לימים: ${skipped.join(", ")}` : "", flagged ? flaggedNote(flagged) : ""].filter(Boolean);
+  return notes.length ? { ok: true, success: `השעות עודכנו. ${notes.join(" ")}` } : { ok: true };
 }
 
 export async function removeAvailability(_prev: ActionState, formData: FormData): Promise<ActionState> {

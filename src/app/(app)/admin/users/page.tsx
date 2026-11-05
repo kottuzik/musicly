@@ -24,6 +24,8 @@ import { regenerateAdminInvitation, setAdminStatus } from "./actions";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { PermissionsDialog } from "./PermissionsDialog";
 import { TransferDialog } from "./TransferDialog";
+import { TeachingDialog } from "@/components/teaching/TeachingDialog";
+import { stopTeaching } from "@/lib/teaching/actions";
 import styles from "./Users.module.css";
 
 export const metadata: Metadata = { title: "משתמשים" };
@@ -42,13 +44,15 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
   const role = param(params.role);
 
   const supabase = await createClient();
-  const [{ data: profiles }, { data: teachers }, { data: permissions }, { data: invitations }] = await Promise.all([
+  const [{ data: profiles }, { data: teachers }, { data: permissions }, { data: invitations }, { data: lessonTypes }] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email, role, status").is("deleted_at", null),
-    supabase.from("teachers").select("id, profile_id"),
+    supabase.from("teachers").select("id, profile_id, status"),
     supabase.from("admin_permissions").select("profile_id, delete_student_history"),
     supabase.rpc("list_open_invitations"),
+    supabase.from("lesson_types").select("id, name, color").order("name"),
   ]);
 
+  const teachingProfiles = new Set((teachers ?? []).filter((t) => t.status === "active").map((t) => t.profile_id));
   const teacherByProfile = new Map((teachers ?? []).map((t) => [t.profile_id, t.id]));
   const permissionByProfile = new Map((permissions ?? []).map((p) => [p.profile_id, p.delete_student_history]));
   const users = (profiles ?? [])
@@ -131,6 +135,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                         <Avatar name={u.full_name} />
                         {teacherId ? <Link href={`/admin/teachers/${teacherId}`}>{u.full_name}</Link> : u.full_name}
                         {isSelf && <span className="text-small text-secondary">(את/ה)</span>}
+                        {u.role !== "teacher" && teachingProfiles.has(u.id) && <Badge tone="neutral">גם מלמד/ת</Badge>}
                       </div>
                     </td>
                     <td data-label="אימייל">
@@ -144,6 +149,21 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                     </td>
                     <td>
                       <div className={`${table.actions} ${styles.actions}`}>
+                        {canManage && u.role === "admin" && u.status === "active" && !teachingProfiles.has(u.id) && (
+                          <TeachingDialog profileId={u.id} name={u.full_name} lessonTypes={lessonTypes ?? []} />
+                        )}
+                        {canManage && u.role === "admin" && u.status === "active" && teachingProfiles.has(u.id) && (
+                          <ConfirmAction
+                            action={stopTeaching}
+                            fields={{ id: u.id }}
+                            trigger="הפסקת הוראה"
+                            triggerVariant="ghost"
+                            title={`הפסקת ההוראה של ${u.full_name}`}
+                            description="שיעורים עתידיים יישארו ויסומנו ”דורש טיפול”, ולא ניתן יהיה לשבץ שיעורים חדשים. חשבון הניהול לא ישתנה."
+                            confirmLabel="הפסק הוראה"
+                            confirmVariant="danger"
+                          />
+                        )}
                         {canManage && u.role === "admin" && (
                           <>
                             <PermissionsDialog

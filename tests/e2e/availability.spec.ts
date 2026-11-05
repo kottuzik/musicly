@@ -66,6 +66,8 @@ test.beforeAll(async ({}, testInfo) => {
 });
 
 test.afterAll(async ({}, testInfo) => {
+  // Restoring the school's hours must not be cut short by a slow connection to Development.
+  test.setTimeout(120_000);
   if (!users || !FULL_FLOW_PROJECTS.includes(testInfo.project.name)) return;
   const db = service();
   await cleanTeacherData();
@@ -79,6 +81,85 @@ test.describe("availability", () => {
   test.beforeEach(({}, testInfo) => {
     test.skip(!FULL_FLOW_PROJECTS.includes(testInfo.project.name), "Full flows run on desktop and mobile.");
     test.setTimeout(120_000);
+  });
+
+  test("the same hours can be added for the whole week, skipping days they do not fit", async ({ page }) => {
+    const db = service();
+    await cleanTeacherData();
+    await db.from("operating_hours").delete().gte("day_of_week", 0);
+    await db.from("operating_hours").insert([
+      { day_of_week: 0, open_time: "10:00", close_time: "18:00" },
+      { day_of_week: 2, open_time: "12:00", close_time: "20:00" },
+    ]);
+    await login(page, users!.teacher);
+    await page.goto("/teacher/availability");
+
+    const addAllWeek = async (start: string, end: string) => {
+      await page.getByRole("button", { name: "הוספת טווח שעות" }).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByRole("checkbox", { name: /הגדרה לכל השבוע/ }).check();
+      await expect(dialog.getByRole("combobox", { name: "יום", exact: true })).toHaveCount(0);
+      await choose(page, dialog, "משעה", start);
+      await choose(page, dialog, "עד שעה", end);
+      await dialog.getByRole("button", { name: "הוספה" }).click();
+      return dialog;
+    };
+
+    // Fits both open days: added to both, and the dialog closes.
+    let dialog = await addAllWeek("13:00", "15:00");
+    await expect(dialog).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText("13:00–15:00", { exact: true })).toHaveCount(2);
+
+    // Fits only Sunday: Sunday is added and Tuesday is reported.
+    dialog = await addAllWeek("10:00", "11:00");
+    await expect(dialog.getByText("נוסף לימים: ראשון. לא נוסף לימים: שלישי (מחוץ לשעות הפעילות).")).toBeVisible({ timeout: 15_000 });
+    await dialog.getByRole("button", { name: "סגירה" }).last().click();
+    await expect(page.getByText("10:00–11:00", { exact: true })).toHaveCount(1);
+
+    // Nothing fits: a clear error, nothing is added.
+    dialog = await addAllWeek("13:00", "15:00");
+    await expect(dialog.getByText(/לא נוספה זמינות/)).toBeVisible({ timeout: 15_000 });
+    await expect(dialog.getByText(/חופף לזמינות קיימת/)).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // Hours set for the whole week can be widened together.
+    await page.getByRole("button", { name: "עריכת הזמינות ביום ראשון" }).last().click();
+    dialog = page.getByRole("dialog");
+    await choose(page, dialog, "עד שעה", "16:00");
+    await dialog.getByRole("checkbox", { name: /להחיל על כל הימים/ }).check();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
+    await expect(dialog).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText("13:00–16:00", { exact: true })).toHaveCount(2);
+
+    // One range of the week edited into two: nothing is removed, so a teacher may do it directly.
+    await page.getByRole("button", { name: "עריכת הזמינות ביום שלישי" }).click();
+    dialog = page.getByRole("dialog");
+    await choose(page, dialog, "משעה", "12:00");
+    await choose(page, dialog, "עד שעה", "12:30");
+    await dialog.getByRole("checkbox", { name: "הוספת טווח שעות נוסף באותו יום" }).check();
+    await choose(page, dialog, "טווח שני: משעה", "13:00");
+    await choose(page, dialog, "טווח שני: עד שעה", "16:00");
+    await dialog.getByRole("button", { name: "שמירה" }).click();
+    await expect(dialog).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText("12:00–12:30", { exact: true })).toHaveCount(1);
+    await expect(page.getByText("13:00–16:00", { exact: true })).toHaveCount(2);
+
+    // Two ranges added together, on every open day.
+    await cleanTeacherData();
+    await page.reload();
+    await page.getByRole("button", { name: "הוספת טווח שעות" }).click();
+    dialog = page.getByRole("dialog");
+    await dialog.getByRole("checkbox", { name: /הגדרה לכל השבוע/ }).check();
+    await choose(page, dialog, "משעה", "12:00");
+    await choose(page, dialog, "עד שעה", "13:00");
+    await dialog.getByRole("checkbox", { name: "הוספת טווח שעות נוסף באותו יום" }).check();
+    await choose(page, dialog, "טווח שני: משעה", "16:00");
+    await choose(page, dialog, "טווח שני: עד שעה", "18:00");
+    await dialog.getByRole("button", { name: "הוספה" }).click();
+    await expect(dialog).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText("12:00–13:00", { exact: true })).toHaveCount(2);
+    await expect(page.getByText("16:00–18:00", { exact: true })).toHaveCount(2);
+    await cleanTeacherData();
   });
 
   test("hours, teacher availability, live request queue and decisions", async ({ page, browser }, testInfo) => {

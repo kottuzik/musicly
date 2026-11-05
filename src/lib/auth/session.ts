@@ -28,6 +28,27 @@ export async function requireProfile(): Promise<Profile> {
   return profile;
 }
 
+// The active teachers row of the signed-in user: a teacher, or an admin who also teaches.
+export const getTeachingId = cache(async (): Promise<string | null> => {
+  const { profile } = await getCurrentProfile();
+  if (!profile) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("teachers")
+    .select("id")
+    .eq("profile_id", profile.id)
+    .eq("status", "active")
+    .maybeSingle();
+  return data?.id ?? null;
+});
+
+// Teacher actions: open to teachers, and to admins whose teaching is on.
+export async function requireTeaching(): Promise<Profile> {
+  const profile = await requireProfile();
+  if (profile.role !== "teacher" && !(await getTeachingId())) redirect("/forbidden");
+  return profile;
+}
+
 export async function requireRole(roles: readonly Role[]): Promise<Profile> {
   const profile = await requireProfile();
   if (!roles.includes(profile.role)) redirect("/forbidden");

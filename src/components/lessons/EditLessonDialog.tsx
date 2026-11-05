@@ -313,7 +313,7 @@ function EditForm({ lesson, options, onOpenChange, onDone, changeRequestId, prop
         chosenDays={seriesScope ? [Number(day)] : date ? [dayOfWeek(date)] : []}
       />
 
-      {preview && <SeriesPreviewTable preview={preview} />}
+      {preview && <SeriesPreviewTable isSelf={teacherId === options.myTeacherId} preview={preview} />}
 
       {needsConfirm && (
         <Alert tone="warning">
@@ -347,12 +347,14 @@ function EditForm({ lesson, options, onOpenChange, onDone, changeRequestId, prop
   );
 }
 
-function SeriesPreviewTable({ preview }: { preview: SeriesChangePreview }) {
+function SeriesPreviewTable({ preview, isSelf }: { preview: SeriesChangePreview; isSelf: boolean }) {
   const problems = preview.meetings.filter((m) => !["move", "closed_day"].includes(m.outcome));
   return (
     <div className={booking.preview} aria-live="polite">
       <p className={booking.helpTitle}>לפני השמירה</p>
-      {preview.needs_request ? (
+      {preview.needs_request && isSelf ? (
+        <p>חלק מהמפגשים מחוץ לזמינות הקבועה שלך: השינוי יתבצע מיד, כי זה שיבוץ שלך.</p>
+      ) : preview.needs_request ? (
         <p>חלק מהמפגשים מחוץ לזמינות המורה: תישלח למורה בקשת אישור לכל השינוי, ושום דבר לא ישתנה עד שיאשר.</p>
       ) : (
         <p>

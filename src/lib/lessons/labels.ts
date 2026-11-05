@@ -91,6 +91,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   student_deactivated: "תלמיד הושבת",
   student_auto_activated: "תלמיד הופעל אוטומטית בתאריך החזרה",
   teacher_deactivated: "מורה הושבת",
+  availability_updated: "שעות זמינות עודכנו",
+  admin_teaching_enabled: "מנהל התחיל ללמד",
   regular_teacher_changed: "המורה הקבוע הוחלף",
   attendance_reported: "דווחה נוכחות",
   attendance_changed: "הנוכחות תוקנה",

@@ -30,6 +30,10 @@ export const availabilitySlotSchema = z
   .object({ teacherId: z.uuid(), day, start: time, end: time })
   .refine((v) => v.end > v.start, { path: ["end"], message: "שעת הסיום צריכה להיות אחרי שעת ההתחלה" });
 
+export const availabilityEditSchema = z
+  .object({ availabilityId: z.uuid(), start: time, end: time })
+  .refine((v) => v.end > v.start, { path: ["end"], message: "שעת הסיום צריכה להיות אחרי שעת ההתחלה" });
+
 export const removalSchema = z.object({
   availabilityId: z.uuid(),
   kind: z.enum(["remove_weekly", "remove_once"], { error: "יש לבחור סוג הסרה" }),

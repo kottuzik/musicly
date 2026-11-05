@@ -47,7 +47,7 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
   const [{ data: teacher }, { data: lessonTypes }, { data: invitations }] = await Promise.all([
     supabase
       .from("teachers")
-      .select("id, full_name, email, phone, status, profile_id, deleted_at, teacher_skills(lesson_types(id, name, color))")
+      .select("id, full_name, email, phone, status, profile_id, deleted_at, account:profiles!teachers_profile_id_fkey(role), teacher_skills(lesson_types(id, name, color))")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("lesson_types").select("id, name, color").order("name"),
@@ -63,6 +63,8 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
   const skills = teacher.teacher_skills.flatMap((s) => (s.lesson_types ? [s.lesson_types] : []));
   const account = accountState(Boolean(teacher.profile_id), invitations?.find((i) => i.teacher_id === teacher.id));
   const active = teacher.status === "active";
+  // An admin who also teaches: their teaching is turned off from their profile or the users screen.
+  const isAdmin = Boolean(teacher.account) && teacher.account?.role !== "teacher";
 
   return (
     <div className={stack.page}>
@@ -99,7 +101,7 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
                 registered: Boolean(teacher.profile_id),
               }}
             />
-            <ConfirmAction
+            {!isAdmin && <ConfirmAction
               action={setTeacherStatus}
               fields={{ id: teacher.id, status: active ? "inactive" : "active" }}
               trigger={active ? "הפוך ללא פעיל" : "הפוך לפעיל"}
@@ -113,8 +115,8 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
               confirmLabel={active ? "הפוך ללא פעיל" : "הפוך לפעיל"}
             >
               {active ? <TeacherImpactNotice teacherId={teacher.id} /> : <AvailabilityModeField />}
-            </ConfirmAction>
-            <DeleteTeacherButton id={teacher.id} name={teacher.full_name} trigger="מחיקת מורה" />
+            </ConfirmAction>}
+            {!isAdmin && <DeleteTeacherButton id={teacher.id} name={teacher.full_name} trigger="מחיקת מורה" />}
           </>
         }
       />
@@ -201,7 +203,10 @@ export default async function TeacherDetailsPage({ params, searchParams }: PageP
             <div className={styles.account}>
               <Badge tone={ACCOUNT_LABELS[account.kind].tone}>{ACCOUNT_LABELS[account.kind].label}</Badge>
               <p className="text-secondary">
-                {account.kind === "registered" && "המורה נרשם ויכול להתחבר עם האימייל והסיסמה שלו."}
+                {account.kind === "registered" &&
+                  (isAdmin
+                    ? "זה מנהל במערכת שגם מלמד. הפסקת ההוראה נעשית בפרופיל שלו, או בידי המנהל הראשי במסך המשתמשים."
+                    : "המורה נרשם ויכול להתחבר עם האימייל והסיסמה שלו.")}
                 {account.kind === "invited" && `נוצר קישור הרשמה שתקף עד ${formatDate(account.expiresAt)}.`}
                 {account.kind === "expired" && `תוקף הקישור פג ב־${formatDate(account.expiresAt)}. צרו קישור חדש.`}
                 {account.kind === "none" && "המורה עדיין לא קיבל קישור הרשמה."}

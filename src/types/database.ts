@@ -1911,6 +1911,10 @@ export type Database = {
         Args: { p_email: string; p_except_teacher?: string }
         Returns: boolean
       }
+      enable_admin_teaching: {
+        Args: { p_lesson_type_ids: string[]; p_profile_id: string }
+        Returns: string
+      }
       expire_exception_requests: { Args: never; Returns: number }
       expire_lesson_change_requests: { Args: never; Returns: number }
       expire_pending_requests: { Args: never; Returns: number }
@@ -1968,6 +1972,7 @@ export type Database = {
       }
       inactive_teacher_id: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_admin_teacher: { Args: { p_teacher_id: string }; Returns: boolean }
       is_my_student: { Args: { p_student_id: string }; Returns: boolean }
       is_quarter_hour: { Args: { p_time: string }; Returns: boolean }
       job_finish: {
@@ -2379,6 +2384,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       require_super_admin: { Args: never; Returns: undefined }
+      require_teaching_manager: {
+        Args: { p_profile_id: string }
+        Returns: undefined
+      }
       respond_exception_request: {
         Args: {
           p_approve: boolean
@@ -2584,6 +2593,10 @@ export type Database = {
         }
         Returns: Json
       }
+      stop_admin_teaching: {
+        Args: { p_profile_id: string }
+        Returns: undefined
+      }
       stop_series: {
         Args: { p_from_date: string; p_series_id: string }
         Returns: Json
@@ -2622,6 +2635,16 @@ export type Database = {
         Returns: undefined
       }
       unarchive_notifications: { Args: { p_ids: string[] }; Returns: number }
+      update_availability: {
+        Args: {
+          p_availability_id: string
+          p_end: string
+          p_second_end?: string
+          p_second_start?: string
+          p_start: string
+        }
+        Returns: number
+      }
       update_lesson: {
         Args: {
           p_change_request_id: string

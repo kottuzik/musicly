@@ -10,8 +10,18 @@ import { MobileNav } from "./MobileNav";
 import { NavLinks } from "./NavLinks";
 import styles from "./AppShell.module.css";
 
-export function AppShell({ profile, unread, children }: { profile: Profile; unread: number; children: ReactNode }) {
-  const items = navItemsForRole(profile.role, profile.status);
+export function AppShell({
+  profile,
+  unread,
+  teaches,
+  children,
+}: {
+  profile: Profile;
+  unread: number;
+  teaches: boolean;
+  children: ReactNode;
+}) {
+  const items = navItemsForRole(profile.role, profile.status, teaches);
   return (
     <>
       <a href="#main" className={styles.skipLink}>

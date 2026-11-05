@@ -32,7 +32,7 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
       <LiveRefresh tables={["lessons", "exception_booking_requests", "lesson_change_requests"]} />
       <PageHeader
         title="לוח שנה"
-        subtitle="כל השיעורים של בית הספר. לחיצה על שיעור פותחת את פרטיו."
+        subtitle="כל השיעורים של בית הספר. לחיצה על שיעור פותחת את פרטיו, ולחיצה על שעה פנויה פותחת שיעור חדש."
         actions={
           <>
             <ExportLink

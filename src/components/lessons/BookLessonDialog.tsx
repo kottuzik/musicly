@@ -29,6 +29,8 @@ import { useTimeOptions } from "./useBusyTimes";
 type Mode = "single" | "series";
 type Meeting = { day: string; start: string };
 
+export type BookingSlotChoice = { date: string; start: string };
+
 type DialogProps = {
   options: BookingOptions;
   // Opened from a student's page: the student is already chosen and cannot be changed.
@@ -62,16 +64,39 @@ export function BookLessonDialog({ options, studentId, variant }: DialogProps) {
   );
 }
 
+// A new lesson opened from a time clicked in the calendar. Without a time, only the date is filled in.
+export function BookLessonSlotDialog({
+  options,
+  slot,
+  onClose,
+}: {
+  options: BookingOptions;
+  slot: BookingSlotChoice | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={slot !== null} onOpenChange={(open) => !open && onClose()} title="שיעור חדש">
+      {options.students.length === 0 ? (
+        <Alert tone="warning">אין עדיין תלמידים פעילים הרשומים לתחום. הוסיפו תלמיד ותחום לימוד בדף התלמידים.</Alert>
+      ) : (
+        slot && <BookLessonForm options={options} initial={slot} onClose={onClose} />
+      )}
+    </Dialog>
+  );
+}
+
 const timeOptions = TIME_OPTIONS.map((t) => ({ value: t, label: t }));
 const dayOptions = WEEKDAY_LABELS.map((label, i) => ({ value: String(i), label }));
 
 function BookLessonForm({
   options,
   fixedStudentId,
+  initial,
   onClose,
 }: {
   options: BookingOptions;
   fixedStudentId?: string;
+  initial?: BookingSlotChoice;
   onClose: () => void;
 }) {
   // With a fixed student, a single subject is preselected together with its regular teacher and duration.
@@ -83,15 +108,17 @@ function BookLessonForm({
   const [teacherId, setTeacherId] = useState(
     onlySubject && options.teachers.some((t) => t.id === onlySubject.regularTeacherId) ? onlySubject.regularTeacherId : "",
   );
-  const [date, setDate] = useState("");
-  const [start, setStart] = useState("");
+  const [date, setDate] = useState(initial?.date ?? "");
+  const [start, setStart] = useState(initial?.start ?? "");
   const [duration, setDuration] = useState(
     String(options.lessonTypes.find((lt) => lt.id === onlySubject?.lessonTypeId)?.duration ?? ""),
   );
   const [location, setLocation] = useState<LessonLocation>("school");
-  const [startDate, setStartDate] = useState(schoolToday());
+  const [startDate, setStartDate] = useState(initial?.date ?? schoolToday());
   const [endDate, setEndDate] = useState("");
-  const [meetings, setMeetings] = useState<Meeting[]>([{ day: "", start: "" }]);
+  const [meetings, setMeetings] = useState<Meeting[]>([
+    { day: initial ? String(dayOfWeek(initial.date)) : "", start: initial?.start ?? "" },
+  ]);
   const [confirmHours, setConfirmHours] = useState(false);
   const [state, setState] = useState<BookingState & SeriesState>({});
   const [preview, setPreview] = useState<SeriesPreview | null>(null);
@@ -102,6 +129,7 @@ function BookLessonForm({
   const regularTeacherId = student?.subjects.find((s) => s.lessonTypeId === lessonTypeId)?.regularTeacherId ?? "";
   const effectiveTeacherId = mode === "series" ? regularTeacherId : teacherId;
   const teacher = options.teachers.find((t) => t.id === effectiveTeacherId);
+  const isSelf = Boolean(effectiveTeacherId) && effectiveTeacherId === options.myTeacherId;
 
   const subjectOptions = (student?.subjects ?? [])
     .map((s) => options.lessonTypes.find((lt) => lt.id === s.lessonTypeId))
@@ -200,7 +228,7 @@ function BookLessonForm({
 
   function submitSingle() {
     startTransition(async () => {
-      const result = await bookLesson({ ...commonInput, teacherId, date, start, duration });
+      const result = await bookLesson({ ...commonInput, teacherId, date, start: singleUnavailable ? "" : start, duration });
       setState(result);
     });
   }
@@ -348,7 +376,7 @@ function BookLessonForm({
             <SelectField
               label="שעת התחלה"
               name="start"
-              value={start}
+              value={singleUnavailable ? "" : start}
               placeholder={singleUnavailable ? "המורה לא זמין" : date && lessonTypeId ? "בחרו שעה" : "בחרו קודם תאריך"}
               disabled={!date || !lessonTypeId || singleUnavailable}
               options={singleTimeOptions}
@@ -506,8 +534,14 @@ function BookLessonForm({
           <p className={styles.helpTitle}>זמינות {teacher?.name ?? "המורה"} ושעות הפעילות</p>
           {!availabilityText.anyAvailability && (
             <p>
-              <strong>למורה לא הוגדרה זמינות שבועית.</strong> כל מועד שתבחרו יישלח למורה לאישור. אפשר להגדיר לו זמינות בדף
-              המורה, בלשונית „זמינות”.
+              {isSelf ? (
+                <strong>עדיין לא הגדרת זמינות שבועית. אפשר להגדיר אותה במסך „ההוראה שלי”.</strong>
+              ) : (
+                <>
+                  <strong>למורה לא הוגדרה זמינות שבועית.</strong> כל מועד שתבחרו יישלח למורה לאישור. אפשר להגדיר לו זמינות בדף
+                  המורה, בלשונית „זמינות”.
+                </>
+              )}
             </p>
           )}
           <table className={styles.weekTable}>
@@ -535,11 +569,13 @@ function BookLessonForm({
               ))}
             </tbody>
           </table>
-          <p className="text-secondary">מועד מחוץ לזמינות יישלח למורה לאישור, והשעה לא תישמר עד שיאשר.</p>
+          <p className="text-secondary">
+            {isSelf ? "זה שיבוץ שלך: מועד מחוץ לזמינות שלך ייקבע מיד." : "מועד מחוץ לזמינות יישלח למורה לאישור, והשעה לא תישמר עד שיאשר."}
+          </p>
         </div>
       )}
 
-      {mode === "series" && preview && <PreviewSummary preview={preview} />}
+      {mode === "series" && preview && <PreviewSummary preview={preview} isSelf={isSelf} />}
 
       {(state.needsConfirm || (mode === "series" && previewNeedsConfirm)) && (
         <Alert tone="warning">
@@ -591,7 +627,7 @@ function SkippedList({ skipped }: { skipped: { date: string; reason: string }[] 
   );
 }
 
-function PreviewSummary({ preview }: { preview: SeriesPreview }) {
+function PreviewSummary({ preview, isSelf }: { preview: SeriesPreview; isSelf: boolean }) {
   return (
     <div className={styles.preview} aria-live="polite">
       <p className={styles.helpTitle}>לפני השמירה</p>
@@ -603,7 +639,9 @@ function PreviewSummary({ preview }: { preview: SeriesPreview }) {
             </strong>{" "}
             · מפגש ראשון {formatDay(p.first_date)}
           </p>
-          {p.needs_request ? (
+          {p.needs_request && isSelf ? (
+            <p>המועד מחוץ לזמינות הקבועה שלך: הסדרה תיקבע מיד, כי זה שיבוץ שלך.</p>
+          ) : p.needs_request ? (
             <p>המועד מחוץ לזמינות הקבועה של המורה: תישלח למורה בקשת אישור לכל הסדרה, והשעה לא תישמר עד לאישורו.</p>
           ) : (
             <p>ייווצרו {p.scheduled} מפגשים (עד 12 חודשים קדימה).</p>
@@ -627,14 +665,16 @@ function SeriesResults({ results }: { results: NonNullable<SeriesState["results"
   return (
     <div className={stack.form}>
       {results.map((r) => (
-        <Alert key={`${r.day}-${r.start}`} tone={r.result === "request" ? "info" : "success"}>
+        <Alert key={`${r.day}-${r.start}`} tone={r.result === "failed" ? "error" : r.result === "request" ? "info" : "success"}>
           <p>
             <strong>
               יום {WEEKDAY_LABELS[r.day]} בשעה <span dir="ltr">{shortTime(r.start)}</span>:
             </strong>{" "}
-            {r.result === "request"
-              ? "נשלחה למורה בקשת אישור לסדרה. השעה אינה שמורה עד לאישור."
-              : `הסדרה נוצרה עם ${r.created} מפגשים.`}
+            {r.result === "failed"
+              ? `הסדרה לא נוצרה: ${r.note ?? "המועד כבר תפוס"}.`
+              : r.result === "request"
+                ? "נשלחה למורה בקשת אישור לסדרה. השעה אינה שמורה עד לאישור."
+                : `הסדרה נוצרה עם ${r.created} מפגשים.${r.note ? ` ${r.note}.` : ""}`}
           </p>
           {r.skipped && r.skipped.length > 0 && (
             <>

@@ -65,7 +65,7 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
   const [{ data: teachers }, { data: lessonTypes }, { data: invitations }] = await Promise.all([
     supabase
       .from("teachers")
-      .select("id, full_name, email, phone, status, profile_id, teacher_skills(lesson_types(id, name, color))")
+      .select("id, full_name, email, phone, status, profile_id, account:profiles!teachers_profile_id_fkey(role), teacher_skills(lesson_types(id, name, color))")
       .is("deleted_at", null)
       .order("full_name"),
     supabase.from("lesson_types").select("id, name, color").order("name"),
@@ -75,6 +75,7 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
   const rows = (teachers ?? []).map((t) => ({
     ...t,
     skills: t.teacher_skills.flatMap((s) => (s.lesson_types ? [s.lesson_types] : [])),
+    isAdmin: Boolean(t.account) && t.account?.role !== "teacher",
     account: accountState(Boolean(t.profile_id), invitations?.find((i) => i.teacher_id === t.id)),
   }));
 
@@ -148,6 +149,7 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
                     <div className={table.primaryCell}>
                       <Avatar name={t.full_name} />
                       <Link href={`/admin/teachers/${t.id}`}>{t.full_name}</Link>
+                      {t.isAdmin && <Badge tone="primary">גם מנהל/ת</Badge>}
                     </div>
                   </td>
                   <td data-label="תחומי הוראה">
@@ -170,7 +172,7 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/t
                   </td>
                   <td data-label="פעולות">
                     <div className={table.actions}>
-                      <DeleteTeacherButton id={t.id} name={t.full_name} inRow />
+                      {!t.isAdmin && <DeleteTeacherButton id={t.id} name={t.full_name} inRow />}
                     </div>
                   </td>
                 </tr>

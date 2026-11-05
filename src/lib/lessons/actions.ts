@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/actions";
 import { ADMIN_ROLES, TEACHER_ROLES } from "@/lib/auth/roles";
-import { requireProfile, requireRole } from "@/lib/auth/session";
+import { requireProfile, requireRole, requireTeaching } from "@/lib/auth/session";
 import { dbErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { fieldErrors } from "@/lib/validation/auth";
@@ -52,7 +52,14 @@ export type SeriesPreview = {
 export type SeriesState = ActionState & {
   needsConfirm?: boolean;
   preview?: SeriesPreview;
-  results?: { day: number; start: string; result: "series" | "request"; created?: number; skipped?: SkippedDate[] }[];
+  results?: {
+    day: number;
+    start: string;
+    result: "series" | "request" | "failed";
+    created?: number;
+    skipped?: SkippedDate[];
+    note?: string | null;
+  }[];
 };
 
 const BOOKING_FIELDS: Record<string, string> = {
@@ -62,7 +69,18 @@ const BOOKING_FIELDS: Record<string, string> = {
   date_past: "date",
 };
 
+// An admin's own booking outside their availability is answered at once by the database, and only
+// the request's status tells how it ended. Null means it still waits for the teacher.
+async function selfDecided(id: string, done: string): Promise<{ ok?: boolean; success?: string; error?: string } | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("exception_booking_requests").select("status, result_note").eq("id", id).maybeSingle();
+  if (data?.status === "approved") return { ok: true, success: data.result_note ? `${done} ${data.result_note}.` : done };
+  if (data?.status === "cannot_schedule") return { error: data.result_note ?? "לא ניתן לשבץ במועד הזה." };
+  return null;
+}
+
 function revalidateLessons() {
+  revalidatePath("/admin/my-teaching");
   revalidatePath("/admin");
   revalidatePath("/admin/calendar");
   revalidatePath("/admin/requests");
@@ -100,8 +118,10 @@ export async function bookLesson(input: Record<string, unknown>): Promise<Bookin
   }
 
   revalidateLessons();
-  const result = (data as { result: string }).result;
+  const { result, id } = data as { result: string; id: string };
   if (result === "request") {
+    const decided = await selfDecided(id, "השיעור נקבע.");
+    if (decided) return decided;
     return {
       ok: true,
       requested: true,
@@ -156,12 +176,30 @@ export async function createSeries(input: Record<string, unknown>): Promise<Seri
   }
 
   revalidateLessons();
-  return { ok: true, results: data as SeriesState["results"] };
+  const results = await Promise.all(
+    (data as (NonNullable<SeriesState["results"]>[number] & { id: string })[]).map(async (r) => {
+      if (r.result !== "request") return r;
+      const { data: request } = await supabase
+        .from("exception_booking_requests")
+        .select("status, series_id, result_note")
+        .eq("id", r.id)
+        .maybeSingle();
+      if (request?.status === "cannot_schedule") return { ...r, result: "failed" as const, note: request.result_note };
+      if (request?.status !== "approved" || !request.series_id) return r;
+      const { count } = await supabase
+        .from("lessons")
+        .select("id", { count: "exact", head: true })
+        .eq("series_id", request.series_id)
+        .eq("status", "scheduled");
+      return { ...r, result: "series" as const, created: count ?? 0, note: request.result_note };
+    }),
+  );
+  return { ok: true, results };
 }
 
 // The requested teacher approves or rejects a booking outside their availability.
 export async function respondExceptionRequest(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireRole(TEACHER_ROLES);
+  await requireTeaching();
   const parsed = exceptionDecisionSchema.safeParse({
     id: formData.get("id"),
     version: formData.get("version"),
@@ -285,7 +323,9 @@ export async function listSubstitutes(lessonId: string): Promise<SubstituteOptio
   await requireRole(ADMIN_ROLES);
   const supabase = await createClient();
   const { data } = await supabase.rpc("list_substitutes", { p_lesson_id: lessonId });
-  return (data ?? []).map((t) => ({ id: t.teacher_id, name: t.teacher_name, available: t.available }));
+  // An admin choosing themself needs nobody's approval, so they count as available.
+  const { data: me } = await supabase.rpc("current_teacher_id");
+  return (data ?? []).map((t) => ({ id: t.teacher_id, name: t.teacher_name, available: t.available || t.teacher_id === me }));
 }
 
 export async function updateLesson(input: Record<string, unknown>): Promise<ChangeState> {
@@ -308,7 +348,10 @@ export async function updateLesson(input: Record<string, unknown>): Promise<Chan
   });
   revalidateLessons();
   if (error) return changeError(error);
-  if ((data as { result: string }).result === "request") return { ok: true, requested: true, success: REQUEST_SENT };
+  const outcome = data as { result: string; id: string };
+  if (outcome.result === "request") {
+    return (await selfDecided(outcome.id, "השיעור עודכן.")) ?? { ok: true, requested: true, success: REQUEST_SENT };
+  }
   return { ok: true, success: "השיעור עודכן." };
 }
 
@@ -352,11 +395,13 @@ export async function restoreLesson(input: Record<string, unknown>): Promise<Cha
   revalidateLessons();
   if (error) return changeError(error);
 
-  const result = data as { result: string; suggestions?: string[] };
+  const result = data as { result: string; id: string; suggestions?: string[] };
   if (result.result === "slot_taken") {
     return { error: dbErrorMessage({ message: "slot_taken" }), suggestions: result.suggestions ?? [] };
   }
-  if (result.result === "request") return { ok: true, requested: true, success: REQUEST_SENT };
+  if (result.result === "request") {
+    return (await selfDecided(result.id, "השיעור שוחזר.")) ?? { ok: true, requested: true, success: REQUEST_SENT };
+  }
   return { ok: true, success: "השיעור שוחזר." };
 }
 
@@ -418,8 +463,10 @@ export async function changeSeries(input: Record<string, unknown>): Promise<Chan
   revalidateLessons();
   if (error) return changeError(error);
 
-  const result = data as { result: string; moved?: number; flagged?: number };
-  if (result.result === "request") return { ok: true, requested: true, success: REQUEST_SENT };
+  const result = data as { result: string; id: string; moved?: number; flagged?: number };
+  if (result.result === "request") {
+    return (await selfDecided(result.id, "הסדרה עודכנה.")) ?? { ok: true, requested: true, success: REQUEST_SENT };
+  }
   const flagged = result.flagged ?? 0;
   return {
     ok: true,

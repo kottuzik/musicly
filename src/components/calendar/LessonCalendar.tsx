@@ -2,6 +2,7 @@
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
+import interactionPlugin from "@fullcalendar/react/interaction";
 import heLocale from "@fullcalendar/react/locales/he";
 import themePlugin from "@fullcalendar/react/themes/classic";
 import timeGridPlugin from "@fullcalendar/react/timegrid";
@@ -23,6 +24,7 @@ import {
   type CalendarView,
 } from "@/lib/lessons/time";
 import { schoolToday } from "@/lib/students/age";
+import { BookLessonSlotDialog, type BookingSlotChoice } from "@/components/lessons/BookLessonDialog";
 import { LessonDetailsDialog } from "./LessonDetailsDialog";
 import styles from "./Calendar.module.css";
 
@@ -53,6 +55,16 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [openLesson, setOpenLesson] = useState<string | null>(null);
+  const [newSlot, setNewSlot] = useState<BookingSlotChoice | null>(null);
+  const canBook = isAdmin && Boolean(options);
+
+  // dateStr is in the school's time zone: a date, or a date and time ("2026-11-05T12:30:00+02:00").
+  // A click in the past opens nothing, because lessons are booked only ahead.
+  const chooseSlot = (dateStr: string, instant: Date, allDay: boolean) => {
+    const slotDate = dateStr.slice(0, 10);
+    if (allDay ? slotDate < schoolToday() : instant.getTime() <= Date.now()) return;
+    setNewSlot({ date: slotDate, start: allDay ? "" : dateStr.slice(11, 16) });
+  };
 
   const href = (next: { view?: CalendarView; date?: string }) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -98,10 +110,11 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
         </nav>
       </div>
 
-      <div className={styles.grid}>
+      <div className={canBook ? `${styles.grid} ${styles.gridBookable}` : styles.grid}>
         <FullCalendar
           key={`${view}:${date}`}
-          plugins={[themePlugin, dayGridPlugin, timeGridPlugin]}
+          plugins={[themePlugin, dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          dateClick={canBook ? (info) => chooseSlot(info.dateStr, info.date, info.allDay) : undefined}
           initialView={FC_VIEWS[view]}
           initialDate={date}
           headerToolbar={false}
@@ -171,6 +184,7 @@ export function LessonCalendar({ lessons, view, date, showTeacher, viewFromUrl, 
       </div>
 
       <LessonDetailsDialog lessonId={openLesson} onClose={() => setOpenLesson(null)} isAdmin={isAdmin} options={options} />
+      {canBook && options && <BookLessonSlotDialog options={options} slot={newSlot} onClose={() => setNewSlot(null)} />}
     </div>
   );
 }

@@ -271,7 +271,9 @@ export function LessonDetailsDialog({ lessonId, onClose, isAdmin, options }: Pro
               </ConfirmAction>
             )}
             {scheduled && upcoming && <AddToCalendarLink lessonId={ready.id} />}
-            {!isAdmin && scheduled && upcoming && <LessonReminderDialog lessonId={ready.id} />}
+            {(!isAdmin || ready.teacher_id === options?.myTeacherId) && scheduled && upcoming && (
+              <LessonReminderDialog lessonId={ready.id} />
+            )}
             {!isAdmin && scheduled && upcoming && !ready.pending_change_request_id && !sameDay && (
               <Button variant="ghost" size="small" onClick={() => setDialog("request")}>
                 בקשת שינוי או ביטול

@@ -11,18 +11,20 @@ export type NavIcon =
   | "settings"
   | "profile"
   | "notifications"
-  | "reports";
+  | "reports"
+  | "teaching";
 
 export type NavItem = { href: string; label: string; icon: NavIcon };
 
 // Only screens that already exist are listed; later milestones add their items here.
-export function navItemsForRole(role: Role, status: UserStatus = "active"): NavItem[] {
+export function navItemsForRole(role: Role, status: UserStatus = "active", teaches = false): NavItem[] {
   const profile: NavItem = { href: "/profile", label: "פרופיל", icon: "profile" };
   const notifications: NavItem = { href: "/notifications", label: "התראות", icon: "notifications" };
   if (isAdminRole(role)) {
     return [
       { href: "/admin", label: "בית", icon: "home" },
       { href: "/admin/calendar", label: "לוח שנה", icon: "calendar" },
+      ...(teaches ? [{ href: "/admin/my-teaching", label: "ההוראה שלי", icon: "teaching" } as const] : []),
       { href: "/admin/students", label: "תלמידים", icon: "students" },
       { href: "/admin/teachers", label: "מורים", icon: "teachers" },
       { href: "/admin/requests", label: "בקשות", icon: "requests" },

@@ -29,6 +29,16 @@ async function choose(page: Page, scope: Page | Locator, label: string, option: 
   await page.getByRole("option", { name: option, exact: true }).click();
 }
 
+// A calendar cell sits under the day's column, so it is hit by position, as a real finger or mouse would.
+async function tapSlot(page: Page, cell: Locator, testInfo: TestInfo) {
+  await cell.scrollIntoViewIfNeeded();
+  const box = (await cell.boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  if (testInfo.project.use.hasTouch) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
+}
+
 // A Tuesday a few weeks ahead; each device project gets its own week so runs do not collide.
 function lessonDate(projectName: string) {
   const d = new Date();
@@ -146,6 +156,46 @@ test.describe("lessons and calendar", () => {
     await teacherPage.goto(`/teacher/calendar?view=day&date=${date}`);
     await expect(teacherPage.getByRole("button", { name: new RegExp(`${student}.*בזום`) })).toBeVisible();
     await teacherPage.context().close();
+  });
+
+  test("clicking a time in the calendar opens a new lesson with that date and time", async ({ page }, testInfo) => {
+    const student = `${RUN}-${testInfo.project.name} תלמיד לחיצה`;
+    await newStudent(student);
+    const date = lessonDate(testInfo.project.name);
+    await login(page, users!.admin);
+
+    await page.goto(`/admin/calendar?view=day&date=${date}`);
+    await tapSlot(page, page.locator('[data-time="10:00:00"]').last(), testInfo);
+    const dialog = page.getByRole("dialog", { name: "שיעור חדש" });
+    await expect(dialog.getByLabel("תאריך", { exact: true })).toHaveValue(date);
+    await choose(page, dialog, "תלמיד", student);
+    await expect(dialog.getByRole("combobox", { name: "שעת התחלה", exact: true })).toContainText("10:00");
+    await dialog.getByRole("button", { name: "שמירה" }).click();
+    await expect(dialog.getByText("השיעור נקבע.")).toBeVisible();
+    await dialog.getByRole("button", { name: "סיום" }).click();
+    await expect(page.getByRole("button", { name: new RegExp(student) })).toBeVisible({ timeout: 15_000 });
+
+    // Clicking a lesson still opens the lesson, not a new one.
+    await page.getByRole("button", { name: new RegExp(student) }).click();
+    await expect(page.getByRole("dialog", { name: "שיעור חדש" })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+
+    // The month view fills in the date only; the past opens nothing.
+    await page.goto(`/admin/calendar?view=month&date=${date}`);
+    const emptyDay = new Date(Date.parse(`${date}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+    await tapSlot(page, page.locator(`[data-date="${emptyDay}"]`).last(), testInfo);
+    await expect(page.getByRole("dialog", { name: "שיעור חדש" }).getByLabel("תאריך", { exact: true })).toHaveValue(emptyDay);
+    await page.keyboard.press("Escape");
+    await page.goto("/admin/calendar?view=day&date=2024-01-02");
+    await tapSlot(page, page.locator('[data-time="10:00:00"]').last(), testInfo);
+    await expect(page.getByRole("dialog", { name: "שיעור חדש" })).toHaveCount(0);
+
+    // A teacher's calendar does not open it.
+    await page.context().clearCookies();
+    await login(page, users!.teacher);
+    await page.goto(`/teacher/calendar?view=day&date=${date}`);
+    await tapSlot(page, page.locator('[data-time="11:00:00"]').last(), testInfo);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
   test("admin creates a weekly series after checking its dates", async ({ page }, testInfo) => {

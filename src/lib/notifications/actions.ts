@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/actions";
-import { TEACHER_ROLES } from "@/lib/auth/roles";
-import { requireProfile, requireRole } from "@/lib/auth/session";
+import { requireProfile, requireTeaching } from "@/lib/auth/session";
 import { dbErrorMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { fieldErrors } from "@/lib/validation/auth";
@@ -91,7 +90,7 @@ function offsetsFrom(formData: FormData) {
 }
 
 export async function saveReminderPreferences(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireRole(TEACHER_ROLES);
+  await requireTeaching();
   const enabled = formData.get("enabled") === "on";
   const { offsets, error: offsetsError } = offsetsFrom(formData);
   if (offsetsError) return { fieldErrors: { customAmount: offsetsError } };
@@ -108,14 +107,14 @@ export async function saveReminderPreferences(_prev: ActionState, formData: Form
 
 // What the lesson's reminder dialog shows: this lesson's own setting (if any) and the general one.
 export async function getLessonReminder(lessonId: string) {
-  await requireRole(TEACHER_ROLES);
+  await requireTeaching();
   const supabase = await createClient();
   const [override, general] = await Promise.all([loadLessonReminder(supabase, lessonId), loadReminderSettings(supabase)]);
   return { override, general };
 }
 
 export async function saveLessonReminder(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireRole(TEACHER_ROLES);
+  await requireTeaching();
   const parsed = lessonReminderSchema.safeParse({
     lessonId: String(formData.get("lessonId") ?? ""),
     mode: String(formData.get("mode") ?? ""),
