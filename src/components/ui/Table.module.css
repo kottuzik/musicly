@@ -63,6 +63,14 @@
   font-weight: 600;
 }
 
+/* On a cell itself, flex would stop it being a table cell: it would not fill the row's height, so
+   its text and bottom line would not align with the rest of the row. */
+@media (min-width: 768px) {
+  .table td.primaryCell {
+    display: table-cell;
+  }
+}
+
 .primaryCell a {
   color: inherit;
   text-decoration: none;
