@@ -19,6 +19,7 @@ import { timesWithin, type Hours } from "@/lib/availability/slots";
 import { WEEKDAY_LABELS, dayOfWeek } from "@/lib/time/weekdays";
 import type { Mode } from "./WeeklyAvailability";
 import styles from "./Availability.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = { mode: Mode; teacherId: string; today: string; hours: Hours[] };
 
@@ -70,6 +71,7 @@ function AbsenceForm({ mode, teacherId, today, hours, onDone }: Props & { onDone
     if (result.ok && !result.success) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   // Hours are offered only within the school's operating hours on the chosen date.
   const day = startDate ? dayOfWeek(startDate) : null;
@@ -90,7 +92,7 @@ function AbsenceForm({ mode, teacherId, today, hours, onDone }: Props & { onDone
   }
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="teacherId" value={teacherId} />
       <fieldset

@@ -25,6 +25,7 @@ import { formatDay, schoolToday } from "@/lib/students/age";
 import { TIME_OPTIONS, WEEKDAY_LABELS, addDays, dayOfWeek, shortTime, timeRange } from "@/lib/time/weekdays";
 import styles from "./BookLesson.module.css";
 import { useTimeOptions } from "./useBusyTimes";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Mode = "single" | "series";
 type Meeting = { day: string; start: string };
@@ -121,6 +122,7 @@ function BookLessonForm({
   ]);
   const [confirmHours, setConfirmHours] = useState(false);
   const [state, setState] = useState<BookingState & SeriesState>({});
+  const formRef = useFocusFirstError(state);
   const [preview, setPreview] = useState<SeriesPreview | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -282,6 +284,7 @@ function BookLessonForm({
 
   return (
     <form
+      ref={formRef}
       className={stack.form}
       noValidate
       onSubmit={(e) => {

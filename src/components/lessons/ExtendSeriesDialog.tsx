@@ -13,6 +13,7 @@ import { formatDay, schoolToday } from "@/lib/students/age";
 import { addDays } from "@/lib/time/weekdays";
 import booking from "./BookLesson.module.css";
 import styles from "./LessonChange.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Preview = { create: number; restore: number; problems: { date: string; reason: string }[] };
 
@@ -49,6 +50,7 @@ function ExtendForm({ lesson, onOpenChange, onDone, resuming }: Props & { resumi
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState<string>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const formRef = useFocusFirstError(fieldErrors);
   const [done, setDone] = useState<string>();
   const [pending, startTransition] = useTransition();
 
@@ -95,6 +97,7 @@ function ExtendForm({ lesson, onOpenChange, onDone, resuming }: Props & { resumi
 
   return (
     <form
+      ref={formRef}
       className={stack.form}
       noValidate
       onSubmit={(e) => {

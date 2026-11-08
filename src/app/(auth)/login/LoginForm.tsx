@@ -9,12 +9,14 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { login, type FormState } from "../actions";
 import styles from "../AuthForm.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(login, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {notice && !state.error && <Alert tone="info">{notice}</Alert>}
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="next" value={next ?? ""} />

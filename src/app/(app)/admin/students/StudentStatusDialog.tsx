@@ -15,6 +15,7 @@ import { schoolToday } from "@/lib/students/age";
 import { RETURN_MODE_LABELS, type ReturnMode } from "@/lib/students/labels";
 import { setStudentStatus } from "./actions";
 import styles from "./Students.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = {
   studentId: string;
@@ -63,10 +64,11 @@ function StatusForm({ studentId, current, onDone }: Props & { onDone: () => void
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
   const modeError = state.fieldErrors?.returnMode;
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {!current && <StudentImpactNotice studentId={studentId} />}
       <input type="hidden" name="id" value={studentId} />

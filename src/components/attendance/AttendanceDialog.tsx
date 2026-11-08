@@ -11,6 +11,7 @@ import { TextareaField } from "@/components/ui/TextareaField";
 import type { ActionState } from "@/lib/actions";
 import { setAttendance } from "@/lib/lessons/actions";
 import { ATTENDANCE_LABELS, ATTENDANCE_STATUSES, type AttendanceStatus } from "@/lib/lessons/labels";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = {
   lessonId: string;
@@ -62,10 +63,11 @@ function AttendanceForm({
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
   const errors = state.fieldErrors ?? {};
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form ref={formRef} action={formAction} className={stack.form} noValidate>
       <input type="hidden" name="lessonId" value={lessonId} />
       <input type="hidden" name="version" value={current ? String(current.version) : ""} />
       <ChoiceGroup

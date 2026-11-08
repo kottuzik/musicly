@@ -10,11 +10,13 @@ import type { ActionState } from "@/lib/actions";
 import { saveNotificationChannel, saveReminderPreferences } from "@/lib/notifications/actions";
 import notifications from "@/components/notifications/Notifications.module.css";
 import stack from "@/components/ui/Stack.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function ChannelForm({ channel, email, readOnly }: { channel: "in_app" | "in_app_email"; email: string; readOnly: boolean }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(saveNotificationChannel, {});
+  const formRef = useFocusFirstError(state);
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {state.success && <Alert tone="success">{state.success}</Alert>}
       <ChoiceGroup
@@ -44,8 +46,9 @@ export function ChannelForm({ channel, email, readOnly }: { channel: "in_app" | 
 
 export function ReminderForm({ enabled, offsets }: { enabled: boolean; offsets: number[] }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(saveReminderPreferences, {});
+  const formRef = useFocusFirstError(state);
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {state.success && <Alert tone="success">{state.success}</Alert>}
       <label className={notifications.checkboxLine}>

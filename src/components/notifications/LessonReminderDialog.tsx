@@ -12,6 +12,7 @@ import { getLessonReminder, saveLessonReminder } from "@/lib/notifications/actio
 import { describeOffset } from "@/lib/notifications/reminders";
 import { ReminderOffsetsFields } from "./ReminderOffsetsFields";
 import styles from "./Notifications.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Mode = "default" | "off" | "custom";
 type Info = Awaited<ReturnType<typeof getLessonReminder>>;
@@ -23,6 +24,7 @@ export function LessonReminderDialog({ lessonId }: { lessonId: string }) {
   const [info, setInfo] = useState<Info | null>(null);
   const [mode, setMode] = useState<Mode>("default");
   const [state, formAction, pending] = useActionState<ActionState, FormData>(saveLessonReminder, {});
+  const formRef = useFocusFirstError(state);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +53,7 @@ export function LessonReminderDialog({ lessonId }: { lessonId: string }) {
         {!info ? (
           <p className="text-secondary">טוענים...</p>
         ) : (
-          <form onSubmit={submitWithoutReset(formAction)} className={styles.reminderBox} noValidate>
+          <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={styles.reminderBox} noValidate>
             {state.error && <Alert tone="error">{state.error}</Alert>}
             {state.success && <Alert tone="success">{state.success}</Alert>}
             <input type="hidden" name="lessonId" value={lessonId} />

@@ -9,8 +9,9 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  // Every tab shows the app name only (page titles are ignored by the template).
-  title: { default: "מוזיקלי", template: "מוזיקלי" },
+  // Each page title is shown before the app name, so screen readers announce route changes
+  // (Next.js's route announcer speaks only when document.title changes). WCAG 2.4.2 / 4.1.3.
+  title: { default: "מוזיקלי", template: "%s · מוזיקלי" },
   description: "מערכת ניהול בית הספר למוזיקה",
   robots: { index: false, follow: false, nocache: true },
 };

@@ -25,6 +25,7 @@ import booking from "./BookLesson.module.css";
 import styles from "./LessonChange.module.css";
 import { TeacherWeekHelp } from "./TeacherWeekHelp";
 import { useTimeOptions } from "./useBusyTimes";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Scope = "one" | "from" | "all";
 
@@ -79,6 +80,7 @@ function EditForm({ lesson, options, onOpenChange, onDone, changeRequestId, prop
   const [location, setLocation] = useState<LessonLocation>(lesson.location);
   const [confirmHours, setConfirmHours] = useState(false);
   const [state, setState] = useState<ChangeState>({});
+  const formRef = useFocusFirstError(state);
   const [preview, setPreview] = useState<SeriesChangePreview | null>(null);
   const [substitutes, setSubstitutes] = useState<SubstituteOption[]>([]);
   const [pending, startTransition] = useTransition();
@@ -174,6 +176,7 @@ function EditForm({ lesson, options, onOpenChange, onDone, changeRequestId, prop
 
   return (
     <form
+      ref={formRef}
       className={stack.form}
       noValidate
       onSubmit={(e) => {

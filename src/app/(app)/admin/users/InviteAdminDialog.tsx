@@ -12,6 +12,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import stack from "@/components/ui/Stack.module.css";
 import { inviteAdmin } from "./actions";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function InviteAdminDialog() {
   const [open, setOpen] = useState(false);
@@ -55,9 +56,10 @@ function InviteAdminForm({ onCancel, onCreated }: { onCancel: () => void; onCrea
     if (result.invite) onCreated(result.invite);
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <Field label="שם מלא" name="fullName" required autoComplete="off" error={state.fieldErrors?.fullName} />
       <Field

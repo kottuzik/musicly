@@ -17,6 +17,7 @@ import { SelectField } from "@/components/ui/SelectField";
 import { WEEKDAY_LABELS } from "@/lib/time/weekdays";
 import { formatDay } from "@/lib/students/age";
 import { createLessonType, getDurationImpact, updateLessonType, type DurationImpactSeries } from "./actions";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type LessonType = { id: string; name: string; default_duration_minutes: number; color: string };
 
@@ -57,6 +58,7 @@ function LessonTypeForm({ lessonType, onDone }: { lessonType?: LessonType; onDon
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   // A changed duration can also be applied to existing weekly series: the admin chooses which,
   // and what happens to the meetings that would clash.
@@ -92,7 +94,7 @@ function LessonTypeForm({ lessonType, onDone }: { lessonType?: LessonType; onDon
       : [];
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {lessonType && <input type="hidden" name="id" value={lessonType.id} />}
       {lessonType && <input type="hidden" name="durationSeries" value={JSON.stringify(durationSeries)} />}

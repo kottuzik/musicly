@@ -13,6 +13,7 @@ import type { ActionState } from "@/lib/actions";
 import { ageOn, isMinor, schoolToday } from "@/lib/students/age";
 import { saveStudent } from "./actions";
 import styles from "./Students.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export type StudentFormValues = {
   id: string;
@@ -61,13 +62,14 @@ function StudentForm({ student, onDone }: { student?: StudentFormValues; onDone:
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) && birthDate <= schoolToday();
   const hasParentData = Boolean(student?.parent_name || student?.parent_phone || student?.parent_email);
   const showParent = (validDate && isMinor(birthDate)) || hasParentData;
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {student && <input type="hidden" name="id" value={student.id} />}
       <Field label="שם מלא" name="fullName" required autoComplete="off" defaultValue={student?.full_name} error={state.fieldErrors?.fullName} />

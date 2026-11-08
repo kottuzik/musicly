@@ -12,6 +12,7 @@ import stack from "@/components/ui/Stack.module.css";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import { addCustomClosure } from "./actions";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function CustomClosureDialog({ today }: { today: string }) {
   const [open, setOpen] = useState(false);
@@ -46,9 +47,10 @@ function ClosureForm({ today, onDone }: { today: string; onDone: () => void }) {
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <Field
         label="שם"

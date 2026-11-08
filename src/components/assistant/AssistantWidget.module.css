@@ -1,3 +1,14 @@
+/* Keep the launcher from hiding the focused element (WCAG 2.4.11): its area (16px gap + 56px
+   button + 16px gap = 88px) is excluded when the browser scrolls focus into view, and the page
+   gets matching bottom room so the last controls can scroll above it. Only while it is shown. */
+:global(html):has(.launcher) {
+  scroll-padding-block-end: 88px;
+}
+
+:global(main):has(.launcher) {
+  padding-block-end: 88px;
+}
+
 /* Bottom-right corner (inline-start in RTL). Below dialogs (z-index 40) so those stay on top. */
 .launcher {
   position: fixed;

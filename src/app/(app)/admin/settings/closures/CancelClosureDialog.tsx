@@ -10,6 +10,7 @@ import type { ActionState } from "@/lib/actions";
 import { formatLessonDate, lessonTimeRange } from "@/lib/lessons/time";
 import { cancelClosure, getClosureImpact, type ClosureLesson } from "./actions";
 import styles from "./Closures.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = { id: string; name: string };
 
@@ -49,6 +50,7 @@ function CancelForm({ id, onDone }: { id: string; onDone: () => void }) {
     if (result.ok && !result.success) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   useEffect(() => {
     let active = true;
@@ -74,7 +76,7 @@ function CancelForm({ id, onDone }: { id: string; onDone: () => void }) {
   }
 
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form ref={formRef} action={formAction} className={stack.form} noValidate>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="choose" value="true" />
       {lessons === null && <p className="text-secondary">בודקים אילו שיעורים מושפעים...</p>}

@@ -14,6 +14,7 @@ import stack from "@/components/ui/Stack.module.css";
 import { createLessonTypeInline } from "../settings/lesson-types/actions";
 import { saveTeacher } from "./actions";
 import styles from "./TeacherDialog.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export type TeacherFormValues = {
   id: string;
@@ -69,12 +70,13 @@ function TeacherForm({
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
   // Lesson types added from this dialog join the list and are selected at once.
   const [types, setTypes] = useState(lessonTypes);
   const [selected, setSelected] = useState<string[]>(teacher?.lessonTypeIds ?? []);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {teacher && <input type="hidden" name="id" value={teacher.id} />}
       <Field label="שם מלא" name="fullName" required autoComplete="off" defaultValue={teacher?.full_name} error={state.fieldErrors?.fullName} />

@@ -10,13 +10,15 @@ import type { ActionState } from "@/lib/actions";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
 import stack from "@/components/ui/Stack.module.css";
 import { changePassword, updateOwnProfile } from "./actions";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Details = { fullName: string; email: string; phone: string; roleLabel: string; readOnly: boolean };
 
 export function DetailsForm({ details }: { details: Details }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(updateOwnProfile, {});
+  const formRef = useFocusFirstError(state);
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {state.success && <Alert tone="success">{state.success}</Alert>}
       {details.readOnly && <Alert tone="info">החשבון אינו פעיל, ולכן לא ניתן לעדכן פרטים.</Alert>}
@@ -54,9 +56,10 @@ export function DetailsForm({ details }: { details: Details }) {
 
 export function PasswordForm({ email }: { email: string }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(changePassword, {});
+  const formRef = useFocusFirstError(state);
   return (
     // key resets the fields after a successful change
-    <form key={state.success} onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
+    <form ref={formRef} key={state.success} onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {state.success && <Alert tone="success">{state.success}</Alert>}
       <input type="hidden" name="username" value={email} autoComplete="username" />

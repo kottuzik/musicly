@@ -10,6 +10,7 @@ import stack from "@/components/ui/Stack.module.css";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import { respondExceptionRequest } from "@/lib/lessons/actions";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = {
   request: { id: string; version: number };
@@ -49,6 +50,7 @@ function DecisionForm({ request, decision, onDone }: Omit<Props, "summary"> & { 
     (prev: ActionState, formData: FormData) => respondExceptionRequest(prev, formData),
     {},
   );
+  const formRef = useFocusFirstError(state);
 
   if (state.ok || (state.error && !state.fieldErrors)) {
     return (
@@ -62,7 +64,7 @@ function DecisionForm({ request, decision, onDone }: Omit<Props, "summary"> & { 
   }
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       <input type="hidden" name="id" value={request.id} />
       <input type="hidden" name="version" value={request.version} />
       <input type="hidden" name="decision" value={decision} />

@@ -8,12 +8,14 @@ import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
 import { updatePassword, type FormState } from "../actions";
 import styles from "../AuthForm.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function ResetPasswordForm() {
   const [state, formAction, pending] = useActionState<FormState, FormData>(updatePassword, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <PasswordField
         label="סיסמה חדשה"

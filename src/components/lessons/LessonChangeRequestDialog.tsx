@@ -17,6 +17,7 @@ import { schoolToday } from "@/lib/students/age";
 import { addDays, TIME_OPTIONS } from "@/lib/time/weekdays";
 import booking from "./BookLesson.module.css";
 import styles from "./LessonChange.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 const timeOptions = [{ value: "", label: "ללא הצעה" }, ...TIME_OPTIONS.map((t) => ({ value: t, label: t }))];
 
@@ -49,6 +50,7 @@ function RequestForm({ lesson, onOpenChange, onDone }: Props) {
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   if (state.ok) {
     return (
@@ -63,7 +65,7 @@ function RequestForm({ lesson, onOpenChange, onDone }: Props) {
 
   const errors = state.fieldErrors ?? {};
   return (
-    <form action={formAction} className={stack.form} noValidate>
+    <form ref={formRef} action={formAction} className={stack.form} noValidate>
       <input type="hidden" name="lessonId" value={lesson.id} />
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="start" value={start} />

@@ -16,6 +16,7 @@ import { schoolToday } from "@/lib/students/age";
 import { TIME_OPTIONS } from "@/lib/time/weekdays";
 import booking from "./BookLesson.module.css";
 import styles from "./LessonChange.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = {
   request: { id: string; version: number };
@@ -56,10 +57,11 @@ function RejectForm({ request, onDone }: { request: Props["request"]; onDone: ()
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
   const errors = state.fieldErrors ?? {};
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       <input type="hidden" name="id" value={request.id} />
       <input type="hidden" name="version" value={request.version} />
       <input type="hidden" name="decision" value="reject" />

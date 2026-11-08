@@ -13,6 +13,7 @@ import stack from "@/components/ui/Stack.module.css";
 import type { ActionState } from "@/lib/actions";
 import { updateProfessionalInfo } from "@/lib/students/actions";
 import { LEVELS, LEVEL_LABELS, type StudentLevel } from "@/lib/students/labels";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 type Props = { studentId: string; subjectId: string; subjectName: string; level: StudentLevel; background: string | null };
 
@@ -47,9 +48,10 @@ function ProfessionalInfoForm({ studentId, subjectId, level, background, onDone 
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="id" value={subjectId} />
       <input type="hidden" name="studentId" value={studentId} />

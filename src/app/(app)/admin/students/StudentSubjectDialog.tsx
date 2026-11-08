@@ -15,6 +15,7 @@ import stack from "@/components/ui/Stack.module.css";
 import type { ActionState } from "@/lib/actions";
 import { LEVELS, LEVEL_LABELS, type StudentLevel } from "@/lib/students/labels";
 import { saveStudentSubject } from "./actions";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export type TeacherOption = { id: string; full_name: string; active: boolean; lessonTypeIds: string[] };
 type LessonTypeOption = { id: string; name: string };
@@ -87,6 +88,7 @@ function SubjectForm({ studentId, availableLessonTypes, teachers, subject, onDon
     if (result.ok) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   // Active teachers of the chosen subject; the current regular teacher stays selectable even if inactive.
   const teacherOptions = teachers
@@ -94,7 +96,7 @@ function SubjectForm({ studentId, availableLessonTypes, teachers, subject, onDon
     .map((t) => ({ value: t.id, label: t.active ? t.full_name : `${t.full_name} (לא פעיל)` }));
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="studentId" value={studentId} />
       {subject ? (

@@ -20,6 +20,7 @@ import { slotStates, timesWithin, type Hours, type Slot, type SlotState } from "
 import { formatDay } from "@/lib/students/age";
 import { WEEKDAYS, WEEKDAY_LABELS, addDays, dayOfWeek, shortTime, timeRange } from "@/lib/time/weekdays";
 import styles from "./Availability.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export type Mode = "teacher" | "admin";
 
@@ -146,6 +147,7 @@ function AddSlotForm({ teacherId, hours, onDone }: { teacherId: string; hours: H
     if (result.ok && !result.success) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
   const open = hours.find((h) => String(h.day_of_week) === day);
   // Only times within the chosen day's operating hours are offered, and the end comes after the start.
   // For the whole week: from the earliest opening to the latest closing of the open days.
@@ -171,7 +173,7 @@ function AddSlotForm({ teacherId, hours, onDone }: { teacherId: string; hours: H
   }
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="teacherId" value={teacherId} />
       <label className={choice.option}>
@@ -386,6 +388,7 @@ function EditSlotForm({
     if (result.ok && !result.success) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
   const times = timesWithin(day);
   const options = (list: string[]) => list.map((t) => ({ value: t, label: t }));
 
@@ -401,7 +404,7 @@ function EditSlotForm({
   }
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="availabilityId" value={slot.id} />
       <div className={styles.row}>
@@ -498,6 +501,7 @@ function RemoveSlotForm({ mode, slot, today, onDone }: { mode: Mode; slot: Slot;
     if (result.ok && !result.success) onDone();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   if (state.ok && state.success) {
     return (
@@ -511,7 +515,7 @@ function RemoveSlotForm({ mode, slot, today, onDone }: { mode: Mode; slot: Slot;
   }
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="availabilityId" value={slot.id} />
       <fieldset

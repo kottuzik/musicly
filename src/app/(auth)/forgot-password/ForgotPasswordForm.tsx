@@ -8,12 +8,14 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { requestPasswordReset, type FormState } from "../actions";
 import styles from "../AuthForm.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function ForgotPasswordForm({ linkError }: { linkError: boolean }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(requestPasswordReset, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {linkError && !state.success && !state.error && (
         <Alert tone="warning">הקישור שנפתח פג או אינו תקין. הזינו את האימייל ונשלח קישור חדש.</Alert>
       )}

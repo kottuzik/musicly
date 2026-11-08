@@ -11,7 +11,8 @@ export function Alert({ tone = "info", children }: { tone?: AlertTone; children:
   // Errors are announced immediately; other messages politely.
   const role = tone === "error" ? "alert" : "status";
   return (
-    <div className={`${styles.alert} ${styles[tone]}`} role={role}>
+    // tabIndex -1 lets a form move focus to its error message after a failed submit (useFocusFirstError).
+    <div className={`${styles.alert} ${styles[tone]}`} role={role} tabIndex={tone === "error" ? -1 : undefined}>
       <Icon className={styles.icon} size={18} strokeWidth={1.75} aria-hidden="true" />
       <div>{children}</div>
     </div>

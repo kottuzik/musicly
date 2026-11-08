@@ -9,12 +9,14 @@ import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import { PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
 import { register, type RegisterState } from "./actions";
 import styles from "../AuthForm.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function RegisterForm({ token, email, fullName }: { token: string; email: string; fullName: string }) {
   const [state, formAction, pending] = useActionState<RegisterState, FormData>(register, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={styles.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <input type="hidden" name="token" value={token} />
       <Field label="שם" value={fullName} readOnly />

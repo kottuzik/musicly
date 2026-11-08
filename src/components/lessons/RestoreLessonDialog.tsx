@@ -15,6 +15,7 @@ import { TIME_OPTIONS } from "@/lib/time/weekdays";
 import booking from "./BookLesson.module.css";
 import styles from "./LessonChange.module.css";
 import { useTimeOptions } from "./useBusyTimes";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 
 type Props = {
@@ -38,6 +39,7 @@ function RestoreForm({ lesson, onOpenChange, onDone }: Props) {
   const [start, setStart] = useState(schoolTime(lesson.start_at));
   const [confirmHours, setConfirmHours] = useState(false);
   const [state, setState] = useState<ChangeState>({});
+  const formRef = useFocusFirstError(state);
   const [pending, startTransition] = useTransition();
   const otherTimeOptions = useTimeOptions(TIME_OPTIONS, lesson.duration_minutes, {
     date: other ? date : "",
@@ -75,6 +77,7 @@ function RestoreForm({ lesson, onOpenChange, onDone }: Props) {
   const errors = state.fieldErrors ?? {};
   return (
     <form
+      ref={formRef}
       className={stack.form}
       noValidate
       onSubmit={(e) => {

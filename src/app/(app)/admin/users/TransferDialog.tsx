@@ -11,6 +11,7 @@ import type { ActionState } from "@/lib/actions";
 import stack from "@/components/ui/Stack.module.css";
 import { transferSuperAdmin } from "./actions";
 import styles from "./Users.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export function TransferDialog({ admins }: { admins: { id: string; full_name: string }[] }) {
   const [open, setOpen] = useState(false);
@@ -45,8 +46,9 @@ export function TransferDialog({ admins }: { admins: { id: string; full_name: st
 
 function TransferForm({ admins, onCancel }: { admins: { id: string; full_name: string }[]; onCancel: () => void }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(transferSuperAdmin, {});
+  const formRef = useFocusFirstError(state);
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       <SelectField
         label="מנהל ראשי חדש"

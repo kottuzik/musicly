@@ -8,6 +8,7 @@ import { submitWithoutReset } from "@/components/ui/submitWithoutReset";
 import type { ActionState } from "@/lib/actions";
 import { enableTeaching } from "@/lib/teaching/actions";
 import stack from "@/components/ui/Stack.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 export type TeachingLessonType = { id: string; name: string; color: string };
 
@@ -30,11 +31,12 @@ export function TeachingForm({
     if (result.ok) onDone?.();
     return result;
   }, {});
+  const formRef = useFocusFirstError(state);
 
   if (!lessonTypes.length) return <p className="text-secondary">עדיין לא הוגדרו תחומי לימוד. אפשר להוסיף אותם בהגדרות.</p>;
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.formNarrow} noValidate>
       {state.error && <Alert tone="error">{state.error}</Alert>}
       {state.success && !onDone && <Alert tone="success">{state.success}</Alert>}
       <input type="hidden" name="id" value={profileId} />

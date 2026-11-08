@@ -67,7 +67,7 @@
 .todayButton:focus-visible,
 .viewButton:focus-visible,
 .eventButton:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
   box-shadow: var(--focus-ring);
 }
 

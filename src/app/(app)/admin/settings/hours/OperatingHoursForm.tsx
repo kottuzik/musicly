@@ -10,6 +10,7 @@ import type { Hours } from "@/lib/availability/slots";
 import { TIME_OPTIONS, WEEKDAYS, WEEKDAY_LABELS, shortTime } from "@/lib/time/weekdays";
 import { saveOperatingHours } from "./actions";
 import styles from "./Hours.module.css";
+import { useFocusFirstError } from "@/components/ui/useFocusFirstError";
 
 const OPTIONS = TIME_OPTIONS.map((t) => ({ value: t, label: t }));
 // A day opened in the form starts with the school's default hours.
@@ -19,9 +20,10 @@ const DEFAULT_CLOSE = "22:00";
 export function OperatingHoursForm({ hours }: { hours: Hours[] }) {
   const [open, setOpen] = useState(() => new Set(hours.map((h) => h.day_of_week)));
   const [state, formAction, pending] = useActionState(saveOperatingHours, {});
+  const formRef = useFocusFirstError(state);
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
+    <form ref={formRef} onSubmit={submitWithoutReset(formAction)} className={stack.form} noValidate>
       {state.success && <Alert tone="success">{state.success}</Alert>}
       {state.error && <Alert tone={state.ok ? "warning" : "error"}>{state.error}</Alert>}
       <ul className={styles.days}>

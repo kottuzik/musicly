@@ -2,7 +2,7 @@
 
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import styles from "./Dialog.module.css";
 
 type DialogProps = {
@@ -14,6 +14,27 @@ type DialogProps = {
 };
 
 export function Dialog({ open, onOpenChange, title, description, children }: DialogProps) {
+  // Dialogs are controlled and render no Radix Trigger, so Radix has nothing to return focus to
+  // on close and focus falls to <body>. Remember the element that had focus when the dialog
+  // opened and restore it on close (WCAG 2.4.3). A layout effect runs before Radix moves focus
+  // into the dialog, so activeElement is still the opener here.
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (open && document.activeElement instanceof HTMLElement && document.activeElement !== document.body) {
+      returnFocusRef.current = document.activeElement;
+    }
+  }, [open]);
+
+  function handleCloseAutoFocus(event: Event) {
+    const target = returnFocusRef.current;
+    returnFocusRef.current = null;
+    // If the opener is gone (e.g. its row was deleted), keep Radix's default behaviour.
+    if (target?.isConnected) {
+      event.preventDefault();
+      target.focus();
+    }
+  }
+
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
@@ -21,6 +42,7 @@ export function Dialog({ open, onOpenChange, title, description, children }: Dia
         <RadixDialog.Content
           className={styles.content}
           dir="rtl"
+          onCloseAutoFocus={handleCloseAutoFocus}
           {...(description ? {} : { "aria-describedby": undefined })}
         >
           <div className={styles.header}>

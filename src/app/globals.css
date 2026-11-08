@@ -117,8 +117,11 @@ a {
   color: var(--color-primary);
 }
 
+/* Focus is drawn with box-shadow, which Windows forced-colors (high contrast) mode removes.
+   A transparent outline is invisible normally but is painted in a system color there (WCAG 2.4.7).
+   Component focus styles use the same pattern. */
 :focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
   box-shadow: var(--focus-ring);
   border-radius: var(--radius-sm);
 }
@@ -156,7 +159,7 @@ input[dir="ltr"] {
 
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-secondary); /* #6b7280, 4.83:1 on white (WCAG 1.4.3) */
 }
 
 input:hover,
@@ -168,7 +171,7 @@ textarea:hover {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: none;
+  outline: 2px solid transparent;
   border-color: var(--color-primary);
   box-shadow: var(--focus-ring);
 }
@@ -198,7 +201,7 @@ input[readonly]:hover {
 input[aria-invalid="true"],
 select[aria-invalid="true"],
 textarea[aria-invalid="true"] {
-  border-color: var(--color-error);
+  border-color: var(--color-error-text); /* #b91c1c: the lighter --color-error is under 3:1 (WCAG 1.4.11) */
 }
 
 img {

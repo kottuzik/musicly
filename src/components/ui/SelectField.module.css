@@ -24,17 +24,17 @@
 
 .trigger:focus-visible,
 .trigger[data-state="open"] {
-  outline: none;
+  outline: 2px solid transparent;
   border-color: var(--color-primary);
   box-shadow: var(--focus-ring);
 }
 
 .trigger[aria-invalid="true"] {
-  border-color: var(--color-error);
+  border-color: var(--color-error-text); /* #b91c1c: the lighter --color-error is under 3:1 (WCAG 1.4.11) */
 }
 
 .trigger[data-placeholder] {
-  color: #9ca3af;
+  color: var(--color-text-secondary); /* #6b7280, 4.83:1 on white (WCAG 1.4.3) */
 }
 
 /* Round button with a filled triangle, as in the approved dropdown reference. */
@@ -126,6 +126,9 @@
 .item[data-highlighted] {
   color: var(--color-primary);
   background: var(--color-primary-lighter);
+  /* Colors are dropped in forced-colors mode; this outline then marks the highlighted option. */
+  outline: 2px solid transparent;
+  outline-offset: -2px;
 }
 
 .item[data-disabled] {
