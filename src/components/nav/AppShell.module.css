@@ -212,6 +212,12 @@
   }
 }
 
+@media (min-width: 1024px) {
+  .content {
+    max-inline-size: 1340px;
+  }
+}
+
 .iconButton {
   display: grid;
   place-items: center;

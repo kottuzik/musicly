@@ -1,7 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-import type { StudentLevel } from "./labels";
+import { schoolDate } from "@/lib/lessons/time";
+import type { ReturnMode, StudentLevel } from "./labels";
 
 type Client = SupabaseClient<Database>;
 
@@ -73,7 +74,7 @@ function toSubjectViews(rows: SubjectRow[], lookup: Awaited<ReturnType<typeof te
 export async function listStudents(supabase: Client, filters: StudentFilters, { withContacts }: { withContacts: boolean }) {
   const matchSubject = Boolean(filters.subject || filters.level || filters.teacher);
   const columns = [
-    "id, full_name, birth_date, status",
+    "id, full_name, birth_date, status, expected_return_date, return_mode",
     `subjects:student_subjects(${SUBJECT_COLUMNS})`,
     withContacts ? "student_contacts(phone, parent_phone)" : null,
     matchSubject ? "match:student_subjects!inner(lesson_type_id, level, regular_teacher_id)" : null,
@@ -100,6 +101,8 @@ export async function listStudents(supabase: Client, filters: StudentFilters, { 
     full_name: string;
     birth_date: string;
     status: "active" | "inactive";
+    expected_return_date: string | null;
+    return_mode: ReturnMode | null;
     subjects: SubjectRow[];
     student_contacts?: { phone: string | null; parent_phone: string | null } | null;
   };
@@ -108,6 +111,8 @@ export async function listStudents(supabase: Client, filters: StudentFilters, { 
     fullName: s.full_name,
     birthDate: s.birth_date,
     status: s.status,
+    expectedReturnDate: s.expected_return_date,
+    returnMode: s.return_mode,
     subjects: toSubjectViews(s.subjects, lookup),
     phone: s.student_contacts?.phone ?? null,
     parentPhone: s.student_contacts?.parent_phone ?? null,
@@ -135,4 +140,29 @@ export async function getStudent(supabase: Client, id: string, { withContacts }:
     contacts: contacts.data,
     subjects: toSubjectViews((subjects ?? []) as SubjectRow[], lookup),
   };
+}
+
+export type StudentAbsences = { count: number; recent: string[] };
+
+// Lessons the student did not come to (attendance "student_absent", not cancelled), per student:
+// the total and the dates of the latest ones (local dates, newest first).
+export async function loadStudentAbsences(supabase: Client, studentIds: string[]) {
+  const result = new Map<string, StudentAbsences>();
+  if (!studentIds.length) return result;
+  const { data } = await supabase
+    .from("attendance")
+    .select("lessons!inner(student_id, start_at, status)")
+    .eq("status", "student_absent")
+    .eq("lessons.status", "scheduled")
+    .in("lessons.student_id", studentIds);
+  const rows = ((data ?? []) as unknown as { lessons: { student_id: string; start_at: string } }[])
+    .map((r) => r.lessons)
+    .sort((a, b) => b.start_at.localeCompare(a.start_at));
+  for (const l of rows) {
+    const entry = result.get(l.student_id) ?? { count: 0, recent: [] };
+    entry.count += 1;
+    if (entry.recent.length < 5) entry.recent.push(schoolDate(l.start_at));
+    result.set(l.student_id, entry);
+  }
+  return result;
 }

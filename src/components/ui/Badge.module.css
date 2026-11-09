@@ -54,6 +54,15 @@
   line-height: 16px;
   font-weight: 500;
   white-space: nowrap;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+/* Long text is cut with an ellipsis instead of overflowing the chip. */
+.chipText {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dot {

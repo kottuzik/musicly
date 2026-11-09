@@ -158,6 +158,40 @@ test.describe("lessons and calendar", () => {
     await teacherPage.context().close();
   });
 
+  test("a button next to each student in the students list books a lesson for that student", async ({ page }, testInfo) => {
+    const student = `${RUN}-${testInfo.project.name} תלמיד מהרשימה`;
+    await newStudent(student);
+    const date = lessonDate(testInfo.project.name);
+    await login(page, users!.admin);
+
+    await page.goto("/admin/students");
+    await page.getByRole("searchbox").first().fill(student).catch(() => {});
+    await page.getByRole("button", { name: `קביעת שיעור עבור ${student}` }).click();
+    const dialog = page.getByRole("dialog", { name: "שיעור חדש" });
+    // The student is already chosen; the subject and regular teacher are preselected.
+    await expect(dialog).toContainText(student);
+    await dialog.getByLabel("תאריך", { exact: true }).fill(date);
+    await choose(page, dialog, "שעת התחלה", "12:00");
+    await dialog.getByRole("button", { name: "שמירה" }).click();
+    await expect(dialog.getByText("השיעור נקבע.")).toBeVisible();
+  });
+
+  test("a student row in the students list opens like an accordion; the name still links to the student", async ({ page }, testInfo) => {
+    const student = `${RUN}-${testInfo.project.name} תלמיד אקורדיון`;
+    await newStudent(student);
+    await login(page, users!.admin);
+
+    await page.goto(`/admin/students?q=${encodeURIComponent(student)}`);
+    const toggle = page.getByRole("button", { name: `הצגת פרטי ${student}` });
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await toggle.click();
+    await expect(page.getByRole("button", { name: `סגירת פרטי ${student}` })).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByText("העדרויות", { exact: true })).toBeVisible();
+    await expect(page.getByText("אין העדרויות")).toBeVisible();
+    await page.getByRole("link", { name: student }).click();
+    await expect(page).toHaveURL(/\/admin\/students\/[0-9a-f-]+$/);
+  });
+
   test("clicking a time in the calendar opens a new lesson with that date and time", async ({ page }, testInfo) => {
     const student = `${RUN}-${testInfo.project.name} תלמיד לחיצה`;
     await newStudent(student);

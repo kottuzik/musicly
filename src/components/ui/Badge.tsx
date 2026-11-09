@@ -12,7 +12,7 @@ export function ColorChip({ color, children }: { color: string; children: ReactN
   return (
     <span className={styles.chip} style={{ "--chip-color": color } as CSSProperties}>
       <span className={styles.dot} aria-hidden="true" />
-      {children}
+      <span className={styles.chipText}>{children}</span>
     </span>
   );
 }

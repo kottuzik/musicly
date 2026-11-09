@@ -89,7 +89,7 @@ export function BookLessonSlotDialog({
 const timeOptions = TIME_OPTIONS.map((t) => ({ value: t, label: t }));
 const dayOptions = WEEKDAY_LABELS.map((label, i) => ({ value: String(i), label }));
 
-function BookLessonForm({
+export function BookLessonForm({
   options,
   fixedStudentId,
   initial,

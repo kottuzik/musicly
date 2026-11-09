@@ -10,6 +10,31 @@
   overscroll-behavior: contain;
 }
 
+/* The scrollbar track would otherwise run into the rounded corners; keep it one corner-radius clear. */
+.wrapper::-webkit-scrollbar {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.wrapper::-webkit-scrollbar-track:vertical {
+  margin-block: var(--radius-md);
+}
+
+.wrapper::-webkit-scrollbar-track:horizontal {
+  margin-inline: var(--radius-md);
+}
+
+.wrapper::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #c4c2d6 content-box;
+  background-clip: content-box;
+}
+
+.wrapper::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .table {
   inline-size: 100%;
   border-collapse: collapse;

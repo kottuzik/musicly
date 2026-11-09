@@ -5,6 +5,9 @@ import { NoticeAlert } from "../../NoticeAlert";
 import { DeleteStudentButton } from "@/components/deletion/DeleteButtons";
 import { DeletedPeopleTable } from "@/components/deletion/DeletedPeopleTable";
 import { Tabs } from "@/components/ui/Tabs";
+import { BookForStudentButton, StudentBookingProvider } from "@/components/lessons/StudentBooking";
+import { StudentDetails } from "@/components/students/StudentDetails";
+import { StudentRow } from "@/components/students/StudentRow";
 import { StudentFiltersForm } from "@/components/students/StudentFiltersForm";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge, ColorChip } from "@/components/ui/Badge";
@@ -16,7 +19,8 @@ import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
 import { ageOn } from "@/lib/students/age";
 import { STUDENT_STATUS_LABELS } from "@/lib/students/labels";
-import { listStudents, readFilters } from "@/lib/students/queries";
+import { loadBookingOptions } from "@/lib/lessons/queries";
+import { listStudents, loadStudentAbsences, readFilters } from "@/lib/students/queries";
 import { createClient } from "@/lib/supabase/server";
 import { deleteStudentHistory, restoreStudent } from "./actions";
 import { StudentDialog } from "./StudentDialog";
@@ -53,11 +57,13 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
       </div>
     );
   }
-  const [{ rows, total }, { data: lessonTypes }, { data: teachers }] = await Promise.all([
+  const [{ rows, total }, { data: lessonTypes }, { data: teachers }, bookingOptions] = await Promise.all([
     listStudents(supabase, filters, { withContacts: true }),
     supabase.from("lesson_types").select("id, name").order("name"),
     supabase.from("teachers").select("id, full_name").is("deleted_at", null).order("full_name"),
+    loadBookingOptions(supabase),
   ]);
+  const absences = await loadStudentAbsences(supabase, rows.map((r) => r.id));
   const hasFilters = Object.values(filters).some(Boolean);
 
   return (
@@ -85,6 +91,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
         {hasFilters && <Link href="/admin/students">ניקוי סינון</Link>}
       </p>
 
+      <StudentBookingProvider options={bookingOptions}>
       <div className={table.wrapper} tabIndex={0}>
         {rows.length ? (
           <table className={table.table}>
@@ -100,13 +107,18 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
             </thead>
             <tbody>
               {rows.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <div className={table.primaryCell}>
+                <StudentRow
+                  key={s.id}
+                  label={s.fullName}
+                  columns={6}
+                  name={
+                    <>
                       <Avatar name={s.fullName} />
                       <Link href={`/admin/students/${s.id}`}>{s.fullName}</Link>
-                    </div>
-                  </td>
+                    </>
+                  }
+                  cells={
+                    <>
                   <td data-label="גיל">{ageOn(s.birthDate)}</td>
                   <td data-label="תחומי לימוד">
                     {s.subjects.length ? (
@@ -138,10 +150,14 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
                   </td>
                   <td data-label="פעולות">
                     <div className={table.actions}>
+                      {s.status === "active" && <BookForStudentButton id={s.id} name={s.fullName} />}
                       <DeleteStudentButton id={s.id} name={s.fullName} inRow />
                     </div>
                   </td>
-                </tr>
+                    </>
+                  }
+                  details={<StudentDetails student={s} absences={absences.get(s.id)} />}
+                />
               ))}
             </tbody>
           </table>
@@ -151,6 +167,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
           </p>
         )}
       </div>
+      </StudentBookingProvider>
     </div>
   );
 }
