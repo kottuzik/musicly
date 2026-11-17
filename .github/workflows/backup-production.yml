@@ -1,0 +1,66 @@
+# Daily encrypted backup of the PRODUCTION Supabase database to Google Drive.
+# Runs by itself every day, and can also be started by hand (Actions > Backup Production > Run workflow).
+# Uses the "backup" GitHub Environment (no approval needed, so the schedule is not blocked).
+# If any step fails, GitHub sends the repository owner an e-mail.
+name: Backup Production
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # every day at 01:00 UTC (03:00-04:00 in Israel)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-production
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: backup
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Check this is the production project
+        run: |
+          if [ "$SUPABASE_PROJECT_REF" != "culqeemdrhuvzweessra" ]; then
+            echo "SUPABASE_PROJECT_REF is not the production project. Stopping."
+            exit 1
+          fi
+      - name: Link to the production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - name: Dump the database (structure, app data, login accounts)
+        run: |
+          supabase db dump --linked -f schema.sql
+          supabase db dump --linked --data-only --use-copy -f data.sql
+          supabase db dump --linked --data-only --use-copy -s auth -f auth-data.sql
+          test -s schema.sql && test -s data.sql && test -s auth-data.sql
+      - name: Pack and encrypt
+        run: |
+          F="musicly-prod-$(date -u +%Y%m%d-%H%M).tar.gz.gpg"
+          tar -czf - schema.sql data.sql auth-data.sql \
+            | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 \
+                  --symmetric --cipher-algo AES256 -o "$F" 3<<<"$BACKUP_ENCRYPTION_PASSPHRASE"
+          rm -f schema.sql data.sql auth-data.sql
+          test -s "$F"
+          echo "BACKUP_FILE=$F" >> "$GITHUB_ENV"
+      - name: Upload to Google Drive and remove copies older than 30 days
+        env:
+          RCLONE_CONFIG_DATA: ${{ secrets.RCLONE_CONFIG }}
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+          mkdir -p ~/.config/rclone
+          (umask 077; printf '%s\n' "$RCLONE_CONFIG_DATA" > ~/.config/rclone/rclone.conf)
+          rclone copy "$BACKUP_FILE" gdrive:musicly-backups
+          rclone lsf gdrive:musicly-backups | grep -Fx "$BACKUP_FILE"
+          rclone delete gdrive:musicly-backups --min-age 30d
