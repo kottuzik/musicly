@@ -8,13 +8,13 @@
 .error {
   margin: 0;
   color: var(--color-error-text);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .hebrewDate {
   display: block;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .section {

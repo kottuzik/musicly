@@ -5,7 +5,7 @@
 }
 
 .label {
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 
@@ -17,7 +17,7 @@
 .row input {
   flex: 1;
   min-inline-size: 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .row button {

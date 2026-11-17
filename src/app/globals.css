@@ -10,15 +10,31 @@
   --color-success: #34d399;
   --color-warning: #fbbf24;
   --color-error: #f87171;
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #6b7280;
+  /* Neutrals are tinted toward the brand violet (hue ~265) instead of cool gray. */
+  --color-text-primary: #1e1b2e;
+  /* 6.5:1 on white, 5.4:1 on --color-primary-lighter (WCAG 1.4.3) */
+  --color-text-secondary: #5f5c73;
+  /* Slightly stronger than secondary: small text on tinted rows and ghost buttons (4.5:1+) */
+  --color-text-subtle: #4c4a5e;
   /* Style Guide border #e5e7eb darkened by 20% (lightness) for better visibility */
-  --color-border: #abb2bf;
+  --color-border: #a9a7bb;
   /* Form-control outline: darker than --color-border to meet WCAG 3:1 non-text contrast on white */
-  --color-input-border: #6b7280;
-  --color-input-border-hover: #4b5563;
-  --color-background: #f8fafc;
+  --color-input-border: #75728a;
+  --color-input-border-hover: #54516a;
+  --color-background: #f8f7fb;
   --color-surface: #ffffff;
+
+  /* Quiet structure: hairline dividers, table header / hover rows, neutral chips */
+  --color-divider: #e6e4ef;
+  --color-divider-strong: #d5d2e2;
+  --color-surface-subtle: #f8f7fd;
+  --color-row-hover: #faf9fe;
+  --color-primary-tint: #efeafc;
+  --color-primary-lighter-hover: #e2dafc;
+  --color-neutral-bg: #f0eff6;
+  --color-neutral-text: #3b3950;
+  --color-readonly-bg: #f2f1f7;
+  --color-error-bg-hover: #fde2e2;
 
   /* Darker tints for readable text on light semantic backgrounds */
   --color-success-text: #065f46;
@@ -31,6 +47,19 @@
   --color-info-bg: #f0f9ff;
 
   --font-sans: var(--font-heebo), "Arial Hebrew", Arial, sans-serif;
+
+  /* Type scale: 12 / 14 / 15 / 17 / 22 / 30. Form fields keep 16px so iOS does not zoom on focus. */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 22px;
+  --text-xl: 30px;
+  --text-field: 16px;
+  /* Hebrew needs more air than Latin: taller lines, tighter on headings. */
+  --leading-body: 1.55;
+  --leading-ui: 1.45;
+  --leading-heading: 1.25;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -64,8 +93,8 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -80,33 +109,36 @@ p {
 /* Typography scale */
 h1,
 .text-h1 {
-  font-size: 32px;
-  line-height: 40px;
+  font-size: var(--text-xl);
+  line-height: var(--leading-heading);
   font-weight: 700;
+  text-wrap: balance;
 }
 
 h2,
 .text-h2 {
-  font-size: 24px;
-  line-height: 32px;
+  font-size: var(--text-lg);
+  line-height: var(--leading-heading);
   font-weight: 700;
+  text-wrap: balance;
 }
 
 h3,
 .text-h3 {
-  font-size: 20px;
-  line-height: 28px;
+  font-size: var(--text-md);
+  line-height: 1.35;
   font-weight: 600;
+  text-wrap: balance;
 }
 
 .text-body-lg {
-  font-size: 16px;
-  line-height: 24px;
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
 }
 
 .text-small {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
 }
 
 .text-secondary {
@@ -146,8 +178,8 @@ textarea {
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  font-size: 16px;
-  line-height: 24px;
+  font-size: var(--text-field);
+  line-height: 1.5;
   text-align: start;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -189,9 +221,9 @@ select {
 
 /* Read-only fields look distinct from editable ones. */
 input[readonly] {
-  background: #f3f4f6;
+  background: var(--color-readonly-bg);
   border-color: var(--color-border);
-  color: #374151;
+  color: var(--color-neutral-text);
 }
 
 input[readonly]:hover {

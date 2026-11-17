@@ -5,15 +5,15 @@
   min-block-size: 24px;
   padding-inline: 10px;
   border-radius: 999px;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .neutral {
-  background: #f1f5f9;
-  color: #374151;
+  background: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
 }
 
 .success {
@@ -50,8 +50,8 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--chip-color) 14%, white);
   color: var(--color-text-primary);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   font-weight: 500;
   white-space: nowrap;
   min-inline-size: 0;

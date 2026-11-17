@@ -10,7 +10,7 @@
 
   /* FullCalendar classic theme, aligned with the style guide */
   --fc-classic-primary: var(--color-primary);
-  --fc-classic-border: #dfe3ea;
+  --fc-classic-border: var(--color-divider);
   --fc-classic-today: rgb(237 233 254 / 0.6);
   --fc-classic-now: var(--color-accent);
   --fc-classic-foreground: var(--color-text-primary);
@@ -82,7 +82,7 @@
 }
 
 .grid {
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .gridBookable {
@@ -117,7 +117,7 @@
 }
 
 .eventTime {
-  font-size: 11px;
+  font-size: var(--text-xs);
   direction: ltr;
   align-self: flex-start;
 }
@@ -139,7 +139,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
 
@@ -161,7 +161,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--color-warning-text, #b45309);
 }

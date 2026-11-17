@@ -11,8 +11,8 @@
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  font-size: 16px;
-  line-height: 24px;
+  font-size: var(--text-field);
+  line-height: var(--leading-ui);
   text-align: start;
   cursor: pointer;
   transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -51,7 +51,7 @@
 }
 
 .trigger:hover .icon {
-  background: #e2dafc;
+  background: var(--color-primary-lighter-hover);
 }
 
 .trigger[data-state="open"] .icon {
@@ -109,9 +109,9 @@
   gap: 8px;
   min-block-size: 46px;
   padding-inline: 6px;
-  border-block-end: 1px solid #d1d5db;
-  font-size: 16px;
-  line-height: 24px;
+  border-block-end: 1px solid var(--color-divider-strong);
+  font-size: var(--text-field);
+  line-height: var(--leading-ui);
   font-weight: 500;
   cursor: pointer;
   user-select: none;

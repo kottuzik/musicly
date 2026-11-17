@@ -5,21 +5,21 @@
 }
 
 .label {
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
   font-weight: 500;
   color: var(--color-text-primary);
 }
 
 .error {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   color: var(--color-error-text);
 }
 
 .hint {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   color: var(--color-text-secondary);
 }
 

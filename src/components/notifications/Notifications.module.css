@@ -24,8 +24,8 @@
   border-radius: 9px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   font-weight: 700;
   text-align: center;
 }
@@ -100,7 +100,7 @@
 }
 
 .unread :global(.text-secondary) {
-  color: #4b5563; /* keeps 4.5:1 on the tinted row */
+  color: var(--color-text-subtle); /* keeps 4.5:1 on the tinted row */
 }
 
 .badge {
@@ -109,8 +109,8 @@
   border-radius: 999px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   font-weight: 700;
 }
 

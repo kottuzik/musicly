@@ -52,7 +52,7 @@
 .slots table {
   inline-size: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .slots th,

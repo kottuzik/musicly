@@ -13,7 +13,7 @@
 }
 
 .toggle:hover {
-  background: #efeafc;
+  background: var(--color-primary-tint);
   color: var(--color-primary);
 }
 
@@ -32,7 +32,7 @@
 }
 
 .open {
-  background: #fbfaff;
+  background: var(--color-row-hover);
 }
 
 .panelRow[hidden] {
@@ -40,7 +40,7 @@
 }
 
 .panelCell {
-  background: #fbfaff;
+  background: var(--color-row-hover);
 }
 
 .details {
@@ -61,7 +61,7 @@
 
 .details dt {
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 
