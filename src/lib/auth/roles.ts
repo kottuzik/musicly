@@ -56,8 +56,17 @@ export function canAccessPath(role: Role, path: string): boolean {
 }
 
 // Paths reachable without a session. /reset-password checks the session itself
-// so it can show a clear "link expired" message.
-const PUBLIC_PREFIXES = ["/login", "/forgot-password", "/reset-password", "/register", "/auth"];
+// so it can show a clear "link expired" message. /api/health is the uptime check (returns no data).
+// /api/cron/* is called by Supabase Cron without a session; each route checks CRON_SECRET itself.
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/register",
+  "/auth",
+  "/api/health",
+  "/api/cron",
+];
 // Paths a signed-in user should not see (sent home instead).
 const GUEST_ONLY_PREFIXES = ["/login", "/forgot-password", "/register"];
 
