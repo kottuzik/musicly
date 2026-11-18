@@ -54,6 +54,9 @@ describe("public and guest-only paths", () => {
     expect(isPublicPath("/login")).toBe(true);
     expect(isPublicPath("/auth/confirm")).toBe(true);
     expect(isPublicPath("/reset-password")).toBe(true);
+    expect(isPublicPath("/api/health")).toBe(true);
+    expect(isPublicPath("/api/cron/email")).toBe(true);
+    expect(isPublicPath("/api/assistant")).toBe(false);
     expect(isPublicPath("/admin")).toBe(false);
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/login-other")).toBe(false);

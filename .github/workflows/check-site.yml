@@ -1,0 +1,51 @@
+# Daily check that the live Production site answers and can reach its database.
+# Runs by itself every day, and can also be started by hand (Actions > Check Site > Run workflow).
+# It only opens public pages (like any visitor); it logs in to nothing and changes nothing.
+# If the site does not answer, the run turns red; "Alert on Failure" then opens an Issue and
+# GitHub sends the repository owner an e-mail.
+name: Check Site
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # every day at 05:00 UTC (07:00-08:00 in Israel)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-site
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_URL: https://musicly-flame.vercel.app
+    steps:
+      - name: Open the login page and the home page, and ask the app to read the database
+        run: |
+          # Each page gets 3 attempts (20 seconds apart) so a single network hiccup is not an alarm.
+          # The second argument is text the answer must contain.
+          check() {
+            local url="$1" expect="$2" code
+            for attempt in 1 2 3; do
+              # -L follows redirects (the home page sends visitors to the login page).
+              code=$(curl -sL -o page.html -w '%{http_code}' --max-time 30 "$url" || true)
+              if [ "$code" = "200" ] && grep -qi "$expect" page.html; then
+                echo "OK: $url answered with 200"
+                return 0
+              fi
+              echo "Attempt $attempt: $url answered with '${code:-no answer}'"
+              [ "$attempt" -lt 3 ] && sleep 20
+            done
+            echo "::error::The site did not answer correctly: $url (last result: ${code:-no answer})"
+            return 1
+          }
+          FAILED=0
+          check "$SITE_URL/login" '<html' || FAILED=1
+          check "$SITE_URL/" '<html' || FAILED=1
+          # The app itself reads a table with its secret key; answers {"ok":true} when the database works.
+          check "$SITE_URL/api/health" '"ok":true' || FAILED=1
+          exit $FAILED

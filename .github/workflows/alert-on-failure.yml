@@ -1,5 +1,5 @@
 # Raises an alert when one of the important automations fails, and closes it when it works again.
-# How it works: when "Backup Production", "Verify Backup" or "Migrate Production" finishes,
+# How it works: when "Backup Production", "Verify Backup", "Migrate Production" or "Check Site" finishes,
 # this workflow looks at the result. On failure it opens a GitHub Issue (assigned to the
 # repository owner, so GitHub sends an e-mail) with a link to the failed run.
 # If the same automation fails again, a comment is added to the open issue instead of a new issue.
@@ -9,7 +9,7 @@ name: Alert on Failure
 
 on:
   workflow_run:
-    workflows: ["Backup Production", "Verify Backup", "Migrate Production"]
+    workflows: ["Backup Production", "Verify Backup", "Migrate Production", "Check Site"]
     types: [completed]
 
 permissions:
