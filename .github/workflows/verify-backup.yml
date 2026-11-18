@@ -45,7 +45,12 @@ jobs:
           AGE_HOURS=$(( ( $(date -u +%s) - $(date -u -d "$MODTIME" +%s) ) / 3600 ))
           COUNT_7D=$(jq -r --argjson cutoff "$(( $(date -u +%s) - 7*86400 ))" \
             '[.[] | select(.Name | endswith(".tar.gz.gpg")) | select((.ModTime | sub("\\.[0-9]+"; "") | fromdateiso8601) > $cutoff)] | length' list.json)
-          echo "Latest: $LATEST ($SIZE bytes, $AGE_HOURS hours old). Backups in the last 7 days: $COUNT_7D"
+          # Expect up to 6 backups per week, but fewer while the oldest backup is still young
+          # (e.g. right after the backups were first set up).
+          OLDEST_MODTIME=$(jq -r '[.[] | select(.Name | endswith(".tar.gz.gpg")) | .ModTime] | min' list.json)
+          OLDEST_DAYS=$(( ( $(date -u +%s) - $(date -u -d "$OLDEST_MODTIME" +%s) ) / 86400 ))
+          EXPECTED=$(( OLDEST_DAYS < 6 ? OLDEST_DAYS : 6 ))
+          echo "Latest: $LATEST ($SIZE bytes, $AGE_HOURS hours old). Backups in the last 7 days: $COUNT_7D (expected at least $EXPECTED)"
           echo "LATEST=$LATEST" >> "$GITHUB_ENV"
           if [ "$AGE_HOURS" -gt 30 ]; then
             echo "::error::The newest backup is $AGE_HOURS hours old (expected: at most 30). The daily backup may have stopped."
@@ -55,8 +60,8 @@ jobs:
             echo "::error::The newest backup is suspiciously small ($SIZE bytes)."
             exit 1
           fi
-          if [ "$COUNT_7D" -lt 6 ]; then
-            echo "::error::Only $COUNT_7D backups in the last 7 days (expected: about 7)."
+          if [ "$COUNT_7D" -lt "$EXPECTED" ]; then
+            echo "::error::Only $COUNT_7D backups in the last 7 days (expected at least $EXPECTED)."
             exit 1
           fi
 
