@@ -11,7 +11,7 @@
 .legend {
   padding: 0;
   margin-block-end: 8px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .error {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   color: var(--color-error-text);
 }

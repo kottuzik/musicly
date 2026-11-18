@@ -8,8 +8,8 @@
   padding-inline: 20px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  font-size: 16px;
-  line-height: 24px;
+  font-size: var(--text-base);
+  line-height: var(--leading-ui);
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
@@ -44,7 +44,7 @@
 }
 
 .secondary:hover:not(:disabled) {
-  background: #e2dafc;
+  background: var(--color-primary-lighter-hover);
 }
 
 .outline {
@@ -63,13 +63,13 @@
 }
 
 .danger:hover:not(:disabled) {
-  background: #fde2e2;
+  background: var(--color-error-bg-hover);
 }
 
 .ghost {
   background: transparent;
   /* Darker than the secondary text colour so small ghost buttons keep 4.5:1 contrast on tinted rows. */
-  color: #4b5563;
+  color: var(--color-text-subtle);
 }
 
 .ghost:hover:not(:disabled) {
@@ -81,8 +81,8 @@
   min-block-size: 36px;
   padding-block: 6px;
   padding-inline: 12px;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
 }
 
 .spinner {

@@ -31,7 +31,7 @@
 .table {
   inline-size: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .table th,
@@ -81,7 +81,7 @@
 .history {
   margin: 0;
   padding-inline-start: 18px;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .sectionTitle {

@@ -25,6 +25,6 @@
   min-block-size: 36px;
   padding-block: 6px;
   padding-inline: 12px;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
 }

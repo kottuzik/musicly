@@ -6,8 +6,8 @@
   padding-inline: 14px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
 }
 
 .icon {

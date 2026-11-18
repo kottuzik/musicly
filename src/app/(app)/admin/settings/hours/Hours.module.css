@@ -14,7 +14,7 @@
   gap: 8px 16px;
   min-block-size: 64px;
   padding-block: 8px;
-  border-block-end: 1px solid #e5e7eb;
+  border-block-end: 1px solid var(--color-divider);
 }
 
 .day:last-child {
@@ -46,7 +46,7 @@
   grid-column: 1 / -1;
   margin: 0;
   color: var(--color-error-text);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 @media (max-width: 479px) {

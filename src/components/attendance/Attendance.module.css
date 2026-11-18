@@ -29,7 +29,7 @@
 .note {
   display: block;
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .cancelled {

@@ -20,8 +20,8 @@
 }
 
 .error {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-ui);
   color: var(--color-error-text);
 }
 

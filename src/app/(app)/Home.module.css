@@ -14,10 +14,9 @@
   display: grid;
   gap: 16px;
   align-items: center;
-  background:
-    radial-gradient(circle at 0% 0%, rgb(244 114 182 / 0.12), transparent 50%),
-    radial-gradient(circle at 100% 100%, rgb(56 189 248 / 0.12), transparent 50%),
-    var(--color-surface);
+  /* One brand tint instead of decorative pink/blue gradients: color is reserved for meaning. */
+  background: var(--color-primary-lighter);
+  border-color: var(--color-primary-lighter-hover);
 }
 
 .welcome p {
@@ -67,8 +66,8 @@
 }
 
 .statValue {
-  font-size: 32px;
-  line-height: 40px;
+  font-size: var(--text-xl);
+  line-height: var(--leading-heading);
   font-weight: 700;
 }
 

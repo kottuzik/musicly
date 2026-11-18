@@ -19,8 +19,8 @@
 }
 
 .statValue {
-  font-size: 32px;
-  line-height: 40px;
+  font-size: var(--text-xl);
+  line-height: var(--leading-heading);
   font-weight: 700;
 }
 

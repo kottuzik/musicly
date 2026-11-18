@@ -61,7 +61,7 @@
   gap: 8px;
   margin-block-start: auto;
   padding-block-start: 12px;
-  border-block-start: 1px solid #e5e7eb;
+  border-block-start: 1px solid var(--color-divider);
 }
 
 .empty {

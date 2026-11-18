@@ -128,7 +128,7 @@
 
 .error {
   color: var(--color-error-text);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 @media (max-width: 479px) {
@@ -140,7 +140,7 @@
 .weekTable {
   inline-size: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .weekTable th,

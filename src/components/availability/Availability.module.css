@@ -12,7 +12,7 @@
   gap: 8px 16px;
   align-items: start;
   padding-block: 14px;
-  border-block-end: 1px solid #e5e7eb;
+  border-block-end: 1px solid var(--color-divider);
 }
 
 .day:last-child {
@@ -44,7 +44,7 @@
   padding-inline: 12px 6px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #fbfaff;
+  background: var(--color-row-hover);
 }
 
 .time {
@@ -84,7 +84,7 @@
   justify-content: space-between;
   gap: 8px;
   padding-block: 8px;
-  border-block-end: 1px solid #e5e7eb;
+  border-block-end: 1px solid var(--color-divider);
 }
 
 .listItem:last-child {
@@ -123,7 +123,7 @@
 
 .note {
   margin-block-start: 4px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--color-text-secondary);
 }
 
