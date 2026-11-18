@@ -1,0 +1,33 @@
+# Dependabot: once a week it checks for new versions of the libraries (npm) and of the
+# GitHub Actions used in .github/workflows, and opens Pull Requests. The CI workflow then
+# runs lint, type check, unit tests and the build on each of them.
+# Small updates (minor/patch) are bundled into ONE Pull Request per group, so there is little noise.
+# Big version jumps (major) arrive as separate Pull Requests, because they are the risky ones.
+# Note: GitHub reads this file from the default branch (main).
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Jerusalem"
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: ["minor", "patch"]
+    labels: ["dependencies"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Jerusalem"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ["*"]
+    labels: ["dependencies"]
