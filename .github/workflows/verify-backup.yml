@@ -1,0 +1,73 @@
+# Weekly check that the daily Production backup really exists on Google Drive and can be opened.
+# Runs by itself every Sunday, and can also be started by hand (Actions > Verify Backup > Run workflow).
+# It only READS from Google Drive; it never changes or deletes anything.
+# If any check fails, the run turns red and GitHub sends the repository owner an e-mail.
+name: Verify Backup
+
+on:
+  schedule:
+    - cron: "0 6 * * 0" # every Sunday at 06:00 UTC (08:00-09:00 in Israel)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-backup
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: backup
+    env:
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+      RCLONE_CONFIG_DATA: ${{ secrets.RCLONE_CONFIG }}
+    steps:
+      - name: Install rclone and connect to Google Drive
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+          mkdir -p ~/.config/rclone
+          (umask 077; printf '%s\n' "$RCLONE_CONFIG_DATA" > ~/.config/rclone/rclone.conf)
+
+      - name: Check there is a fresh backup of reasonable size
+        run: |
+          rclone lsjson gdrive:musicly-backups > list.json
+          # Newest backup (file names contain the date, so sorting by name works)
+          LATEST=$(jq -r '[.[] | select(.Name | endswith(".tar.gz.gpg"))] | sort_by(.Name) | last | .Name // empty' list.json)
+          if [ -z "$LATEST" ]; then
+            echo "::error::No backup files found on Google Drive."
+            exit 1
+          fi
+          SIZE=$(jq -r --arg n "$LATEST" '.[] | select(.Name == $n) | .Size' list.json)
+          MODTIME=$(jq -r --arg n "$LATEST" '.[] | select(.Name == $n) | .ModTime' list.json)
+          AGE_HOURS=$(( ( $(date -u +%s) - $(date -u -d "$MODTIME" +%s) ) / 3600 ))
+          COUNT_7D=$(jq -r --argjson cutoff "$(( $(date -u +%s) - 7*86400 ))" \
+            '[.[] | select(.Name | endswith(".tar.gz.gpg")) | select((.ModTime | sub("\\.[0-9]+"; "") | fromdateiso8601) > $cutoff)] | length' list.json)
+          echo "Latest: $LATEST ($SIZE bytes, $AGE_HOURS hours old). Backups in the last 7 days: $COUNT_7D"
+          echo "LATEST=$LATEST" >> "$GITHUB_ENV"
+          if [ "$AGE_HOURS" -gt 30 ]; then
+            echo "::error::The newest backup is $AGE_HOURS hours old (expected: at most 30). The daily backup may have stopped."
+            exit 1
+          fi
+          if [ "$SIZE" -lt 1024 ]; then
+            echo "::error::The newest backup is suspiciously small ($SIZE bytes)."
+            exit 1
+          fi
+          if [ "$COUNT_7D" -lt 6 ]; then
+            echo "::error::Only $COUNT_7D backups in the last 7 days (expected: about 7)."
+            exit 1
+          fi
+
+      - name: Check the newest backup can be decrypted and opened
+        run: |
+          rclone copy "gdrive:musicly-backups/$LATEST" .
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 \
+              --decrypt "$LATEST" 3<<<"$BACKUP_ENCRYPTION_PASSPHRASE" > backup.tar.gz
+          FILES=$(tar -tzf backup.tar.gz)
+          echo "$FILES"
+          for f in schema.sql data.sql auth-data.sql; do
+            echo "$FILES" | grep -Fx "$f" || { echo "::error::$f is missing inside the backup."; exit 1; }
+          done
+          rm -f backup.tar.gz "$LATEST"
