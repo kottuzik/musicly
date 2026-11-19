@@ -148,6 +148,11 @@
   opacity: 0.65;
 }
 
+.cancelled {
+  outline: 1px dashed var(--color-text-secondary);
+  outline-offset: -2px;
+}
+
 .closed .eventTitle,
 .cancelled .eventTitle {
   text-decoration: line-through;

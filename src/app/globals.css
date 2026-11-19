@@ -68,6 +68,7 @@
 
   --shadow-sm: 0 1px 2px rgb(31 41 55 / 0.05);
   --shadow-md: 0 4px 16px rgb(107 70 193 / 0.08);
+  --shadow-card: 0 1px 2px rgb(76 42 154 / 0.04), 0 8px 24px rgb(76 42 154 / 0.05);
   --shadow-lg: 0 12px 40px rgb(107 70 193 / 0.12);
 
   /* White gap + solid primary ring: 6.4:1 against white (the old translucent ring was about 2:1). */

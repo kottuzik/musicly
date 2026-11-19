@@ -73,6 +73,7 @@
 .navLink[aria-current="page"] {
   background: var(--color-primary-lighter);
   color: var(--color-primary);
+  font-weight: 700;
 }
 
 .main {

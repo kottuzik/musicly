@@ -45,7 +45,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 18px 20px;
+  padding: 20px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -66,9 +66,11 @@
 }
 
 .statValue {
-  font-size: var(--text-xl);
-  line-height: var(--leading-heading);
-  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin-block-start: 6px;
 }
 
 .statLabel {
@@ -77,9 +79,33 @@
 
 .statIcon {
   position: absolute;
-  inset-block-start: 18px;
-  inset-inline-end: 18px;
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  box-sizing: content-box;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-lighter);
   color: var(--color-primary);
+}
+
+/* Counters that ask for action (pending requests, lessons needing attention) turn warm while above zero. */
+.statWarn {
+  background: var(--color-warning-bg);
+  border-color: #f6d88b;
+}
+
+.statWarn .statLabel {
+  color: var(--color-warning-text);
+  font-weight: 600;
+}
+
+.statWarn .statValue {
+  color: var(--color-warning-text);
+}
+
+.statWarn .statIcon {
+  background: #fef3c7;
+  color: var(--color-warning-text);
 }
 
 .cardHeader {

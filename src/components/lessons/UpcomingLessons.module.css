@@ -24,9 +24,10 @@
 }
 
 .time {
-  min-inline-size: 48px;
-  font-weight: 700;
-  font-size: var(--text-base);
+  min-inline-size: 56px;
+  font-weight: 800;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
 }
 
 .body {

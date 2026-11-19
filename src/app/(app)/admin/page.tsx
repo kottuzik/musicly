@@ -34,8 +34,8 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
     { label: "שיעורי היום", value: stats.todayCount, icon: CalendarDays, href: "/admin/calendar?view=day" },
     { label: "שיעורי השבוע", value: stats.weekCount, icon: CalendarRange, href: "/admin/calendar?view=week" },
     { label: "התקיימו החודש", value: stats.heldThisMonth, icon: CalendarCheck, href: "/admin/activity?kind=attendance" },
-    { label: "בקשות ממתינות", value: stats.pendingRequests, icon: ClipboardCheck, href: "/admin/requests" },
-    { label: "דורשים טיפול", value: stats.attention.length, icon: AlertTriangle, href: "/admin/calendar?attention=1" },
+    { label: "בקשות ממתינות", value: stats.pendingRequests, icon: ClipboardCheck, href: "/admin/requests", warn: true },
+    { label: "דורשים טיפול", value: stats.attention.length, icon: AlertTriangle, href: "/admin/calendar?attention=1", warn: true },
     { label: "התראות שלא נקראו", value: unread, icon: Bell, href: "/notifications" },
   ];
 
@@ -53,9 +53,9 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
         <BookLessonDialog options={options} />
       </div>
       <ul className={styles.stats} aria-label="נתוני בית הספר">
-        {cards.map(({ label, value, icon: Icon, href }) => (
+        {cards.map(({ label, value, icon: Icon, href, ...rest }) => (
           <li key={label}>
-            <Link href={href} className={styles.stat}>
+            <Link href={href} className={`${styles.stat} ${"warn" in rest && rest.warn && value > 0 ? styles.statWarn : ""}`}>
               <span className={styles.statValue}>{value}</span>
               <span className={styles.statLabel}>{label}</span>
               <Icon className={styles.statIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
