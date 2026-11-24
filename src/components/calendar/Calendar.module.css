@@ -36,6 +36,17 @@
   text-align: center;
 }
 
+/* Signature detail: a short five-line music staff under the title, the one musical mark of the calendar. */
+.title::after {
+  content: "";
+  display: block;
+  inline-size: 48px;
+  block-size: 17px;
+  margin: 6px auto 0;
+  background: repeating-linear-gradient(to bottom, var(--color-border) 0 1px, transparent 1px 4px);
+  opacity: 0.7;
+}
+
 .navButton,
 .todayButton,
 .viewButton {

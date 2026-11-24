@@ -1,5 +1,6 @@
-import { Video } from "lucide-react";
+import { Music, Video } from "lucide-react";
 import { ColorChip } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { LOCATION_LABELS } from "@/lib/lessons/labels";
 import type { CalendarLesson } from "@/lib/lessons/queries";
 import { formatLessonDate, schoolDate, schoolTime } from "@/lib/lessons/time";
@@ -11,13 +12,15 @@ export function UpcomingLessons({
   showTeacher,
   showDate = false,
   empty,
+  emptyAction,
 }: {
   lessons: CalendarLesson[];
   showTeacher: boolean;
   showDate?: boolean;
   empty: string;
+  emptyAction?: { href: string; label: string };
 }) {
-  if (!lessons.length) return <p className="text-secondary">{empty}</p>;
+  if (!lessons.length) return <EmptyState icon={Music} action={emptyAction}>{empty}</EmptyState>;
   return (
     <ul className={styles.list}>
       {lessons.map((l, i) => {

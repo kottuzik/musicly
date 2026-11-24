@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -126,7 +127,9 @@ export default async function ClosuresPage({ searchParams }: PageProps<"/admin/s
                   <td>
                     <div className={table.actions}>
                       {activeKeys.has(h.key) ? (
-                        <Badge tone="primary">יום סגירה ✓</Badge>
+                        <Badge tone="primary">
+                          <Check size={14} strokeWidth={1.5} aria-hidden="true" /> יום סגירה
+                        </Badge>
                       ) : (
                         <HolidayButton holidayKey={h.key} name={h.name} />
                       )}

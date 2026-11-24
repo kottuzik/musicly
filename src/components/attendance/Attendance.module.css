@@ -73,3 +73,19 @@
   gap: 8px 16px;
   margin-block-end: 12px;
 }
+
+/* A notification title that opens the unreported-lessons dialog. */
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}

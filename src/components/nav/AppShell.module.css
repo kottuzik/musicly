@@ -33,7 +33,7 @@
   padding-inline: 8px;
   font-size: var(--text-base);
   line-height: var(--leading-ui);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
@@ -73,7 +73,7 @@
 .navLink[aria-current="page"] {
   background: var(--color-primary-lighter);
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .main {
@@ -148,7 +148,7 @@
   border-radius: 50%;
   background: var(--color-primary-lighter);
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .logout {

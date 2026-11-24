@@ -1,4 +1,4 @@
-import { AlertTriangle, Bell, CalendarCheck, CalendarDays, CalendarRange, ClipboardCheck, GraduationCap, Music } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, History, CalendarCheck, CalendarDays, CalendarRange, ClipboardCheck, GraduationCap, Music } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { UnreportedCard } from "@/components/attendance/UnreportedCard";
@@ -6,6 +6,7 @@ import { BookLessonDialog } from "@/components/lessons/BookLessonDialog";
 import { UpcomingLessons } from "@/components/lessons/UpcomingLessons";
 import { LiveRefresh } from "@/components/realtime/LiveRefresh";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { requireRole } from "@/lib/auth/session";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { ATTENTION_REASON_LABELS, AUDIT_ACTION_LABELS, auditDetail } from "@/lib/lessons/labels";
@@ -29,9 +30,10 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
   ]);
 
   const cards = [
+    // Today is what the day starts with, so it leads and the other counters stay compact.
+    { label: "שיעורי היום", value: stats.todayCount, icon: CalendarDays, href: "/admin/calendar?view=day", lead: true },
     { label: "תלמידים פעילים", value: stats.students, icon: GraduationCap, href: "/admin/students" },
     { label: "מורים פעילים", value: stats.teachers, icon: Music, href: "/admin/teachers" },
-    { label: "שיעורי היום", value: stats.todayCount, icon: CalendarDays, href: "/admin/calendar?view=day" },
     { label: "שיעורי השבוע", value: stats.weekCount, icon: CalendarRange, href: "/admin/calendar?view=week" },
     { label: "התקיימו החודש", value: stats.heldThisMonth, icon: CalendarCheck, href: "/admin/activity?kind=attendance" },
     { label: "בקשות ממתינות", value: stats.pendingRequests, icon: ClipboardCheck, href: "/admin/requests", warn: true },
@@ -55,7 +57,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
       <ul className={styles.stats} aria-label="נתוני בית הספר">
         {cards.map(({ label, value, icon: Icon, href, ...rest }) => (
           <li key={label}>
-            <Link href={href} className={`${styles.stat} ${"warn" in rest && rest.warn && value > 0 ? styles.statWarn : ""}`}>
+            <Link href={href} className={`${styles.stat} ${"warn" in rest && rest.warn && value > 0 ? styles.statWarn : ""} ${"lead" in rest && rest.lead ? styles.statLead : ""}`}>
               <span className={styles.statValue}>{value}</span>
               <span className={styles.statLabel}>{label}</span>
               <Icon className={styles.statIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
@@ -68,7 +70,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
           <h2 className="text-h3">השיעורים הקרובים היום</h2>
           <Link href="/admin/calendar?view=day">ללוח השנה</Link>
         </div>
-        <UpcomingLessons lessons={stats.upcoming} showTeacher empty="אין עוד שיעורים היום." />
+        <UpcomingLessons lessons={stats.upcoming} showTeacher empty="אין עוד שיעורים היום." emptyAction={{ href: "/admin/calendar?view=week", label: "לשיעורי השבוע" }} />
       </Card>
       <Card>
         <div className={styles.cardHeader}>
@@ -76,7 +78,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
           <Link href="/admin/calendar?attention=1">לכל הרשימה בלוח השנה</Link>
         </div>
         {stats.attention.length === 0 ? (
-          <p className="text-secondary">אין שיעורים שדורשים טיפול.</p>
+          <EmptyState icon={CheckCircle2}>אין שיעורים שדורשים טיפול.</EmptyState>
         ) : (
           <ul className={styles.feed}>
             {stats.attention.slice(0, 5).map((l) => (
@@ -100,7 +102,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin"
           <Link href="/admin/activity">לכל הפעילות</Link>
         </div>
         {stats.recent.length === 0 ? (
-          <p className="text-secondary">עוד לא בוצעו שינויים או ביטולים.</p>
+          <EmptyState icon={History}>עוד לא בוצעו שינויים או ביטולים.</EmptyState>
         ) : (
           <ul className={styles.feed}>
             {stats.recent.map((e) => (

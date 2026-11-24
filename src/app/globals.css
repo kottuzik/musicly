@@ -67,9 +67,9 @@
   --radius-xl: 24px;
 
   --shadow-sm: 0 1px 2px rgb(31 41 55 / 0.05);
-  --shadow-md: 0 4px 16px rgb(107 70 193 / 0.08);
-  --shadow-card: 0 1px 2px rgb(76 42 154 / 0.04), 0 8px 24px rgb(76 42 154 / 0.05);
-  --shadow-lg: 0 12px 40px rgb(107 70 193 / 0.12);
+  --shadow-md: 0 4px 16px rgb(31 41 55 / 0.08);
+  --shadow-card: 0 1px 2px rgb(31 41 55 / 0.04), 0 8px 24px rgb(31 41 55 / 0.05);
+  --shadow-lg: 0 12px 40px rgb(31 41 55 / 0.12);
 
   /* White gap + solid primary ring: 6.4:1 against white (the old translucent ring was about 2:1). */
   --focus-ring: 0 0 0 2px #fff, 0 0 0 4px var(--color-primary);
@@ -112,7 +112,7 @@ h1,
 .text-h1 {
   font-size: var(--text-xl);
   line-height: var(--leading-heading);
-  font-weight: 700;
+  font-weight: 600;
   text-wrap: balance;
 }
 
@@ -120,7 +120,7 @@ h2,
 .text-h2 {
   font-size: var(--text-lg);
   line-height: var(--leading-heading);
-  font-weight: 700;
+  font-weight: 600;
   text-wrap: balance;
 }
 

@@ -68,13 +68,25 @@
 .statValue {
   font-size: 34px;
   line-height: 1.15;
-  font-weight: 800;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   margin-block-start: 6px;
 }
 
 .statLabel {
   color: var(--color-text-secondary);
+}
+
+/* The lead counter is twice as wide and its figure larger; on phones it is just the first tile. */
+@media (min-width: 640px) {
+  .statLead {
+    grid-column: span 2;
+    justify-content: center;
+  }
+
+  .statLead .statValue {
+    font-size: 48px;
+  }
 }
 
 .statIcon {

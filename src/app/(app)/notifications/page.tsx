@@ -10,7 +10,7 @@ import toolbar from "@/components/ui/Toolbar.module.css";
 import { isAdminRole } from "@/lib/auth/roles";
 import { requireProfile } from "@/lib/auth/session";
 import { isNotificationTab, NOTIFICATION_TABS } from "@/lib/notifications/labels";
-import { loadBookingOptions, loadLessonChangeRequests } from "@/lib/lessons/queries";
+import { loadBookingOptions, loadLessonChangeRequests, loadUnreportedLessons } from "@/lib/lessons/queries";
 import { loadNotifications, loadPendingRequests, PAGE_SIZE, unreadTabs } from "@/lib/notifications/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,6 +42,8 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
     ? await Promise.all([loadLessonChangeRequests(supabase, true), loadBookingOptions(supabase)])
     : [[], undefined];
   const changeRequests = Object.fromEntries(changeList.map((r) => [r.id, r]));
+  // The "attendance not reported" notification opens a dialog listing these lessons.
+  const unreported = rows.some((r) => r.type === "attendance_unreported") ? (await loadUnreportedLessons(supabase, 100)).lessons : [];
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const link = (p: number) => `/notifications?tab=${tab}&page=${p}`;
 
@@ -65,7 +67,7 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
             {EMPTY[tab]}
           </p>
         ) : (
-          <NotificationList rows={rows} tab={tab} base={base} pending={pending} changeRequests={changeRequests} options={options} total={total} />
+          <NotificationList rows={rows} tab={tab} base={base} pending={pending} changeRequests={changeRequests} options={options} total={total} unreported={unreported} />
         )}
       </Card>
       {pages > 1 && (

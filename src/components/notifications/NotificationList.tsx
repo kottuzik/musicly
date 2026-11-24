@@ -7,8 +7,9 @@ import { DecisionDialog } from "@/components/availability/DecisionDialog";
 import { ExceptionDecisionDialog } from "@/components/lessons/ExceptionDecisionDialog";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { UnreportedDialog } from "@/components/attendance/UnreportedDialog";
 import { ChangeRequestActions } from "@/components/lessons/ChangeRequestActions";
-import type { BookingOptions, LessonChangeRequest } from "@/lib/lessons/queries";
+import type { BookingOptions, LessonChangeRequest, UnreportedLesson } from "@/lib/lessons/queries";
 import { formatLessonDate, schoolTime } from "@/lib/lessons/time";
 import {
   archiveAllNotifications,
@@ -32,6 +33,8 @@ type Props = {
   options?: BookingOptions;
   // All notifications of this tab (all pages), for the "archive all" button.
   total: number;
+  // Lessons without an attendance report, for the "attendance not reported" notification.
+  unreported?: UnreportedLesson[];
 };
 
 // The answer buttons of a notification about a request, using the same dialogs as the requests screens.
@@ -60,7 +63,7 @@ function RequestActions({ n, view, request }: { n: NotificationRow; view: Notifi
 
 // The notification center list. Rows can be marked read and archived (or brought back from the
 // archive); there is no way to delete one.
-export function NotificationList({ rows, tab, base, pending: pendingRequests, changeRequests, options, total }: Props) {
+export function NotificationList({ rows, tab, base, pending: pendingRequests, changeRequests, options, total, unreported = [] }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -172,7 +175,15 @@ export function NotificationList({ rows, tab, base, pending: pendingRequests, ch
                     חדשה
                   </span>
                 )}
-                {view.href ? (
+                {n.type === "attendance_unreported" && tab !== "archive" ? (
+                  <UnreportedDialog
+                    title={view.title}
+                    lessons={unreported}
+                    onOpen={() => {
+                      if (unread) void markNotificationsRead([n.id]);
+                    }}
+                  />
+                ) : view.href ? (
                   <Link
                     href={view.href}
                     className={styles.title}

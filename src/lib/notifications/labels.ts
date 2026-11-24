@@ -146,7 +146,14 @@ export function describeNotification(n: NotificationRow, base: "/admin" | "/teac
         href: lessonHref,
       };
     case "attendance_unreported":
-      return { title: `לא דווחה נוכחות ב־${num(p.count)} שיעורים`, detail: "שיעורים שהסתיימו ב־30 הימים האחרונים", href: base };
+      return {
+        title: `לא דווחה נוכחות ב־${num(p.count)} שיעורים`,
+        detail: str(p.start_at)
+          ? `הוותיק ביותר: ${formatLessonDate(str(p.start_at))} · ${schoolTime(str(p.start_at))}`
+          : "שיעורים שהסתיימו ב־30 הימים האחרונים",
+        // The notification list opens a dialog with the lessons instead of following this link (emails use it).
+        href: "/notifications?tab=system",
+      };
     case "student_return_due":
       return { title: "הגיע תאריך החזרה של תלמיד", detail: student ?? "", href: n.entity_id ? `/admin/students/${n.entity_id}` : "/admin/students" };
     case "student_returned_auto":

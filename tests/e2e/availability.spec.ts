@@ -329,7 +329,7 @@ test.describe("availability", () => {
     const candidate = holidays.getByRole("row").filter({ has: page.getByRole("button", { name: "הגדרה כיום סגירה" }) }).first();
     const holidayName = (await candidate.getByRole("cell").first().innerText()).trim();
     await candidate.getByRole("button", { name: "הגדרה כיום סגירה" }).click();
-    await expect(holidays.getByRole("row").filter({ hasText: holidayName }).first()).toContainText("יום סגירה ✓");
+    await expect(holidays.getByRole("row").filter({ hasText: holidayName }).first()).toContainText("יום סגירה");
 
     await page.getByRole("button", { name: "יום סגירה מיוחד" }).click();
     const dialog = page.getByRole("dialog");
