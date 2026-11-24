@@ -96,15 +96,23 @@ export default async function RequestsPage({ searchParams }: PageProps<"/admin/r
   );
 }
 
-function SectionTabs({ current }: { current: "availability" | "booking" | "changes" }) {
+// Section tabs; a count after the name shows where requests are waiting, so none is overlooked.
+async function SectionTabs({ current }: { current: "availability" | "booking" | "changes" }) {
+  const supabase = await createClient();
+  const [{ count: availability }, booking, changes] = await Promise.all([
+    supabase.from("availability_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    loadExceptionRequests(supabase),
+    loadLessonChangeRequests(supabase, true),
+  ]);
+  const waiting = (n: number) => (n > 0 ? ` (${n})` : "");
   return (
     <Tabs
       label="סוג בקשות"
       current={current}
       items={[
-        { key: "availability", href: "/admin/requests", label: "זמינות והיעדרויות" },
-        { key: "booking", href: "/admin/requests?section=booking", label: "שיבוץ מחוץ לזמינות" },
-        { key: "changes", href: "/admin/requests?section=changes", label: "שינוי וביטול שיעורים" },
+        { key: "availability", href: "/admin/requests", label: `זמינות והיעדרויות${waiting(availability ?? 0)}` },
+        { key: "booking", href: "/admin/requests?section=booking", label: `שיבוץ מחוץ לזמינות${waiting(booking.filter((r) => r.status === "pending").length)}` },
+        { key: "changes", href: "/admin/requests?section=changes", label: `שינוי וביטול שיעורים${waiting(changes.length)}` },
       ]}
     />
   );

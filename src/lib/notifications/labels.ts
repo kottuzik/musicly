@@ -60,6 +60,8 @@ export function describeNotification(n: NotificationRow, base: "/admin" | "/teac
   const calendar = `${base}/calendar`;
   const lessonHref = str(p.start_at) ? `${calendar}?view=day&date=${schoolDate(str(p.start_at))}` : calendar;
   const requests = `${base}/requests`;
+  // The admin requests screen has a section per request kind; a teacher sees all of them on one page.
+  const section = (name: "booking" | "changes") => (base === "/admin" ? `${requests}?section=${name}` : requests);
   const request = join(str(p.subject), str(p.start_date));
 
   switch (n.type) {
@@ -103,7 +105,7 @@ export function describeNotification(n: NotificationRow, base: "/admin" | "/teac
     case "availability_request_rejected":
       return { title: "בקשת הזמינות שלך נדחתה", detail: REQUEST_KIND[str(p.kind)] ?? "", href: `${base}/availability` };
     case "change_request_new":
-      return { title: "מורה ביקש לשנות או לבטל שיעור", detail: join(REQUEST_KIND[str(p.kind)] ?? "", lessonLine(p, student)), href: requests };
+      return { title: "מורה ביקש לשנות או לבטל שיעור", detail: join(REQUEST_KIND[str(p.kind)] ?? "", lessonLine(p, student)), href: section("changes") };
     case "change_request_approved":
       return {
         title: "בקשתך לשיעור אושרה",
@@ -130,13 +132,13 @@ export function describeNotification(n: NotificationRow, base: "/admin" | "/teac
     case "approval_request_new":
       return { title: "נדרש אישורך לשיעור", detail: request, href: requests };
     case "approval_request_approved":
-      return { title: "המורה אישר את הבקשה", detail: request, href: requests };
+      return { title: "המורה אישר את הבקשה", detail: request, href: section("booking") };
     case "approval_request_rejected":
-      return { title: "המורה דחה את הבקשה", detail: request, href: requests };
+      return { title: "המורה דחה את הבקשה", detail: request, href: section("booking") };
     case "approval_request_cannot_schedule":
-      return { title: "לא ניתן לשבץ: המועד נתפס לפני שהמורה ענה", detail: request, href: requests };
+      return { title: "לא ניתן לשבץ: המועד נתפס לפני שהמורה ענה", detail: request, href: section("booking") };
     case "approval_request_expired":
-      return { title: "בקשה פגה כי מועד השיעור עבר", detail: request, href: requests };
+      return { title: "בקשה פגה כי מועד השיעור עבר", detail: request, href: section("booking") };
     case "lessons_need_attention":
       return { title: "יש שיעורים שדורשים טיפול", detail: "", href: `${base}/calendar?attention=1` };
     case "lesson_reminder":
